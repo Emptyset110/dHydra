@@ -1,4 +1,10 @@
 # -*- coding: utf8 -*-
+"""
+股票接口类 
+Created on 02/17/2016
+@author: Wen Gu
+@contact: emptyset110@gmail.com
+"""
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from pandas import DataFrame
@@ -12,24 +18,15 @@ class Stock:
 		# connect to mongodb named: stock
 		client = MongoClient()
 		self.db = client.stock
-
+		self.updated = datetime.now()
+		self.outstanding = list()
 		# INITIALIZATION: CHECKING UPDATES
 		print "Checking Updates..."
 		lastUpdated = self.db.lastUpdated.find_one( {"list" : {"$exists":True, "$ne": None},"list" : {"$exists":True, "$ne": None} } )
 		self.update_basic_info()
 		[self.codeList, self.basicInfo] = self.fetch_basic_info()
 
-	# Get All Stock Codes
-	def get_code(self):
-		return 	(	
-					set_today_all
-				|	set_industry_classified
-				| 	set_area_classified
-				|	set_concept_classified
-				|	set_sme_classified
-				)
-
-	## Not in use ##
+	## NOT IN USE ##
 	def fetch_classification(self):
 		# 数据来源自新浪财经的行业分类/概念分类/地域分类
 		print "Trying: get_today_all"
@@ -65,7 +62,8 @@ class Stock:
 				,	set_sme_classified
 				]
 
-
+	# Will automatically call "update_basic_info" if needed
+	# @return [self.codeList, self.basicInfo]
 	def fetch_basic_info(self):
 		result = self.db.basicInfo.find_one( 
 			{
@@ -77,8 +75,11 @@ class Stock:
 		else:
 			update_basic_info()
 			[codeList, result] = self.fetch_basic_info()
+
+		self.updated = datetime.now()
 		return [codeList, result]
 
+	# Update stock.basicInfo in mongodb
 	def update_basic_info(self):
 		update_necessary = False
 		basicInfo = self.db.basicInfo.find_one( 
@@ -125,29 +126,36 @@ class Stock:
 				realtime = realtime.append( ts.get_realtime_quotes( self.codeList[i : i+500] ), ignore_index=True )
 			i += 500
 
+		# Get the datetime
 		data_time = datetime.strptime( realtime.iloc[0]["date"] + " " + realtime.iloc[0]["time"] , '%Y-%m-%d %H:%M:%S')
-
 		code = realtime["code"]
-
 		num = len(realtime)
-		# realtime = realtime.convert_objects(convert_numeric=True)
-		# for i in realtime.index: takes much much longer
-		for i in range(0,num):
-			# realtime.loc[i,'time'] takes much much longer!!
-			realtime.iloc[i]['time'] = data_time
+		realtime["time"] = data_time
+		# Drop Useless colulmns
+		realtime = realtime.drop( realtime.columns[[0,6,7,30]] ,axis = 1)
+		# Convert string to float
+		realtime = realtime.convert_objects(convert_dates=False,convert_numeric=True,convert_timedeltas=False)
 
-		realtime = realtime.convert_objects(convert_numeric=True)
-		outstanding = self.basicInfo["basicInfo"]["outstanding"]
-		for i in range(0,num):
-			realtime.loc[i,'turnover'] = realtime.loc[i,"volume"]/outstanding[ code[i] ]/100
+		# TODO: UGLY HERE. Need a better logic for updating
+		if ( ( self.updated.date() == datetime.now().date() ) & ( self.updated.hour >= 9 ) ):
+			if ( self.outstanding == [] ):
+				for i in range(0,num):
+					self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
+		else:
+			print "The basicInfo is outdated. Trying to update basicInfo..."
+			[ self.codeList, self.basicInfo ] = self.fetch_basic_info()
+			self.outstanding = list()
+			for i in range(0,num):
+				self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
+
+		# Compute turn_over_rate
+		realtime["turn_over_rate"] = realtime["volume"]/self.outstanding/100
 		realtime["code"] = code
-		realtime.set_index("code")
+
 		return realtime
 
 	# First fetch_realtime, then insert it into mongodb
 	def get_realtime(self,time):
-		print datetime.now()
-
 		realtime = self.fetch_realtime()
 
 		data_time = realtime.iloc[0]['time']
@@ -155,14 +163,8 @@ class Stock:
 			time = data_time
 		else:
 			print "No need", time
-			print "data_time", data_time
 			return data_time
 
-		# outstanding = self.basicInfo["basicInfo"]["outstanding"]
-		# for i in realtime.index:
-		# 	realtime.loc[i,'time'] = data_time
-			# realtime.iloc[i]["time"] = data_time
-			# realtime.loc[i,"turn_over_ratio"] = realtime.loc[i,"volume"]/outstanding[ code[i] ]/100
-
 		self.db.realtime.insert_many( realtime.iloc[0:2900].to_dict(orient='records') )
+		print "data_time", data_time
 		return time
