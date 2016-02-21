@@ -1,15 +1,14 @@
 # -*- coding: utf8 -*-
+"""
+本脚本用于实时接收股票数据
+Created on 02/17/2016
+@author: Wen Gu
+@contact: emptyset110@gmail.com
+"""
 import dHydra
-import time as t
-from datetime import datetime
 
-
+# Get an instance of stock
 stock = dHydra.Stock()
 
-# time = datetime.now()
-time = datetime(1999,1,1,10,0)
+stock.start_realtime()
 
-start = datetime.now()
-
-time = stock.get_realtime( time )
-print "time cost:", (datetime.now()-start)

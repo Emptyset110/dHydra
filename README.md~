@@ -2,11 +2,9 @@
 
 ---
 > A solution for saving &amp; data mining Chinese Stocks based on "TuShare"(tushare.org)
-> dHydra旨在为国内股票市场的量化交易分析提供一套数据清洗/存储的解决方案。
-> 内容包含但不限于：
+> 这个项目旨在为国内股票市场的量化交易分析提供一套数据清洗/存储的解决方案，包括但不限于：
 > - 实时获取数据并持久化
-> - 在L1基础上计算更（精确）有效的tick data(分笔数据)，精确度介于Level-1与Level-2之间。
-> - 整合包含舆情在内的更多数据
+> - 在L1基础上计算更（精确）有效的tick data(分笔数据)
 
 
 ## Prerequisites

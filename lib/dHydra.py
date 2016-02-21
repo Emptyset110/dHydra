@@ -9,6 +9,7 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta
 from pandas import DataFrame
 import tushare as ts
+import time as t
 import json
 import pandas
 
@@ -168,3 +169,18 @@ class Stock:
 		self.db.realtime.insert_many( realtime.iloc[0:2900].to_dict(orient='records') )
 		print "data_time", data_time
 		return time
+
+	def start_realtime(self):
+		time = datetime.now()
+		while True:
+			try:
+				start = datetime.now()
+
+				if (start.hour<9 or start.hour>15):
+					print "It's Too Early or Too late", start
+					t.sleep(360)
+					continue
+				time = self.get_realtime( time )
+				print "time cost:", (datetime.now()-start)
+			except Exception,e:
+				print e
