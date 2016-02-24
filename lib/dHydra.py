@@ -8,6 +8,7 @@ Created on 02/17/2016
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from pandas import DataFrame
+import config.const as C
 import tushare as ts
 import time as t
 import json
@@ -19,11 +20,9 @@ class Stock:
 		# connect to mongodb named: stock
 		client = MongoClient()
 		self.db = client.stock
-		self.updated = datetime.now()
 		self.outstanding = list()
 		# INITIALIZATION: CHECKING UPDATES
 		print "Checking Updates..."
-		lastUpdated = self.db.lastUpdated.find_one( {"list" : {"$exists":True, "$ne": None},"list" : {"$exists":True, "$ne": None} } )
 		self.update_basic_info()
 		[self.codeList, self.basicInfo] = self.fetch_basic_info()
 
@@ -82,24 +81,27 @@ class Stock:
 
 	# Update stock.basicInfo in mongodb
 	def update_basic_info(self):
-		update_necessary = False
+		update_necessity = False
 		basicInfo = self.db.basicInfo.find_one( 
 			{
 				"lastUpdated": {"$exists":True, "$ne": None}
-			} 
+			}
 		)
 		if (basicInfo == None):
 			print "No record of basicInfo found. A new record is to be created......"
-			update_necessary = True
+			update_necessity = True
 		else:
 			# Criteria For Updating
-			if  ( basicInfo["lastUpdated"].date() < datetime.now().date() ):
-				update_necessary = True
-				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"].date(), "trying to update right now..."
+			if ( ( basicInfo["lastUpdated"].date()<datetime.now().date() ) ):
+				update_necessity = True
+				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], "trying to update right now..."
+			elif ( basicInfo["lastUpdated"].hour<9 ) & ( datetime.now().hour>=9 ) :
+				update_necessity = True
+				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], "trying to update right now..."
 			else:
-				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"].date(), " NO NEED to update right now..."
+				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], " NO NEED to update right now..."
 			
-		if (update_necessary):
+		if (update_necessity):
 			basicInfo = ts.get_stock_basics()
 			
 			result = self.db.basicInfo.update_one(
@@ -116,6 +118,21 @@ class Stock:
 				upsert = True
 			)
 
+	def self_updated(self,code):
+		num = len(code)
+		# TODO: UGLY HERE. Need a better logic for updating
+		if ( ( self.updated.date() == datetime.now().date() ) & ( self.updated.hour >= 9 ) ):
+			if ( self.outstanding == [] ):
+				for i in range(0,num):
+					self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
+		else:
+			print "The basicInfo is outdated. Trying to update basicInfo..."
+			self.update_basic_info()
+			[ self.codeList, self.basicInfo ] = self.fetch_basic_info()
+			self.outstanding = list()
+			for i in range(0,num):
+				self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
+
 	# fetch realtime data using TuShare
 	#	Thanks to tushare.org
 	def fetch_realtime(self):
@@ -130,27 +147,15 @@ class Stock:
 		# Get the datetime
 		data_time = datetime.strptime( realtime.iloc[0]["date"] + " " + realtime.iloc[0]["time"] , '%Y-%m-%d %H:%M:%S')
 		code = realtime["code"]
-		num = len(realtime)
 		realtime["time"] = data_time
 		# Drop Useless colulmns
 		realtime = realtime.drop( realtime.columns[[0,6,7,30]] ,axis = 1)
 		# Convert string to float
 		realtime = realtime.convert_objects(convert_dates=False,convert_numeric=True,convert_timedeltas=False)
-
-		# TODO: UGLY HERE. Need a better logic for updating
-		if ( ( self.updated.date() == datetime.now().date() ) & ( self.updated.hour >= 9 ) ):
-			if ( self.outstanding == [] ):
-				for i in range(0,num):
-					self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
-		else:
-			print "The basicInfo is outdated. Trying to update basicInfo..."
-			[ self.codeList, self.basicInfo ] = self.fetch_basic_info()
-			self.outstanding = list()
-			for i in range(0,num):
-				self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
-
+		# update self.basicInfo & self.outstanding
+		self.self_updated(code)
 		# Compute turn_over_rate
-		realtime["turn_over_rate"] = realtime["volume"]/self.outstanding/100
+		realtime["turn_over_ratio"] = realtime["volume"]/self.outstanding/100
 		realtime["code"] = code
 
 		return realtime
@@ -184,3 +189,66 @@ class Stock:
 				print "time cost:", (datetime.now()-start)
 			except Exception,e:
 				print e
+
+	def export_realtime_csv(	self
+							,	start=str( datetime.now().date() )
+							,	end=str( (datetime.now()+timedelta(days=1)).date() )
+							,	resample=None,	prefix=''
+							,	path=C.PATH_DATA_ROOT+C.PATH_DATA_REALTIME
+							):
+		total_len = len(self.codeList)
+		start_time = datetime.now()
+
+		s_date = raw_input('Please input the date(Format:"2016-02-16"):')
+
+		date = datetime.strptime(s_date, '%Y-%m-%d')
+
+		for i in range(0,total_len):
+
+			items = list()
+			stock_cursor = self.db.realtime.find(
+				{
+					"code": self.codeList[i]
+				,	"time": { "$gt": date, "$lt" : date + timedelta(days=1) }
+				}
+			)
+
+			if (stock_cursor.count() == 0):
+				continue
+
+			for row in stock_cursor:
+				items.append(row)
+
+			stock_csv = pandas.DataFrame.from_dict(items)
+
+			stock_csv["turn_over_ratio"] = stock_csv["volume"]/self.basicInfo["basicInfo"]["outstanding"][ self.codeList[i] ]/100
+
+			stock_csv.set_index("time",drop=False,inplace=True)
+			if (resample!=None):
+				stock_csv = stock_csv.resample(resample,how='last')
+			upper_bound = datetime.strptime( s_date+" "+'09:15:00' , '%Y-%m-%d %H:%M:%S')
+			lower_bound = datetime.strptime( s_date+" "+'15:31:00' , '%Y-%m-%d %H:%M:%S')
+			stock_csv = stock_csv[(stock_csv.time>upper_bound) & (stock_csv.time<lower_bound)]
+			stock_csv.to_csv( 	'%s%s/%s.csv'% (path,s_date,self.codeList[i])
+							,	columns = [	
+											"volume"
+										,	"amount"
+										,	"price"
+										,	"b1_ratio"
+										,	"a1_p",	"a1_v"
+										,	"a2_p",	"a2_v"
+										,	"a3_p",	"a3_v"
+										,	"a4_p",	"a4_v"
+										,	"a5_p",	"a5_v"
+										,	"b1_p",	"b1_v"
+										,	"b2_p",	"b2_v"
+										,	"b3_p",	"b3_v"
+										,	"b4_p",	"b4_v"
+										,	"b5_p",	"b5_v"
+										,	"open",	"pre_close"
+										,	"turn_over_ratio"
+										]
+			)
+
+			print "time cost:",( datetime.now()-start_time )
+			print "Process: ",float(i)/float(total_len)*100, "%"
