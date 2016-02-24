@@ -1,14 +1,19 @@
-# dHydra - 量化九头蛇
+# dHydra - 量子九头蛇
 
 ---
 > A solution for saving &amp; data mining Chinese Stocks based on "TuShare"
 > 
 > dHydra旨在为国内股票市场的量化交易分析提供一套数据清洗/存储的解决方案。
 > 内容包含但不限于：
-> - 实时获取数据并持久化
-> - 在L1基础上计算更（精确）有效的tick data(分笔数据)，精确度介于Level-1与Level-2之间。
-> - 整合包含舆情在内的更多数据
+> - 对TuShare接口提供的数据提供现成的存储（以及导出/导入）方案
+> - 获取3秒/条实时获取数据并持久化存储（以及导出/导入）
+> - 数据可视化(TODO)
+> - 基于Level-2高频数据的回测系统(TODO)
 
+## 使用对象
+- 正在学习使用python进行数据分析/数据挖掘的同学
+- 对金融市场进行大数据分析的企业和个人
+- 量化投资分析师（Quant）
 
 ## Prerequisites
 
@@ -35,6 +40,7 @@ stock.start_realtime()
 ###Stock类
  - `Stock.fetch_realtime()`：返回所有A股实时数据
  - `Stock.start_realtime()`：获取并存储实时数据
+ - `Stock.export_realtime_csv()`：将数据导出到'dHydra/data/stock_realtime/日期'文件夹中，日期格式为`YYYY-MM-DD`
 
 ## Mongodb数据结构设计说明（TODO）
 
