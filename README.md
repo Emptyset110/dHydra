@@ -7,6 +7,7 @@
 > 内容包含但不限于：
 > - 对TuShare接口提供的数据提供现成的存储（以及导出/导入）方案
 > - 获取3秒/条实时获取数据并持久化存储（以及导出/导入）
+> - 获取新浪Level-2数据（新浪普及版，10档盘口与逐笔数据）[Working on it]
 > - 数据可视化(TODO)
 > - 基于Level-2高频数据的回测系统(TODO)
 
@@ -27,7 +28,7 @@ py
 ```
 git clone https://github.com/Emptyset110/dHydra.git
 ```
-在`/lib`文件夹下运行python
+在`/dHydra/dHydra`文件夹下运行python
 ```python
 import dHydra
 stock = dHydra.Stock()  #实例化Stock类
