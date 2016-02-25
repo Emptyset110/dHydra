@@ -21,7 +21,7 @@
  - mongodb 3.2
  - pandas库（用`pip install pandas`安装）
  - pymongo库(`pip install pymongo`,用以连接mongodb)
-py
+
 ## Getting Started
 [下载源码][1] or use `git clone`
 ```
