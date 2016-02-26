@@ -18,7 +18,7 @@
 
 ## Prerequisites
 
- - python 2/3 (开发环境Ubuntu 15.10, python2.7.10/python3.5.1)
+ - python2 (开发环境Ubuntu 15.10, python2.7.10)
  - mongodb 3.2
  - pandas库（用`pip install pandas`安装）
  - pymongo库(`pip install pymongo`,用以连接mongodb)
