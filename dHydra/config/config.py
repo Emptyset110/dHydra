@@ -7,6 +7,7 @@ Created on 02/22/2016
 @contact: 		emptyset110@gmail.com
 """
 import const
+
 class Config:
 
 	def __init__(self):

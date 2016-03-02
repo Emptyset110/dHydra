@@ -5,6 +5,7 @@ Created on 02/17/2016
 @author: Wen Gu
 @contact: emptyset110@gmail.com
 """
+from __future__ import print_function
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from pandas import DataFrame
@@ -22,30 +23,31 @@ class Stock:
 		self.db = client.stock
 		self.outstanding = list()
 		# INITIALIZATION: CHECKING UPDATES
-		print "Checking Updates..."
+		print( "Checking Updates..." )
 		self.update_basic_info()
 		[self.codeList, self.basicInfo] = self.fetch_basic_info()
+		# self.codeList = list(self.codeList)
 
 	## NOT IN USE ##
 	def fetch_classification(self):
 		# 数据来源自新浪财经的行业分类/概念分类/地域分类
-		print "Trying: get_today_all"
+		print( "Trying: get_today_all" )
 		today_all = ts.get_today_all() #一次性获取今日全部股价
 		set_today_all = set(today_all.T.values[0])
 
-		print "Trying: get_industry_classified"
+		print( "Trying: get_industry_classified" )
 		industry_classified = ts.get_industry_classified()
 		set_industry_classified = set(industry_classified.T.values[0])
 
-		print "Trying: get_area_classified"
+		print( "Trying: get_area_classified" )
 		area_classified = ts.get_area_classified()
 		set_area_classified = set(area_classified.T.values[0])
 
-		print "Trying: get_concept_classified"
+		print( "Trying: get_concept_classified" )
 		concept_classified = ts.get_concept_classified()
 		set_concept_classified = set(concept_classified.T.values[0])
 
-		print "Trying: get_sme_classified"
+		print( "Trying: get_sme_classified" )
 		sme_classified = ts.get_sme_classified()
 		set_sme_classified = set(sme_classified.T.values[0])
 
@@ -71,7 +73,7 @@ class Stock:
 			} 
 		)
 		if (result != None):
-			codeList = result["basicInfo"]["name"].keys()
+			codeList = list(result["basicInfo"]["name"].keys())
 		else:
 			update_basic_info()
 			[codeList, result] = self.fetch_basic_info()
@@ -88,18 +90,18 @@ class Stock:
 			}
 		)
 		if (basicInfo == None):
-			print "No record of basicInfo found. A new record is to be created......"
+			print( "No record of basicInfo found. A new record is to be created......" )
 			update_necessity = True
 		else:
 			# Criteria For Updating
 			if ( ( basicInfo["lastUpdated"].date()<datetime.now().date() ) ):
 				update_necessity = True
-				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], "trying to update right now..."
+				print( "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], "trying to update right now..." )
 			elif ( basicInfo["lastUpdated"].hour<9 ) & ( datetime.now().hour>=9 ) :
 				update_necessity = True
-				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], "trying to update right now..."
+				print( "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], "trying to update right now..." )
 			else:
-				print "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], " NO NEED to update right now..."
+				print( "Stock Basic Info last updated on: ", basicInfo["lastUpdated"], " NO NEED to update right now..." )
 			
 		if (update_necessity):
 			basicInfo = ts.get_stock_basics()
@@ -126,7 +128,7 @@ class Stock:
 				for i in range(0,num):
 					self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
 		else:
-			print "The basicInfo is outdated. Trying to update basicInfo..."
+			print( "The basicInfo is outdated. Trying to update basicInfo..." )
 			self.update_basic_info()
 			[ self.codeList, self.basicInfo ] = self.fetch_basic_info()
 			self.outstanding = list()
@@ -168,11 +170,11 @@ class Stock:
 		if (data_time>time):
 			time = data_time
 		else:
-			print "No need", time
+			print( "No need", time )
 			return data_time
 
 		self.db.realtime.insert_many( realtime.iloc[0:2900].to_dict(orient='records') )
-		print "data_time", data_time
+		print( "data_time", data_time )
 		return time
 
 	def start_realtime(self):
@@ -182,16 +184,16 @@ class Stock:
 				start = datetime.now()
 
 				if (start.hour<9 or start.hour>15):
-					print "It's Too Early or Too late", start
+					print( "It's Too Early or Too late", start )
 					t.sleep(360)
 					continue
 				time = self.get_realtime( time )
-				print "time cost:", (datetime.now()-start)
-			except Exception,e:
-				print e
+				print( "time cost:", (datetime.now()-start) )
+			except Exception as e:
+				print( e )
 
 	def export_realtime_csv(	self
-							,	start=str( datetime.now().date() )
+							,	start=None
 							,	end=str( (datetime.now()+timedelta(days=1)).date() )
 							,	resample=None,	prefix=''
 							,	path=C.PATH_DATA_ROOT+C.PATH_DATA_REALTIME
@@ -199,13 +201,17 @@ class Stock:
 		total_len = len(self.codeList)
 		start_time = datetime.now()
 
-		s_date = raw_input('Please input the date(Format:"2016-02-16"):')
+		if start==None:
+			s_date = raw_input('Please input the date(Format:"2016-02-16"):')
+		else:
+			s_date = start
 
 		date = datetime.strptime(s_date, '%Y-%m-%d')
 
 		for i in range(0,total_len):
 
 			items = list()
+			# print( type(self.codeList[i]) )
 			stock_cursor = self.db.realtime.find(
 				{
 					"code": self.codeList[i]
@@ -227,7 +233,7 @@ class Stock:
 			if (resample!=None):
 				stock_csv = stock_csv.resample(resample,how='last')
 			upper_bound = datetime.strptime( s_date+" "+'09:15:00' , '%Y-%m-%d %H:%M:%S')
-			lower_bound = datetime.strptime( s_date+" "+'15:31:00' , '%Y-%m-%d %H:%M:%S')
+			lower_bound = datetime.strptime( s_date+" "+'15:05:00' , '%Y-%m-%d %H:%M:%S')
 			stock_csv = stock_csv[(stock_csv.time>upper_bound) & (stock_csv.time<lower_bound)]
 			stock_csv.to_csv( 	'%s%s/%s.csv'% (path,s_date,self.codeList[i])
 							,	columns = [	
@@ -250,5 +256,5 @@ class Stock:
 										]
 			)
 
-			print "time cost:",( datetime.now()-start_time )
-			print "Process: ",float(i)/float(total_len)*100, "%"
+			print("time cost:",( datetime.now()-start_time ) )
+			print("Process: ",float(i)/float(total_len)*100, "%")
