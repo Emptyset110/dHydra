@@ -6,21 +6,44 @@
 """
 from datetime import datetime
 import os
-import asyncio, requests
-import config.connection as CON
+import requests
+
 import pandas as pd
 import base64,binascii,rsa,json,time,logging,threading
 from autobahn.asyncio.websocket import WebSocketClientProtocol, WebSocketClientFactory
-import util
+
 import tushare as ts
+
+### The incompatibility between python 2 & 3 is HOLY BULLSHIT ###
+try:
+   input = raw_input
+except NameError:
+   pass
+try:
+	import dHydra.util as util
+except:
+	import util
+try:
+	import dHydra.config.connection as CON
+except:
+	from config import connection as CON
+try:
+	import asyncio
+except:
+	import trollius
+### The incompatibility between python 2 & 3 is HOLY BULLSHIT ###
 
 class SinaFinance:
 
 	def __init__(self, username=None, pwd=None):
 		if (username == None):
-			self.username = raw_input('Please input username to login sina:')
+			self.username = input('Please input username to login sina:')
+		else:
+			self.username=username
 		if (pwd == None):
-			self.pwd = raw_input('Please input pwd to login sina:')
+			self.pwd = input('Please input pwd to login sina:')
+		else:
+			self.pwd = pwd
 		self.rsaPubkey = '10001'
 		self.ip = util._get_public_ip()
 		self.session = requests.Session()
@@ -71,8 +94,8 @@ class SinaFinance:
 	def l2_hist(self, codeList):
 		totalCount = 0
 		date = str(datetime.now().date())
-		os.makedirs('../data/stock/stock_l2/%s' % date,exists_ok=True )
-		os.makedirs('../data/stock/stock_l2/tmp',exists_ok=True)
+		os.makedirs('../data/stock_l2/%s' % date,exist_ok=True )
+		os.makedirs('../data/stock_l2/tmp',exist_ok=True)
 		for code in codeList:
 			time.sleep(0.001)
 			# 这样做可以同时打开N个进程并发进行，加快获取速度
@@ -115,7 +138,7 @@ class SinaFinance:
 					l2 = l2.set_index("index").sort_index("index")
 				l2.to_csv('../data/stock_l2/%s/%s.csv' % (date,symbol) )
 				print( "Count: ",count )
-				print( "Time Cost: ", datetime.now()-start )
+				print( "Time Cost: ", datetime.now() - start )
 
 
 	def wskt_token(self):

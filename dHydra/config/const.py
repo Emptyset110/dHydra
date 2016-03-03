@@ -9,7 +9,7 @@ VERSION = '0.0.1'
 
 #	路径配置		
 #	Path Configuration
-PATH_DATA_ROOT = '../data/'
+PATH_DATA_ROOT = 'data/'
 PATH_DATA_REALTIME = 'stock_realtime/'
 PATH_DATA_L2 = 'stock_l2/'
 

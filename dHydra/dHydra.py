@@ -9,11 +9,21 @@ from __future__ import print_function
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from pandas import DataFrame
-import config.const as C
 import tushare as ts
 import time as t
 import json
 import pandas
+### THE INCOMPATIBILITY BETWEEN PYTHON 2 & 3 IS HOLY BULLSHIT ###
+try:
+	import dHydra.config.const as C
+except:
+	from config import const as C
+
+try:
+   input = raw_input
+except NameError:
+   pass
+### THE INCOMPATIBILITY BETWEEN PYTHON 2 & 3 IS HOLY BULLSHIT ###
 
 class Stock:
 
@@ -193,7 +203,7 @@ class Stock:
 				print( e )
 
 	def export_realtime_csv(	self
-							,	start=None
+							,	date=None
 							,	end=str( (datetime.now()+timedelta(days=1)).date() )
 							,	resample=None,	prefix=''
 							,	path=C.PATH_DATA_ROOT+C.PATH_DATA_REALTIME
@@ -201,10 +211,10 @@ class Stock:
 		total_len = len(self.codeList)
 		start_time = datetime.now()
 
-		if start==None:
-			s_date = raw_input('Please input the date(Format:"2016-02-16"):')
+		if date==None:
+			s_date = input('Please input the date(Format:"2016-02-16"):')
 		else:
-			s_date = start
+			s_date = date
 
 		date = datetime.strptime(s_date, '%Y-%m-%d')
 
@@ -235,6 +245,7 @@ class Stock:
 			upper_bound = datetime.strptime( s_date+" "+'09:15:00' , '%Y-%m-%d %H:%M:%S')
 			lower_bound = datetime.strptime( s_date+" "+'15:05:00' , '%Y-%m-%d %H:%M:%S')
 			stock_csv = stock_csv[(stock_csv.time>upper_bound) & (stock_csv.time<lower_bound)]
+			os.makedirs( '%s%s' % ( path,s_date ), exist_ok = True )
 			stock_csv.to_csv( 	'%s%s/%s.csv'% (path,s_date,self.codeList[i])
 							,	columns = [	
 											"volume"
