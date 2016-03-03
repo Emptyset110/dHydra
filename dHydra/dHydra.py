@@ -6,6 +6,7 @@ Created on 02/17/2016
 @contact: emptyset110@gmail.com
 """
 from __future__ import print_function
+import os
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from pandas import DataFrame
