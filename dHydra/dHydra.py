@@ -5,8 +5,7 @@ Created on 02/17/2016
 @author: Wen Gu
 @contact: emptyset110@gmail.com
 """
-from __future__ import print_function
-import os
+from __future__ import print_function, absolute_import
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from pandas import DataFrame
@@ -14,12 +13,16 @@ import tushare as ts
 import time as t
 import json
 import pandas
+import os
 ### THE INCOMPATIBILITY BETWEEN PYTHON 2 & 3 IS HOLY BULLSHIT ###
 try:
 	import dHydra.config.const as C
 except:
 	from config import const as C
-
+try:
+	import dHydra.util as util
+except:
+	import util
 try:
    input = raw_input
 except NameError:
@@ -29,6 +32,8 @@ except NameError:
 class Stock:
 
 	def __init__(self):
+		import asyncio
+		self.loop = asyncio.get_event_loop()
 		# connect to mongodb named: stock
 		client = MongoClient()
 		self.db = client.stock
@@ -36,8 +41,9 @@ class Stock:
 		# INITIALIZATION: CHECKING UPDATES
 		print( "Checking Updates..." )
 		self.update_basic_info()
-		[self.codeList, self.basicInfo] = self.fetch_basic_info()
-		# self.codeList = list(self.codeList)
+		[self.codeList, self.symbolList, self.basicInfo] = self.fetch_basic_info()
+
+
 
 	## NOT IN USE ##
 	def fetch_classification(self):
@@ -76,7 +82,7 @@ class Stock:
 				]
 
 	# Will automatically call "update_basic_info" if needed
-	# @return [self.codeList, self.basicInfo]
+	# @return [self.codeList, self.symbolList, self.basicInfo]
 	def fetch_basic_info(self):
 		result = self.db.basicInfo.find_one( 
 			{
@@ -89,8 +95,12 @@ class Stock:
 			update_basic_info()
 			[codeList, result] = self.fetch_basic_info()
 
+		symbolList = list()
+		for code in codeList:
+			symbolList.append( util._code_to_symbol(code) )
+
 		self.updated = datetime.now()
-		return [codeList, result]
+		return [codeList, symbolList, result]
 
 	# Update stock.basicInfo in mongodb
 	def update_basic_info(self):
@@ -217,6 +227,16 @@ class Stock:
 		else:
 			s_date = date
 
+		import os
+		try:
+		    os.makedirs( "%s%s" % ( path,s_date ), exist_ok=True )
+		except Exception as e:
+			print(e)
+			try:
+				os.makedirs( "%s%s" % ( path,s_date ) )
+			except Exception as e:
+				print(e)
+				pass
 		date = datetime.strptime(s_date, '%Y-%m-%d')
 
 		for i in range(0,total_len):
@@ -246,7 +266,9 @@ class Stock:
 			upper_bound = datetime.strptime( s_date+" "+'09:15:00' , '%Y-%m-%d %H:%M:%S')
 			lower_bound = datetime.strptime( s_date+" "+'15:05:00' , '%Y-%m-%d %H:%M:%S')
 			stock_csv = stock_csv[(stock_csv.time>upper_bound) & (stock_csv.time<lower_bound)]
-			os.makedirs( '%s%s' % ( path,s_date ), exist_ok = True )
+
+
+
 			stock_csv.to_csv( 	'%s%s/%s.csv'% (path,s_date,self.codeList[i])
 							,	columns = [	
 											"volume"
@@ -270,3 +292,29 @@ class Stock:
 
 			print("time cost:",( datetime.now()-start_time ) )
 			print("Process: ",float(i)/float(total_len)*100, "%")
+
+
+	def start_sina(self):
+		import dHydra.sinaFinance as sinaFinance
+		import threading
+		import asyncio
+		sina = sinaFinance.SinaFinance()
+		threads = []
+		# Cut symbolList
+		step = 50
+		symbolListSlice = [self.symbolList[ i : i + step] for i in range(0, len(self.symbolList), step)]
+		for symbolList in symbolListSlice:
+
+			loop = asyncio.get_event_loop()
+			if loop.is_running():
+				loop = asyncio.new_event_loop()
+				asyncio.set_event_loop( loop )
+
+			t = threading.Thread(target = sina.start_ws,args=(symbolList,loop) )
+			threads.append(t)
+		for t in threads:
+			t.setDaemon(True)
+			t.start()
+			print(t.name)
+		for t in threads:
+			t.join()

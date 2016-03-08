@@ -10,6 +10,7 @@
 > - 获取新浪Level-2数据（新浪普及版，10档盘口与逐笔数据）[Working on it]
 > - 数据可视化(TODO)
 > - 基于Level-2高频数据的回测系统(TODO)
+> - ***IMPORTANT: 由于在获取Level2高频数据时大量采用了异步io(asyncio)与多线程(threading)，作者精力有限，难以维护代码使它继续兼容python2。因此以后dHydra将只支持python3.4+版本***
 
 ## 使用对象
 - 正在学习使用python进行数据分析/数据挖掘的同学
@@ -18,7 +19,7 @@
 
 ## Prerequisites
 
- - python 2/3 (开发环境Ubuntu 15.10, python 3.5)
+ - python 3.4+ (开发环境Ubuntu 15.10, python 3.5)
  - mongodb 3.2
 
 ## 安装dHydra
@@ -48,7 +49,7 @@ stock.fetch_realtime()
 ```
 
 ```
->>> stock.fetch_realtime().head(10)		只显示前10条
+>>> stock.fetch_realtime().head(10)		#只显示前10条
 The basicInfo is outdated. Trying to update basicInfo...
 Stock Basic Info last updated on:  2016-03-04 03:28:33.730000  NO NEED to update right now...
     open  pre_close  price   high    low     volume        amount  b1_v  \

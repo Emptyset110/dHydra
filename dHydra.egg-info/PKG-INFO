@@ -1,0 +1,15 @@
+Metadata-Version: 1.1
+Name: dHydra
+Version: 0.1.20
+Summary: A solution for saving & data mining Chinese Stocks based on TuShare
+Home-page: http://dHydra.org
+Author: Wen Gu
+Author-email: emptyset110@gmail.com
+License: Apache Software License
+Description: UNKNOWN
+Keywords: Finance,Chinese Stock,Quant
+Platform: UNKNOWN
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: Operating System :: OS Independent
