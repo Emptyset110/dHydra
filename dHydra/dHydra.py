@@ -14,20 +14,10 @@ import time as t
 import json
 import pandas
 import os
-### THE INCOMPATIBILITY BETWEEN PYTHON 2 & 3 IS HOLY BULLSHIT ###
-try:
-	import dHydra.config.const as C
-except:
-	from config import const as C
-try:
-	import dHydra.util as util
-except:
-	import util
-try:
-   input = raw_input
-except NameError:
-   pass
-### THE INCOMPATIBILITY BETWEEN PYTHON 2 & 3 IS HOLY BULLSHIT ###
+import dHydra.config.const as C
+import dHydra.util as util
+import threading
+
 
 class Stock:
 
@@ -87,7 +77,7 @@ class Stock:
 		result = self.db.basicInfo.find_one( 
 			{
 				"lastUpdated": {"$exists":True, "$ne": None}
-			} 
+			}
 		)
 		if (result != None):
 			codeList = list(result["basicInfo"]["name"].keys())
@@ -294,12 +284,12 @@ class Stock:
 			print("Process: ",float(i)/float(total_len)*100, "%")
 
 
-	def start_sina(self):
+	def start_sina(self, callback=None):
 		import dHydra.sinaFinance as sinaFinance
-		import threading
 		import asyncio
 		sina = sinaFinance.SinaFinance()
 		threads = []
+
 		# Cut symbolList
 		step = 50
 		symbolListSlice = [self.symbolList[ i : i + step] for i in range(0, len(self.symbolList), step)]
@@ -310,11 +300,29 @@ class Stock:
 				loop = asyncio.new_event_loop()
 				asyncio.set_event_loop( loop )
 
-			t = threading.Thread(target = sina.start_ws,args=(symbolList,loop) )
+			t = threading.Thread(target = sina.start_ws,args=(symbolList,loop,callback) )
 			threads.append(t)
 		for t in threads:
 			t.setDaemon(True)
 			t.start()
-			print(t.name)
+			print("开启线程：",t.name)
 		for t in threads:
 			t.join()
+
+	# def sina_l2_hist(self):
+	# 	import dHydra.sinaFinance as sinaFinance
+	# 	import threading
+	# 	step = 200
+	# 	sina = sinaFinance.SinaFinance()
+	# 	threads = []
+	# 	symbolListSlice = [self.symbolList[ i : i + step] for i in range(0, len(self.symbolList), step)]
+	# 	for symbolList in symbolListSlice:
+	# 		t = threading.Thread(target = sina.l2_hist_list, args=(symbolList,) )
+	# 		threads.append(t)
+
+	# 	for t in threads:
+	# 		t.setDaemon(True)
+	# 		t.start()
+	# 		print("开启线程：",t.name)
+	# 	for t in threads:
+	# 		t.join()

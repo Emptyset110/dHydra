@@ -15,8 +15,6 @@ except:
 def read(fname):
     return codecs.open(os.path.join(os.path.dirname(__file__), fname)).read()
  
- 
- 
 NAME = "dHydra"
 """
 名字，一般放你包的名字即可
@@ -42,7 +40,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
  
 URL = "http://dHydra.org"
 
-VERSION = "0.1.20"
+VERSION = "0.2.2"
 
 LICENSE = "Apache Software License"
  
@@ -57,7 +55,7 @@ setup(
     ,   'Intended Audience :: Financial and Insurance Industry'
     ,   'Operating System :: OS Independent'
     ]
-,   install_requires = ["requests","pandas","tushare","pymongo","websockets","rsa","threading","functools"]
+,   install_requires = ["requests","pandas","tushare","pymongo","websockets","rsa"]
 ,   keywords = KEYWORDS
 ,   author = AUTHOR
 ,   author_email = AUTHOR_EMAIL

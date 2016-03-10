@@ -1,7 +1,9 @@
 # dHydra - 量子九头蛇
 
 ---
-> A solution for saving &amp; data mining Chinese Stocks based on "TuShare"
+**详细文档可以参考看云：**
+http://www.kancloud.cn/emptyset/dhydra/125528
+
 > 
 > dHydra旨在为国内股票市场的量化交易分析提供一套数据清洗/存储的解决方案。
 > 内容包含但不限于：
@@ -89,12 +91,7 @@ Stock Basic Info last updated on:  2016-03-04 03:28:33.730000  NO NEED to update
 9 2016-03-03 15:05:54  600030         2.565978
 ```
 更多用法请参考API文档
-
-## API文档（TODO）
-###Stock类
- - `Stock.fetch_realtime()`：返回所有A股实时数据
- - `Stock.start_realtime()`：获取并存储实时数据
- - `Stock.export_realtime_csv()`：将数据导出到'../data/stock_realtime/日期'文件夹中，日期格式为`YYYY-MM-DD`
+http://www.kancloud.cn/emptyset/dhydra/125528
 
 ## Mongodb数据结构设计说明（TODO）
 

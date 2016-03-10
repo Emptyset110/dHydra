@@ -4,5 +4,3 @@ tushare
 pymongo
 websockets
 rsa
-threading
-functools
