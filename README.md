@@ -136,7 +136,7 @@ stock.export_realtime_csv(date="2016-03-04",resample="T")
 stock.export_realtime_csv(date="2016-03-03")
 ```
 ## 新浪Level2行情
-![](image/56e175952242f.png)
+![](http://box.kancloud.cn/2016-03-10_56e176714cb97.png)
 官网链接：http://finance.sina.com.cn/stock/level2/orderIntro.html
 **如果要使用新浪l2接口，需要自行去新浪网购买普及版（298元/年）**，数据来源于sina
 ### 开启新浪Level2的实时推送(Websocket)
@@ -160,8 +160,8 @@ def print_msg(message):
 
 stock.start_sina(callback = print_msg)
 ```
-![](image/56e11d9096d14.png)
-![](image/56e11d9c4be01.png)
+![](http://box.kancloud.cn/2016-03-10_56e11dbb3590b.png)
+![](http://box.kancloud.cn/2016-03-10_56e11dbb4b7bd.png)
 
 ### 新浪Level2当日历史下载（http协议）
 - `Stock.sina_l2_hist(thread_num)`
