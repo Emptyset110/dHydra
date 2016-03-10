@@ -41,59 +41,134 @@ pip install dHydra --upgrade
 import dHydra
 stock = dHydra.Stock()  #实例化Stock类
 ```
-## 演示
-例如：调用Stock类的start_realtime()方法来实时下载数据
-```python
-stock.start_realtime()  
-#start_realtime()方法用于实时获取3秒/次的股票数据，计算出实时换手率后存入mongodb
-```
-或者：调用Stock类的fetch_realtime()方法来返回所有A股的实时数据（5档盘口）。
-```python
-stock.fetch_realtime()
-```
+## Stock类
 
-```
->>> stock.fetch_realtime().head(10)		#只显示前10条
-The basicInfo is outdated. Trying to update basicInfo...
-Stock Basic Info last updated on:  2016-03-04 03:28:33.730000  NO NEED to update right now...
-    open  pre_close  price   high    low     volume        amount  b1_v  \
-0   0.00      15.59   0.00   0.00   0.00          0  0.000000e+00   NaN   
-1  11.65      11.67  11.58  12.20  11.30   23743032  2.776920e+08   239   
-2  18.80      18.83  18.88  18.90  18.58   16622623  3.115732e+08    29   
-3  18.68      18.66  18.50  19.05  18.36    5235251  9.793853e+07    30   
-4  26.55      26.34  26.88  27.87  26.34    5825682  1.577169e+08     3   
-5   7.25       7.28   7.17   7.57   7.17   42793356  3.133067e+08  2757   
-6  10.70      10.73  10.63  11.20  10.61   34686493  3.775260e+08   618   
-7  13.89      14.08  14.12  14.65  13.86    2620218  3.739386e+07     3   
-8  15.40      15.69  15.64  15.99  15.40   10713644  1.679434e+08   229   
-9  15.90      16.12  15.92  16.10  15.68  251842034  3.996301e+09  2346   
+### 属性
 
-    b1_p  b2_v       ...          a2_p  a3_v   a3_p  a4_v   a4_p  a5_v   a5_p  \
-0   0.00   NaN       ...          0.00   NaN   0.00   NaN   0.00   NaN   0.00   
-1  11.58  1120       ...         11.60    72  11.61   125  11.62   208  11.63   
-2  18.88    88       ...         18.90    64  18.91   102  18.92    96  18.93   
-3  18.44   110       ...         18.53    21  18.54    32  18.58     5  18.59   
-4  26.88     4       ...         26.90    26  26.91    50  26.92     2  26.93   
-5   7.17  1751       ...          7.19  2651   7.20  1372   7.21   578   7.22   
-6  10.63   674       ...         10.65   247  10.66    89  10.67    49  10.68   
-7  14.10   132       ...         14.12    38  14.13    32  14.15     7  14.18   
-8  15.63   105       ...         15.65  1676  15.66     2  15.67   118  15.69   
-9  15.90  7559       ...         15.92  1476  15.95  1486  15.96  1363  15.97   
+- `Stock.codeList`
+    - 类型  :   `<class 'list'>`
+    - 说明  :   所有A股代码(例如300204)组成的list
+- `Stock.symbolList`
+    - 类型  :   `<class 'list'>`
+    - 说明  :   所有A股符号(例如sz300204)组成的list
+- `Stock.basicInfo`
+    - 类型  :   `<class 'dict'>`
+    - 说明  :   所有A股基本信息
+        -   Stock.basicInfo["lastUpdated"]    : 该信息获得时间
+        -   Stock.basicInfo["codeList"] : 与`Stock.codeList`相同
+        -   Stock.basicInfo["basicInfo"]      : dict类型的字段，包含A股基本信息
+            -   timeToMarket : 上市日期
+            -   bvps:每股账面净值
+            -   totals:总股本（万）
+            -   totalAssets：总资产（万）
+            -   liquidAssets：流动资产
+            -   name：名称
+            -   industry：所属行业
+            -   area：所属地区
+            -   outstanding：流通股本
+            -   reserved：公积金
+            -   fixedAssets：固定资产
+            -   eps：每股收益
+            -   reservedPerShare：每股公积金
+
+### 方法
+
+- `Stock.fetch_realtime()`：
+    发起一次http请求，获取3秒/条的所有A股实时数据（5档盘口）【耗时<0.5秒】
+    **返回：**dataframe, 共30列
+    - **time**: 时间
+    - **preclose**:昨日收盘价
+    - **price**：现价
+    - **high**：今日最高价
+    - **low**:今日最低价
+    - **open**: 开盘价
+    - **volume**：成交量
+    - **amount**：成交额
+    - **b1_v**：买1手数(1手=100股)
+    - **b1_p**：买1价格
+    - ……买1到买5
+    - **a1_v**：卖1手数
+    - **turn_over_ratio**：换手率
+
+    **使用范例：**
+```
+import dHydra
+stock = dHydra.Stock()
+stock.fetch_realtime().head(5)  #只显示前5行
+    open  pre_close  price   high    low   volume       amount  b1_v   b1_p  \
+0  18.21      18.21  18.08  18.47  17.93   986725  17948736.25     3  18.08   
+1   0.00       9.32   0.00   0.00   0.00        0         0.00   NaN   0.00   
+2  40.00      40.18  39.53  41.00  39.40  1647203  66075188.14     1  39.53   
+3   9.55       9.49   9.50   9.63   9.38  2172628  20614849.75   106   9.48   
+4  11.40      11.34  11.28  11.49  11.22  3032562  34412780.45   159  11.27   
+
+   b2_v       ...          a2_p  a3_v   a3_p  a4_v   a4_p  a5_v   a5_p  \
+0    18       ...         18.19     7  18.20    20  18.25     2  18.26   
+1   NaN       ...          0.00   NaN   0.00   NaN   0.00   NaN   0.00   
+2    10       ...         39.78     5  39.80     5  39.85     4  39.86   
+3     7       ...          9.51   115   9.52   186   9.53   184   9.54   
+4   124       ...         11.29    10  11.30    16  11.32    41  11.33   
 
                  time    code  turn_over_ratio  
-0 2016-03-03 15:05:54  002606         0.000000  
-1 2016-03-03 15:05:54  000975         2.311716  
-2 2016-03-03 15:05:54  600196         0.871738  
-3 2016-03-03 15:05:54  300183         2.061707  
-4 2016-03-03 15:05:54  600685         1.328659  
-5 2016-03-03 15:05:54  000518         4.156568  
-6 2016-03-03 15:05:54  000012         2.662964  
-7 2016-03-03 15:05:54  600167         1.241809  
-8 2016-03-03 15:05:54  002529         5.356822  
-9 2016-03-03 15:05:54  600030         2.565978
+0 2016-03-10 11:35:55  300444         1.430602  
+1 2016-03-10 11:35:55  000962         0.000000  
+2 2016-03-10 11:35:55  300493         5.490677  
+3 2016-03-10 11:35:55  002610         0.309419  
+4 2016-03-10 11:35:55  002363         0.786523
 ```
-更多用法（新浪Level2高频数据的获取需要自行购买新浪Level2普及版298/年），请参考API文档
-http://www.kancloud.cn/emptyset/dhydra/125528
+- `Stock.start_realtime()`：
+    不断发起http请求的方式来获取3秒/条的所有A股实时数据（5档盘口），存储到mongodb。每天上午9点程序会自动更新一次所有股票的基本信息。使用此方法时需要注意计算机的本地时区必须是北京时间（东八区），否则程序会误以为不在交易期间而不发起http请求。
+- `Stock.export_realtime_csv()`：
+    **参数**：
+    **date**: 
+    需要导出的日期。可以为空，默认为今天。日期格式：YYYY-MM-DD
+    **end**：
+    可以为空，默认为今天日期+1日。日期格式：YYYY-MM-DD
+    **resample**：
+    pandas.DataFrame对时间序列的处理。**可以为空，默认不处理**。参数说明[参考这里](http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html)。
+    e.g: 如果resample="T"，则会按照每1分钟1条数据的方式（取当分钟最后一条数据）导出，如果resample="15S"，则是15秒/条导出。
+    会在程序运行的当前路径生成`data/stock_realtime/日期/股票代码.csv`文件
+    **使用范例**：
+```
+import dHydra
+stock = dHydra.Stock()
+stock.export_realtime_csv(date="2016-03-04",resample="T")
+stock.export_realtime_csv(date="2016-03-03")
+```
+## 新浪Level2行情
+![](image/56e175952242f.png)
+官网链接：http://finance.sina.com.cn/stock/level2/orderIntro.html
+**如果要使用新浪l2接口，需要自行去新浪网购买普及版（298元/年）**，数据来源于sina
+### 开启新浪Level2的实时推送(Websocket)
+- `Stock.start_sina(callback)`
+    **参数：**
+    **callback**：可以为空，如果为空系统默认会将message输出到屏幕上
+     - **类型**：asyncio.coroutine
+     - **说明**：异步回调函数（严格意义上它不是函数，而是一个coroutine），用于处理Websocket接受到的实时数据(message)
+     - **message格式说明**：
+    
+    **使用范例：**
+```
+import dHydra
+import asyncio
+stock = dHydra.Stock()
+
+# 这里是异步回调函数的内容，用于处理websocket接收到的消息
+@asyncio.coroutine
+def print_msg(message):
+    print(message)  #这里是处理逻辑，或许你想把它存入mongodb，或者做一些实时计算
+
+stock.start_sina(callback = print_msg)
+```
+![](image/56e11d9096d14.png)
+![](image/56e11d9c4be01.png)
+
+### 新浪Level2当日历史下载（http协议）
+- `Stock.sina_l2_hist(thread_num)`
+    **参数**
+    **thread_num**：（可选）开启线程的数量，默认为15个线程。开启15个线程大概占用20M带宽
+    **说明**
+    将会在当前路径`data/stock_l2/日期`目录下建立csv文件
 
 ## Mongodb数据结构设计说明（TODO）
 
