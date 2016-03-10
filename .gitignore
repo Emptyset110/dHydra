@@ -1,1 +1,3 @@
-*.pyc
+/dHydra.egg-info/*
+/dist/*
+/dHydra/__pycache__/*

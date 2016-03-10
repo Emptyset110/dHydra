@@ -13,16 +13,15 @@ import tushare as ts
 import time as t
 import json
 import pandas
-import os
-import dHydra.config.const as C
-import dHydra.util as util
+from .config import const as C
+from . import util
 import threading
-
+import asyncio
+import os
 
 class Stock:
 
 	def __init__(self):
-		import asyncio
 		self.loop = asyncio.get_event_loop()
 		# connect to mongodb named: stock
 		client = MongoClient()
@@ -32,7 +31,7 @@ class Stock:
 		print( "Checking Updates..." )
 		self.update_basic_info()
 		[self.codeList, self.symbolList, self.basicInfo] = self.fetch_basic_info()
-
+		self.sina = None
 
 
 	## NOT IN USE ##
@@ -217,7 +216,7 @@ class Stock:
 		else:
 			s_date = date
 
-		import os
+		# import os
 		try:
 		    os.makedirs( "%s%s" % ( path,s_date ), exist_ok=True )
 		except Exception as e:
@@ -256,9 +255,6 @@ class Stock:
 			upper_bound = datetime.strptime( s_date+" "+'09:15:00' , '%Y-%m-%d %H:%M:%S')
 			lower_bound = datetime.strptime( s_date+" "+'15:05:00' , '%Y-%m-%d %H:%M:%S')
 			stock_csv = stock_csv[(stock_csv.time>upper_bound) & (stock_csv.time<lower_bound)]
-
-
-
 			stock_csv.to_csv( 	'%s%s/%s.csv'% (path,s_date,self.codeList[i])
 							,	columns = [	
 											"volume"
@@ -283,13 +279,24 @@ class Stock:
 			print("time cost:",( datetime.now()-start_time ) )
 			print("Process: ",float(i)/float(total_len)*100, "%")
 
+	"""
+	下面是调用新浪部分
+	"""
+	def get_sina(self):
+		from . import sinaFinance
+		self.sina = sinaFinance.SinaFinance()
+		return self.sina
 
+	# 开启新浪L2 Websocket
 	def start_sina(self, callback=None):
-		import dHydra.sinaFinance as sinaFinance
-		import asyncio
-		sina = sinaFinance.SinaFinance()
-		threads = []
+		if (self.sina is None):
+			self.get_sina()
 
+		if not(self.sina.isLogin):
+			print("新浪没有登录成功，请重试")
+			return False
+
+		threads = []
 		# Cut symbolList
 		step = 50
 		symbolListSlice = [self.symbolList[ i : i + step] for i in range(0, len(self.symbolList), step)]
@@ -300,7 +307,7 @@ class Stock:
 				loop = asyncio.new_event_loop()
 				asyncio.set_event_loop( loop )
 
-			t = threading.Thread(target = sina.start_ws,args=(symbolList,loop,callback) )
+			t = threading.Thread(target = self.sina.start_ws,args=(symbolList,loop,callback) )
 			threads.append(t)
 		for t in threads:
 			t.setDaemon(True)
@@ -309,20 +316,29 @@ class Stock:
 		for t in threads:
 			t.join()
 
-	# def sina_l2_hist(self):
-	# 	import dHydra.sinaFinance as sinaFinance
-	# 	import threading
-	# 	step = 200
-	# 	sina = sinaFinance.SinaFinance()
-	# 	threads = []
-	# 	symbolListSlice = [self.symbolList[ i : i + step] for i in range(0, len(self.symbolList), step)]
-	# 	for symbolList in symbolListSlice:
-	# 		t = threading.Thread(target = sina.l2_hist_list, args=(symbolList,) )
-	# 		threads.append(t)
+	# thread_num代表同时开启的线程数量，默认15个
+	def sina_l2_hist(self, thread_num = 15):
+		if (self.sina is None):
+			self.get_sina()
+		if not(self.sina.isLogin):
+			print("新浪没有登录成功，请重试")
+			return False
+		threads = []
+		step = int( len(self.codeList)/thread_num )
+		symbolListSlice = [self.symbolList[ i : i + step] for i in range(0, len(self.symbolList), step)]
+		for symbolList in symbolListSlice:
 
-	# 	for t in threads:
-	# 		t.setDaemon(True)
-	# 		t.start()
-	# 		print("开启线程：",t.name)
-	# 	for t in threads:
-	# 		t.join()
+			loop = asyncio.get_event_loop()
+			if loop.is_running():
+				loop = asyncio.new_event_loop()
+				asyncio.set_event_loop( loop )
+
+			t = threading.Thread(target = self.sina.l2_hist_list, args=(symbolList,loop,) )
+			threads.append(t)
+
+		for t in threads:
+			t.setDaemon(True)
+			t.start()
+			print("开启线程：",t.name)
+		for t in threads:
+			t.join()

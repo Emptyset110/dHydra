@@ -11,12 +11,10 @@ import base64,binascii,rsa,json,time,logging,threading
 import os
 import websockets
 import functools
-
-import dHydra.util as util
-import dHydra.config.connection as CON
+from . import util
+from .config import connection as CON
 import asyncio
 import getpass
-
 
 class SinaFinance:
 	def __init__(self, username=None, pwd=None):
@@ -31,7 +29,7 @@ class SinaFinance:
 		self.rsaPubkey = '10001'
 		self.ip = util._get_public_ip()
 		self.session = requests.Session()
-		self.login()
+		self.isLogin = self.login()
 
 	def login(self):
 		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
@@ -55,16 +53,18 @@ class SinaFinance:
 		,	headers = CON.HEADERS_LOGIN
 		)
 		if (self.login.json()["retcode"]=='0'):
-			print( "Successfully Logged in as %s, uid = %s" % ( self.login.json()["nick"], self.login.json()["uid"]) )
+			print( "登录成功: %s, uid = %s" % ( self.login.json()["nick"], self.login.json()["uid"]) )
 
 			i = 0
 			for url in self.login.json()["crossDomainUrlList"]:
 				req = self.session.get( url,headers = CON.HEADERS_CROSSDOMAIN(CON.CROSSDOMAIN_HOST[i]) )
 				# print(req.text)
 				i += 1
+			return True
 		else:
 			print( "Authentication Failed..." )
 			print( self.login.json() )
+			return False
 
 	
 	# RSA2 encoding
@@ -91,6 +91,7 @@ class SinaFinance:
 					,	headers = CON.HEADERS_L2(symbol=symbol)
 				) )
 				req = yield from async_req
+				# print(req.url)
 				data = req.text[90:-2]
 				data = dict( json.loads(data) )
 				count = data["result"]["data"]["count"]
@@ -113,7 +114,7 @@ class SinaFinance:
 			# print( "Time Cost: ", datetime.now() - start )
 
 	# 获取逐笔数据
-	def l2_hist_list(self, symbolList):
+	def l2_hist_list(self, symbolList,loop):
 		global totalCount
 		totalCount = 0
 		if (datetime.now().hour<7):
@@ -126,9 +127,10 @@ class SinaFinance:
 		for symbol in symbolList:
 			tasks.append( self.l2_hist(symbol,date) )
 
-		loop = asyncio.get_event_loop()
+		if loop.is_running():
+			loop = asyncio.new_event_loop()
+		asyncio.set_event_loop(loop)
 		loop.run_until_complete( asyncio.wait(tasks) )
-
 
 	@asyncio.coroutine
 	def get_ws_token(self,qlist,symbol):
@@ -140,7 +142,7 @@ class SinaFinance:
 		,	verify	=	True
 		) )
 		req = yield from async_req
-		print( "token = ", req.text[45:-17] )
+		# print( "token = ", req.text[45:-17] )
 		token = req.text[45:-17]
 		return token
 
@@ -177,7 +179,7 @@ class SinaFinance:
 					callback = self.print_websocket
 				yield from callback(message)
 			except Exception as e:
-				print(e)
+				# print(e)
 				ws.close() 
 				yield from self.create_ws(qlist,symbol,loop)
 	
