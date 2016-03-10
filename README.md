@@ -1,4 +1,4 @@
-# dHydra - 量子九头蛇
+# dHydra - 量化九头蛇
 
 ---
 **详细文档可以参考看云：**
@@ -9,10 +9,10 @@ http://www.kancloud.cn/emptyset/dhydra/125528
 > 内容包含但不限于：
 > - 对TuShare接口提供的数据提供现成的存储（以及导出/导入）方案
 > - 获取3秒/条实时获取数据并持久化存储（以及导出/导入）
-> - 获取新浪Level-2数据（新浪普及版，10档盘口与逐笔数据）[Working on it]
+> - 获取新浪Level-2数据（新浪普及版，10档盘口与逐笔数据）
 > - 数据可视化(TODO)
 > - 基于Level-2高频数据的回测系统(TODO)
-> - ***IMPORTANT: 由于在获取Level2高频数据时大量采用了异步io(asyncio)与多线程(threading)，作者精力有限，难以维护代码使它继续兼容python2。因此以后dHydra将只支持python3.4+版本***
+> - ***IMPORTANT: 由于在获取Level2高频数据时采用了异步io(asyncio)与多线程(threading)，作者精力有限，难以维护代码使它继续兼容python2。因此以后dHydra将只支持python3.4+版本***
 
 ## 使用对象
 - 正在学习使用python进行数据分析/数据挖掘的同学
