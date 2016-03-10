@@ -32,13 +32,13 @@ HEADERS_LOGIN = {
 }
 PARAM_L2HIST = lambda symbol,page: {
 	"symbol"			:	symbol
-,	"callback"			:	"jQuery17203851605022791773_" + str( int(time.time()*1000) )
+,	"callback"			:	"jQuery17209838373235483986_" + str( int(time.time()*1000) )
 ,	"pageNum"			:	10000
 ,	"page"				:	page
-,	"stime"				:	'09%3A15%3A00'
-,	"etime"				:	'15%3A05%3A00'
+,	"stime"				:	'09:25:00'
+,	"etime"				:	'15:05:00'
 ,	"sign"				:	''
-,	"num"				:	'0'
+,	"num"				:	'20'
 ,	"_"					:	int(time.time()*1000)
 }
 HEADERS_L2 = lambda symbol	: {
@@ -58,7 +58,7 @@ HEADERS_WSKT_TOKEN = lambda 	:	{
 ,	'Host'						:	'current.sina.com.cn'
 ,	'User-Agent'				:	'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
 ,	'Referer'					:	'http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml'
-# ,	'Cookie'					:	'UOR=,finance.sina.com.cn,; SINAGLOBAL=117.85.56.181_1456667771.258251; vjuids=-4299b1d0a.153282a4536.0.63624093; SGUID=1456667772264_5d5aafd5; U_TRS1=000000b5.5238d9b.56d2fc7c.5af26a8b; ArtiFSize=14; Apache=117.85.56.88_1456806197.633755; vjlast=1456806198; U_TRS2=00000058.d1ea15a2.56d51935.3cc94184; usrmdpool=usrmdinst_0; ULV=1456806345873:5:3:5:117.85.56.88_1456806197.633755:1456806197600; lxlrtst=1456805122_o; lxlrttp=1456805122; hqEtagMode=1; rotatecount=3; SUS=SID-3341633314-1456806370-GZ-wck24-f647a5bf3fe1d6a5766967dbe671074f; SUE=es%3Ded2e5ba93a533a1cf83ad410ee550905%26ev%3Dv1%26es2%3Ddf44eccbfbe464fd125e505f48f1efdd%26rs0%3DU0HiSYFUZ5vC6qlR96izRwkKcWVOBTnhyk2cxcOqZSxh373q%252FYlrpMaW%252Blfrp20Cd1NwEWUjmileZc0wK7pu1XTEddS0CVPHoVt7CAKfCFVssA2YJI51HdbKBAXZUEkq4xWvxGyiy4qNcb%252Bp0VpgN2dIYFDQK6K4BxumfmsAAmc%253D%26rv%3D0; SUP=cv%3D1%26bt%3D1456806370%26et%3D1456892770%26d%3D40c3%26i%3D074f%26us%3D1%26vf%3D0%26vt%3D0%26ac%3D2%26st%3D0%26lt%3D1%26uid%3D3341633314%26user%3D13373635073%26ag%3D1%26name%3D13373635073%26nick%3DOriginal_Emptyset%26sex%3D%26ps%3D0%26email%3D%26dob%3D%26ln%3D13373635073%26os%3D%26fmp%3D%26lcp%3D; SUB=_2A2570WmyDeRxGeVN71MX8y3PyjiIHXVYp9x6rDV_PUNbuNBeLWHFkW9LHetfmk0CtFgTSk0cCVYqIlFYxMW7Xg..; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9Wh0iz-ugMVN5EgRvkEg4y1X; ALF=1488342370; sso_info=v02m6alo5qztY-cpqWnmpa5oZuFvYWbl4G0npeNpZ2CmbWalpC9jLOMtIyTmLOMs4yxjYDAwA==;theone=current56d5193b6f421'
+# ,	"Cookie"					:	"UOR=,finance.sina.com.cn,; SINAGLOBAL=117.85.56.181_1456667771.258251; vjuids=-4299b1d0a.153282a4536.0.63624093; SGUID=1456667772264_5d5aafd5; U_TRS1=000000b5.5238d9b.56d2fc7c.5af26a8b; lxlrtst=1457139560_c; ArtiFSize=14; Apache=221.227.4.159_1457548762.812349; U_TRS2=0000009f.8b4c60c3.56e06ddb.b1cf7a44; ULV=1457548764592:16:14:11:221.227.4.159_1457548762.812349:1457548763017; usrmdpool=usrmdinst_4; SessionID=274ubc2f1vpfgn0p1m5g7p4j81; vjlast=1457552280; lxlrttp=1457516257; ULOGIN_IMG=gz-8eb0f9dc72a2210895619c82f8973929664c; SUS=SID-3341633314-1457552529-GZ-jkpet-e6947bd2432c7bc5cb423c8599ce6c52; SUE=es%3Dcab851dfba86aaaa40e82a45c0ae9d48%26ev%3Dv1%26es2%3D4f0b9b69c8415751fac8b7855702612b%26rs0%3DyVeIY5YqTKcveiDkaCwn2YByliyE2Ig5ChkAd4deQhlGCrKFEZJM1oJXmnAwpJDyiCV4vgpIUWHgV6Hv09fMYVznGFvblRr5Dr6Inknwl6lNaXMXXUjTLXSNUMNYLQW1VmqAZfVH9t%252BbJhWYCvJ%252FPNPARJRjjj4SjLMXX9ENlOE%253D%26rv%3D0; SUP=cv%3D1%26bt%3D1457552529%26et%3D1457638929%26d%3D40c3%26i%3D6c52%26us%3D1%26vf%3D0%26vt%3D0%26ac%3D6%26st%3D0%26lt%3D1%26uid%3D3341633314%26user%3D13373635073%26ag%3D1%26name%3D13373635073%26nick%3DOriginal_Emptyset%26sex%3D%26ps%3D0%26email%3D%26dob%3D%26ln%3D13373635073%26os%3D%26fmp%3D%26lcp%3D2016-03-10%252003%253A18%253A04; SUB=_2A2575AzBDeRxGeVN71MX8y3PyjiIHXVYkHkJrDV_PUNbuNBeLXfekW9LHetA9a_fGyYITeJjrjjraMGDKLCq5w..; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9Wh0iz-ugMVN5EgRvkEg4y1X; ALF=1489088529; sso_info=v02m6alo5qztY-cpqWnmpa5oZuFvYWbl4G0npeNpZ2CmbWalpC9jLOMtIyTmLOMs4yxjYDAwA==; rotatecount=27"
 }
 HEADERS_CROSSDOMAIN = lambda host	:	{
 	'Host'							:	host
