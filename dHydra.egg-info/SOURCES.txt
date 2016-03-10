@@ -1,7 +1,6 @@
 setup.py
 dHydra/__init__.py
 dHydra/dHydra.py
-dHydra/demo.py
 dHydra/sinaFinance.py
 dHydra/util.py
 dHydra.egg-info/PKG-INFO
@@ -14,3 +13,6 @@ dHydra/config/__init__.py
 dHydra/config/config.py
 dHydra/config/connection.py
 dHydra/config/const.py
+dHydra/movies/__init__.py
+dHydra/movies/connection.py
+dHydra/movies/movies.py

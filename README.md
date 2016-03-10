@@ -4,6 +4,7 @@
 **详细文档可以参考看云：**
 http://www.kancloud.cn/emptyset/dhydra/125528
 
+**dHydra数据QQ群：458920407**
 > 
 > dHydra旨在为国内股票市场的量化交易分析提供一套数据清洗/存储的解决方案。
 > 内容包含但不限于：
@@ -18,10 +19,12 @@ http://www.kancloud.cn/emptyset/dhydra/125528
 - 正在学习使用python进行数据分析/数据挖掘的同学
 - 对金融市场进行大数据分析的企业和个人
 - 量化投资分析师（Quant）
+---
+## 不适用对象（一本正经严肃脸>_<）
+- 投机者
 
-## Prerequisites
-
- - python 3.4+ (开发环境Ubuntu 15.10, python 3.5)
+## 运行环境
+ - python 3.4以上 (开发环境Ubuntu 15.10, python 3.5)，**不对python2.7提供支持，多版本虚拟环境安装请参考安装dHydra文档**
  - mongodb 3.2
 
 ## 安装dHydra
@@ -37,10 +40,9 @@ pip install dHydra --upgrade
 ```python
 import dHydra
 stock = dHydra.Stock()  #实例化Stock类
-sina = dHydra.SinaFinance()		#实例化SinaFinance类
 ```
 ## 演示
-例如：调用Stock类的start_realtime()方法来实时下载数据到
+例如：调用Stock类的start_realtime()方法来实时下载数据
 ```python
 stock.start_realtime()  
 #start_realtime()方法用于实时获取3秒/次的股票数据，计算出实时换手率后存入mongodb
@@ -90,7 +92,7 @@ Stock Basic Info last updated on:  2016-03-04 03:28:33.730000  NO NEED to update
 8 2016-03-03 15:05:54  002529         5.356822  
 9 2016-03-03 15:05:54  600030         2.565978
 ```
-更多用法请参考API文档
+更多用法（新浪Level2高频数据的获取需要自行购买新浪Level2普及版298/年），请参考API文档
 http://www.kancloud.cn/emptyset/dhydra/125528
 
 ## Mongodb数据结构设计说明（TODO）
