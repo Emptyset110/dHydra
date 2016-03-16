@@ -324,12 +324,11 @@ class Stock:
 		if ( ( self.updated.date() == datetime.now().date() ) & ( self.updated.hour >= 9 ) ):
 			if ( self.outstanding == [] ):
 				for i in range(0,num):
-					# TODO: SOMETHING IS WRONG HERE
 					self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
 		else:
 			print( "The basicInfo is outdated. Trying to update basicInfo..." )
 			self.update_basic_info()
-			[ self.codeList, self.basicInfo ] = self.fetch_basic_info()
+			[self.codeList, self.symbolList, self.basicInfo] = self.fetch_basic_info()
 			self.outstanding = list()
 			for i in range(0,num):
 				self.outstanding.append( self.basicInfo["basicInfo"]["outstanding"][code[i]] )
