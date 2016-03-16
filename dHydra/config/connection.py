@@ -122,3 +122,29 @@ URL_VFVALID = "http://weibo.com/sguide/vdun.php"
 URL_L2HIST = 'http://stock.finance.sina.com.cn/stock/api/openapi.php/StockLevel2Service.getTransactionList'
 URL_WSKT_TOKEN = 'https://current.sina.com.cn/auth/api/jsonp.php/var%20KKE_auth_OSfOoonMj=/AuthSign_Service.getSignCode'
 SOCKET_BASE = 'ws://ff.sinajs.cn/wskt'
+
+"""
+雪球
+"""
+HEADERS_XUEQIU = {
+	"Accept"			:	"application/json, text/javascript, */*; q=0.01"
+,	"Accept-Encoding"	:	"gzip, deflate, sdch"
+,	"Accept-Language"	:	"en-US,en;q=0.8"
+,	"cache-control"		:	"no-cache"
+,	"Connection"		:	"keep-alive"
+,	"Host"				:	"xueqiu.com"
+,	"Referer"			:	"http://xueqiu.com/hq"
+,	"User-Agent"		:	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36"
+,	"X-Requested-With"	:	"XMLHttpRequest"
+}
+
+CONST_XUEQIU_QUOTE_ORDER_COLUMN = "symbol,name,current,chg,percent,last_close,open,high,low,volume,amount,market_capital,pe_ttm,high52w,low52w,hasexist"
+CONST_XUEQIU_QUOTE_COLUMN = "symbol,exchange,code,name,current,percentage,change,open,high,low,close,last_close,high52week,low52week,volume,volumeAverage,marketCapital,eps,pe_ttm,pe_lyr_beta,totalShares,time,afterHours,afterHoursPct,afterHoursChg,updateAt,dividednd,yield,turnover_rate,instOwn,rise_stop,fall_stop,currency_unit,amount,net_assets,hasexist,has_warrant,type,flag,rest_day,amplitude,lot_size,tick_size,kzz_stock_symbol,kzz_stock_name,kzz_stock_current,kzz_convert_price,kzz_convert_value"
+URL_XUEQIU_HQ = "http://xueqiu.com/hq"
+URL_XUEQIU_QUOTE_ORDER = lambda page,columns,stockType : "http://xueqiu.com/stock/quote_order.json?page=%s&size=90&order=desc&exchange=CN&stockType=%s&column=%s&orderBy=symbol&_=%s"	% ( page,stockType, columns,int(time.time()*1000) )
+URL_XUEQIU_QUOTE = lambda symbol : "http://xueqiu.com/v4/stock/quote.json?code=%s&_=%s" % (symbol, int(time.time()*1000) )
+
+"""
+tushare
+"""
+URL_TUSHARE_BASICS = "http://218.244.146.57/static/all.csv"

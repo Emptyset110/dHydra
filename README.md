@@ -142,6 +142,7 @@ stock.export_realtime_csv(date="2016-03-03")
 **如果要使用新浪l2接口，需要自行去新浪网购买普及版（298元/年）**，数据来源于sina
 ### 开启新浪Level2的实时推送(Websocket)
 - `Stock.start_sina(callback)`
+
     **参数：**
     **callback**：可以为空，如果为空系统默认会将message输出到屏幕上
      - **类型**：asyncio.coroutine
@@ -166,6 +167,7 @@ stock.start_sina(callback = print_msg)
 
 ### 新浪Level2当日历史下载（http协议）
 - `Stock.sina_l2_hist(thread_num)`
+
     **参数**
     **thread_num**：（可选）开启线程的数量，默认为15个线程。开启15个线程大概占用20M带宽
     **说明**

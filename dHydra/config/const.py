@@ -6,7 +6,7 @@ Created on 02/22/2016
 @author: 		Wen Gu
 @contact: 		emptyset110@gmail.com
 """
-VERSION = '0.0.1'
+VERSION = '0.2.0'
 
 #	路径配置		
 #	Path Configuration
@@ -22,3 +22,12 @@ PATH_DATA_L2 = 'stock_l2/'
 INDEX_LABELS = ['sh', 'sz', 'hs300', 'sz50', 'cyb', 'zxb', 'zx300', 'zh500']
 INDEX_LIST = {'sh': 'sh000001', 'sz': 'sz399001', 'hs300': 'sz399300',
               'sz50': 'sh000016', 'zxb': 'sz399005', 'cyb': 'sz399006', 'zx300': 'sz399008', 'zh500':'sh000905'}
+
+
+#	雪球常数
+EX_NAME = {
+	'sha'	:	'沪A'
+,	'shb'	:	'沪B'
+,	'sza'	:	'深A'
+,	'szb'	:	'深B'
+}

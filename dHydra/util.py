@@ -27,5 +27,11 @@ def _code_to_symbol(code):
         else:
             return 'sh%s'%code if code[:1] in ['5', '6', '9'] else 'sz%s'%code
 
+def symbol_list_to_code(symbolList):
+    codeList = []
+    for symbol in symbolList:
+        codeList.append(symbol[2:8])
+    return codeList
+
 def _get_public_ip():
 	return requests.get('http://ipinfo.io/ip').text.strip()

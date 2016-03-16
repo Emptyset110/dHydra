@@ -148,11 +148,10 @@ class SinaFinance:
 
 	# 2cn_是3秒一条的Level2 10档行情
 	# 2cn_symbol_0,2cn_symbol_1是逐笔数据
+	# 2cn_symbol_orders是挂单数据
+	# symbol_i是基本信息
 	def generate_qlist(self,qlist,symbol):
-		if qlist!='':
-			qlist = qlist + ",2cn_%s,2cn_%s_0,2cn_%s_1,%s" % (symbol,symbol,symbol,symbol)
-		else:
-			qlist = "2cn_%s,2cn_%s_0,2cn_%s_1,%s" % (symbol,symbol,symbol,symbol)
+		qlist = "2cn_%s,2cn_%s_0,2cn_%s_1,%s,%s_i,2cn_%s_orders" % (symbol,symbol,symbol,symbol,symbol,symbol)
 		return qlist
 
 	"""
@@ -179,8 +178,7 @@ class SinaFinance:
 					callback = self.print_websocket
 				yield from callback(message)
 			except Exception as e:
-				# print(e)
-				ws.close() 
+				ws.close()
 				yield from self.create_ws(qlist,symbol,loop)
 	
 	@asyncio.coroutine
