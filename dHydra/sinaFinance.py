@@ -91,12 +91,11 @@ class SinaFinance:
 					,	headers = CON.HEADERS_L2(symbol=symbol)
 				) )
 				req = yield from async_req
-				# print(req.url)
 				data = req.text[90:-2]
 				data = dict( json.loads(data) )
 				count = data["result"]["data"]["count"]
 				
-				if (page==1):
+				if ( page == 1 ):
 					l2 = pd.DataFrame(data["result"]["data"]["data"])
 				else:
 					l2 = l2.append(pd.DataFrame(data["result"]["data"]["data"]), ignore_index=True)
@@ -109,15 +108,19 @@ class SinaFinance:
 				l2 = l2.set_index("index").sort_index("index")
 			totalCount += 1
 			print( "symbol = ",symbol, " 已完成： ", totalCount )
-			l2.to_csv('data/stock_l2/%s/%s.csv' % (date,symbol) )
-			# print( "Count: ",count )
-			# print( "Time Cost: ", datetime.now() - start )
+			x = l2.to_csv('data/stock_l2/%s/%s.csv' % (date,symbol) )
+			# 释放变量内存
+			del async_req
+			del req
+			del l2
+			del data
+			del x
 
 	# 获取逐笔数据
 	def l2_hist_list(self, symbolList,loop):
 		global totalCount
 		totalCount = 0
-		if (datetime.now().hour<7):
+		if (datetime.now().hour<8):
 			date = str(datetime.now().date()-timedelta(days=1))
 		else:
 			date = str(datetime.now().date())
@@ -125,12 +128,11 @@ class SinaFinance:
 		print('已经创建目录./data/stock_l2/%s, 将在此目录下生成csv' % date)
 		tasks = list()
 		for symbol in symbolList:
-			tasks.append( self.l2_hist(symbol,date) )
+			tasks.append( self.l2_hist( symbol,date ) )
 
-		if loop.is_running():
-			loop = asyncio.new_event_loop()
 		asyncio.set_event_loop(loop)
 		loop.run_until_complete( asyncio.wait(tasks) )
+		loop.close()
 
 	@asyncio.coroutine
 	def get_ws_token(self,qlist,symbol):
@@ -151,7 +153,10 @@ class SinaFinance:
 	# 2cn_symbol_orders是挂单数据
 	# symbol_i是基本信息
 	def generate_qlist(self,qlist,symbol):
-		qlist = "2cn_%s,2cn_%s_0,2cn_%s_1,%s,%s_i,2cn_%s_orders" % (symbol,symbol,symbol,symbol,symbol,symbol)
+		if qlist == '':
+			qlist = "2cn_%s,2cn_%s_0,2cn_%s_1,%s,%s_i,2cn_%s_orders" % (symbol,symbol,symbol,symbol,symbol,symbol)
+		else:
+			qlist = qlist + ',' + "2cn_%s,2cn_%s_0,2cn_%s_1,%s,%s_i,2cn_%s_orders" % (symbol,symbol,symbol,symbol,symbol,symbol)
 		return qlist
 
 	"""
@@ -195,3 +200,4 @@ class SinaFinance:
 			loop = asyncio.new_event_loop()
 			asyncio.set_event_loop( loop )
 		loop.run_until_complete( self.create_ws(qlist,symbol=symbol, loop=loop, callback=callback) )
+		loop.close()
