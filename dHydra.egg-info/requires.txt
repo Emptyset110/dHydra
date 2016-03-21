@@ -1,6 +1,0 @@
-requests
-pandas
-tushare
-pymongo
-websockets
-rsa
