@@ -3,6 +3,7 @@ dHydra/__init__.py
 dHydra/dHydra.py
 dHydra/sinaFinance.py
 dHydra/util.py
+dHydra/xueqiu.py
 dHydra.egg-info/PKG-INFO
 dHydra.egg-info/SOURCES.txt
 dHydra.egg-info/dependency_links.txt

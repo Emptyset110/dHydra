@@ -15,6 +15,9 @@ from . import util
 from .config import connection as CON
 import asyncio
 import getpass
+import threading
+import gc
+from ctypes import cdll, CDLL
 
 class SinaFinance:
 	def __init__(self, username=None, pwd=None):
@@ -76,14 +79,13 @@ class SinaFinance:
 
 	# 获取单股票逐笔数据
 	@asyncio.coroutine
-	def l2_hist(self, symbol, date):
-		# Start timing!
+	def l2_hist(self, symbol, date, loop):
 		global totalCount
 		start = datetime.now()
-		loop = asyncio.get_event_loop()
 		if not(os.path.exists('data/stock_l2/%s/%s.csv' % (date,symbol) )):
 			nextPage = True
 			page = 1
+			l2 = list()
 			while (nextPage):
 				async_req = loop.run_in_executor(None, functools.partial( self.session.get
 					,	CON.URL_L2HIST
@@ -93,33 +95,36 @@ class SinaFinance:
 				req = yield from async_req
 				data = req.text[90:-2]
 				data = dict( json.loads(data) )
-				count = data["result"]["data"]["count"]
-				
-				if ( page == 1 ):
-					l2 = pd.DataFrame(data["result"]["data"]["data"])
-				else:
-					l2 = l2.append(pd.DataFrame(data["result"]["data"]["data"]), ignore_index=True)
-
-				if (str(len(l2))==count):
+				count = int( data["result"]["data"]["count"] )
+				if ( data["result"]["data"]["data"] is not None ):
+					l2.extend(data["result"]["data"]["data"])
+				del req
+				del data
+				del async_req
+				if ( len(l2) == count ):
 					nextPage = False
 				page+=1
-			l2 = l2.convert_objects(convert_dates=False,convert_numeric=True,convert_timedeltas=False)
-			if not(len(l2)==0):
-				l2 = l2.set_index("index").sort_index("index")
-			totalCount += 1
-			print( "symbol = ",symbol, " 已完成： ", totalCount )
-			x = l2.to_csv('data/stock_l2/%s/%s.csv' % (date,symbol) )
-			# 释放变量内存
-			del async_req
-			del req
+			l2df = pd.DataFrame( l2 )
 			del l2
-			del data
-			del x
+			l2df = l2df.convert_objects(convert_dates=False,convert_numeric=True,convert_timedeltas=False)
+			if not(len(l2df)==0):
+				l2df = l2df.set_index("index").sort_index("index")
+			totalCount += 1
+			l2df.to_csv('data/stock_l2/%s/%s.csv' % (date,symbol) )
+			del l2df
+			gc.collect()
+		print( "symbol = ",symbol, " 已完成： ", totalCount )
+		return True
 
 	# 获取逐笔数据
-	def l2_hist_list(self, symbolList,loop):
+	def l2_hist_list(self, symbolList=None,loop=None):
 		global totalCount
 		totalCount = 0
+
+		if loop is None:
+			loop = asyncio.new_event_loop()
+
+		asyncio.set_event_loop(loop)
 		if (datetime.now().hour<8):
 			date = str(datetime.now().date()-timedelta(days=1))
 		else:
@@ -128,11 +133,13 @@ class SinaFinance:
 		print('已经创建目录./data/stock_l2/%s, 将在此目录下生成csv' % date)
 		tasks = list()
 		for symbol in symbolList:
-			tasks.append( self.l2_hist( symbol,date ) )
-
-		asyncio.set_event_loop(loop)
-		loop.run_until_complete( asyncio.wait(tasks) )
+			tasks.append( self.l2_hist( symbol,date,loop ) )
+		step = 30
+		taskList = [tasks[ i : i + step] for i in range(0, len(tasks), step)]
+		for task in taskList:
+			loop.run_until_complete( asyncio.wait(task) )
 		loop.close()
+
 
 	@asyncio.coroutine
 	def get_ws_token(self,qlist,symbol):
@@ -144,7 +151,6 @@ class SinaFinance:
 		,	verify	=	True
 		) )
 		req = yield from async_req
-		# print( "token = ", req.text[45:-17] )
 		token = req.text[45:-17]
 		return token
 
@@ -159,13 +165,16 @@ class SinaFinance:
 			qlist = qlist + ',' + "2cn_%s,2cn_%s_0,2cn_%s_1,%s,%s_i,2cn_%s_orders" % (symbol,symbol,symbol,symbol,symbol,symbol)
 		return qlist
 
+	def send(self, message, ws ):
+		print( "> {}".format(message) )
+		yield from ws.send(message)
+
 	"""
 	TODO: 目前websocket断开后的逻辑是重连。需要保持连接不断的逻辑与无缝重连的逻辑。
 	"""
 	@asyncio.coroutine
 	def create_ws(self, qlist, symbol, loop, callback = None ):
 		asyncio.set_event_loop(loop)
-		# print("BEGINNING OF create_ws: ", qlist)
 		token = yield from self.get_ws_token(qlist,symbol)
 
 		url_ws = 'ws://ff.sinajs.cn/wskt?token=' + token + '&list=' + qlist
@@ -174,21 +183,25 @@ class SinaFinance:
 		# print("BEGINNING OF websockets.connect")
 		start = datetime.now()
 		ws = yield from websockets.connect(url_wss)
-		# print("time cost: ", datetime.now()-start)
-		# print("FINISHED websockts.connect")
 		while True:
 			try:
 				message = yield from ws.recv()
 				if callback == None:
 					callback = self.print_websocket
 				yield from callback(message)
+				del message
+				# print( "About to send: {}".format("*"+token) )
+				# t = threading.Timer(30, self.send(message="*"+token, ws=ws) )
 			except Exception as e:
+				print(e)
 				ws.close()
 				yield from self.create_ws(qlist,symbol,loop)
 	
 	@asyncio.coroutine
 	def print_websocket(self, message):
 		print( "< {}".format(message) )
+		del message
+		return True
 
 	def start_ws(self, symbolList = None, loop = None, callback = None ):
 		asyncio.set_event_loop(loop)

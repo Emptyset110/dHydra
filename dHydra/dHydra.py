@@ -5,7 +5,6 @@ Created on 02/17/2016
 @author: Wen Gu
 @contact: emptyset110@gmail.com
 """
-from __future__ import print_function, absolute_import
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 import pandas
@@ -24,29 +23,21 @@ import os
 import re
 import requests
 
-import inspect
-import traceback
-import sys
-
 class Stock:
 	def __init__(self, lang='cn'):
-		# Magic, don't ask why #
-		# I was trying to get the instance name from inside the class
-		# BUT I'M GIVING UP
-        ########################
 		self.loop = asyncio.get_event_loop()
 		# Connect to mongodb
 		self.db = self.get_mongodb()
 		self.outstanding = list()
 		self.session = requests.Session()
-		# 无数据库连接的方案
-		if self.db==False:
-			self.get_symbolList()
-		else:
+		self.xq = self.get_xueqiu()	#获取雪球实例
+		self.get_symbolList()
+		if self.db:
 			# INITIALIZATION: CHECKING UPDATES
 			self.update_basic_info()
 			[self.codeList, self.symbolList, self.basicInfo] = self.fetch_basic_info()
 		self.sina = None
+		self.xueqiu_basics = {}
 
 	"""
 	此接口用于从tushare,xueqiu两者中获取当日可靠的symbolList列表
@@ -66,10 +57,10 @@ class Stock:
 		)
 		print( "正在从雪球社区获取当日沪深股票..." )
 		try:
-			self.xueqiuSHA = self.get_xueqiu_stocks(stockTypeList=['sha'])	#从雪球获取沪A股
-			self.xueqiuSHB = self.get_xueqiu_stocks(stockTypeList=['shb'])	#从雪球获取沪B股
-			self.xueqiuSZA = self.get_xueqiu_stocks(stockTypeList=['sza'])	#从雪球获取深A股
-			self.xueqiuSZB = self.get_xueqiu_stocks(stockTypeList=['szb'])	#从雪球获取深B股
+			self.xueqiuSHA = self.xq.get_stocks(stockTypeList=['sha'])	#从雪球获取沪A股
+			self.xueqiuSHB = self.xq.get_stocks(stockTypeList=['shb'])	#从雪球获取沪B股
+			self.xueqiuSZA = self.xq.get_stocks(stockTypeList=['sza'])	#从雪球获取深A股
+			self.xueqiuSZB = self.xq.get_stocks(stockTypeList=['szb'])	#从雪球获取深B股
 			self.xueqiu = self.xueqiuSHA.append(
 				self.xueqiuSHB.append(
 					self.xueqiuSZA.append(self.xueqiuSZB)
@@ -86,25 +77,15 @@ class Stock:
 	def get_mongodb(self):
 		# connect to mongodb named: stock
 		try:
-			client = MongoClient(serverSelectionTimeoutMS=1)
+			client = MongoClient(serverSelectionTimeoutMS=1000)
 			db = client.stock
 			client.server_info()
 			print("已经成功连接到mongodb")
 			return db
 		except:
-			print("连接到mongodb失败")
+			print(">>>>>>>>>>>>>>>>>>>>>连接到mongodb失败<<<<<<<<<<<<<<<<<<<")
+			print("如果您在交互命令行界面，可以调用本类下的get_mongodb()方法重新连接")
 			return False
-
-	# def get_my_name(self):
-	# 	ans = []
-	# 	frame = inspect.currentframe().f_back
-	# 	tmp = frame.f_globals.copy()
-	# 	tmp.update(frame.f_locals)
-	# 	for k, var in tmp.items():
-	# 		if isinstance(var, self.__class__):
-	# 			if hash(self) == hash(var):
-	# 				ans.append(k)
-	# 	return ans
 
 	def get_symbol_list_eastmoney(self):
 		response = self.session.get("http://quote.eastmoney.com/stocklist.html").text
@@ -123,139 +104,41 @@ class Stock:
 		return tushare_basics
 
 
-	"""
-	>>>   雪球相关接口	   <<<
-	"""
-	"""
-	stockTypeList 	: list
-		['sha','shb','sza','szb']分别代表沪A，沪B，深A，深B。如果为空则代表获取所有沪深AB股
-		e.g: stockTypeList = ['sha','shb']即获取所有沪A沪B
-	columns 		:	string
-		默认为："symbol,name,current,chg,percent,last_close,open,high,low,volume,amount,market_capital,pe_ttm,high52w,low52w,hasexist"
-	"""
-	def get_xueqiu_stocks(		self
-							,	stockTypeList	=	['sha','shb','sza','szb']
-							,	columns 		=	CON.CONST_XUEQIU_QUOTE_ORDER_COLUMN
-		):
-
-		stock_xueqiu = None
-		for stockType in stockTypeList:
-			print( "正在从雪球获取：{}".format(C.EX_NAME[stockType]) )
-			page = 1
-			while True:
-				response = self.session.get(
-					CON.URL_XUEQIU_QUOTE_ORDER(page,columns,stockType)
-				,	headers = CON.HEADERS_XUEQIU
-				).json()
-				df = DataFrame.from_records(response["data"], columns=response["column"])
-				if stock_xueqiu is None:
-					stock_xueqiu = df
-				else:
-					stock_xueqiu = stock_xueqiu.append(df)
-				if df.size==0:
-					break
-				page += 1
-
-		self.stock_xueqiu = stock_xueqiu
-		return stock_xueqiu
-
-	"""
-	雪球单股基本面数据获取coroutine
-	"""
-	@asyncio.coroutine
-	def async_fetch_xueqiu_basics(self, symbol=None):
-		if symbol is not None:
-			async_req = loop.run_in_executor(None, functools.partial( self.session.get
-			,	CON.URL_XUEQIU_QUOTE(symbol)
-			,	headers = CON.HEADERS_XUEQIU
-			) )
-			xueqiu_basics = yield from async_req
-		return(xueqiu_basics)
-
-	"""
-	雪球单股基本面数据获取
-	默认返回值格式是dict，若参数dataframe为True则返回dataframe
-	"""
-	def fetch_xueqiu_basics(self, symbol = None, dataframe = False):
-		if symbol is not None:
-			xueqiu_basics = self.session.get(
-				CON.URL_XUEQIU_QUOTE(symbol)
-			,	headers = CON.HEADERS_XUEQIU
-			).json()
-		if dataframe:
-			xueqiu_basics = DataFrame.from_records( xueqiu_basics ).T
-		return(xueqiu_basics)
-
-	def get_xueqiu_basics_task(self):
-		pass
-
-
-	def get_xueqiu_basics(self, symbol=None, symbolList=None, async = True, dataframe = True):
-		if async == False:
-			if symbol is not None:
-				xueqiu_basics = self.fetch_xueqiu_basics( symbol = symbol )
-			elif symbolList is not None:
-				xueqiu_basics = dict()
-				for symbol in symbolList:
-					xueqiu_basics.update( self.fetch_xueqiu_basics( symbol = symbol, dataframe = False) )
-			else:
-				print( "缺少symbol或symbolList参数" )
-				xueqiu_basics = False
-		else:
-			loop = asyncio.get_event_loop()
-			
-			loop.close()
-
-		if dataframe:
-			xueqiu_basics = DataFrame.from_records( xueqiu_basics ).T
-		return(xueqiu_basics)
-
-
-
-	"""
-	雪球键盘助手
-	"""
-	def keyboard_helper(self,symbol):
-		response = self.session.get(
-			"http://xueqiu.com/stock/search.json?code=%s&size=10&_=%s"%(symbol,int(t.time()*1000))
-		).json()["stocks"]
-
-
 	## NOT IN USE ##
-	def fetch_classification(self):
-		# 数据来源自新浪财经的行业分类/概念分类/地域分类
-		print( "Trying: get_today_all" )
-		today_all = ts.get_today_all() #一次性获取今日全部股价
-		set_today_all = set(today_all.T.values[0])
+	# def fetch_classification(self):
+	# 	# 数据来源自新浪财经的行业分类/概念分类/地域分类
+	# 	print( "Trying: get_today_all" )
+	# 	today_all = ts.get_today_all() #一次性获取今日全部股价
+	# 	set_today_all = set(today_all.T.values[0])
 
-		print( "Trying: get_industry_classified" )
-		industry_classified = ts.get_industry_classified()
-		set_industry_classified = set(industry_classified.T.values[0])
+	# 	print( "Trying: get_industry_classified" )
+	# 	industry_classified = ts.get_industry_classified()
+	# 	set_industry_classified = set(industry_classified.T.values[0])
 
-		print( "Trying: get_area_classified" )
-		area_classified = ts.get_area_classified()
-		set_area_classified = set(area_classified.T.values[0])
+	# 	print( "Trying: get_area_classified" )
+	# 	area_classified = ts.get_area_classified()
+	# 	set_area_classified = set(area_classified.T.values[0])
 
-		print( "Trying: get_concept_classified" )
-		concept_classified = ts.get_concept_classified()
-		set_concept_classified = set(concept_classified.T.values[0])
+	# 	print( "Trying: get_concept_classified" )
+	# 	concept_classified = ts.get_concept_classified()
+	# 	set_concept_classified = set(concept_classified.T.values[0])
 
-		print( "Trying: get_sme_classified" )
-		sme_classified = ts.get_sme_classified()
-		set_sme_classified = set(sme_classified.T.values[0])
+	# 	print( "Trying: get_sme_classified" )
+	# 	sme_classified = ts.get_sme_classified()
+	# 	set_sme_classified = set(sme_classified.T.values[0])
 
-		return [
-					today_all
-				,	set_today_all
-				,	industry_classified
-				,	set_industry_classified
-				,	area_classified
-				,	set_area_classified
-				,	concept_classified
-				,	set_concept_classified
-				,	sme_classified
-				,	set_sme_classified
-				]
+	# 	return [
+	# 				today_all
+	# 			,	set_today_all
+	# 			,	industry_classified
+	# 			,	set_industry_classified
+	# 			,	area_classified
+	# 			,	set_area_classified
+	# 			,	concept_classified
+	# 			,	set_concept_classified
+	# 			,	sme_classified
+	# 			,	set_sme_classified
+	# 			]
 
 	# Will automatically call "update_basic_info" if needed
 	# @return [self.codeList, self.symbolList, self.basicInfo]
@@ -357,7 +240,6 @@ class Stock:
 		# Compute turn_over_rate
 		realtime["turn_over_ratio"] = realtime["volume"]/self.outstanding/100
 		realtime["code"] = code
-
 		return realtime
 
 	# First fetch_realtime, then insert it into mongodb
@@ -389,7 +271,7 @@ class Stock:
 				print( "time cost:", (datetime.now()-start) )
 			except Exception as e:
 				print( e )
-				# traceback.print_exc()
+				traceback.print_exc()
 
 	def export_realtime_csv(	self
 							,	date=None
@@ -404,8 +286,6 @@ class Stock:
 			s_date = input('Please input the date(Format:"2016-02-16"):')
 		else:
 			s_date = date
-
-		# import os
 		try:
 		    os.makedirs( "%s%s" % ( path,s_date ), exist_ok=True )
 		except Exception as e:
@@ -418,26 +298,19 @@ class Stock:
 		date = datetime.strptime(s_date, '%Y-%m-%d')
 
 		for i in range(0,total_len):
-
 			items = list()
-			# print( type(self.codeList[i]) )
 			stock_cursor = self.db.realtime.find(
 				{
 					"code": self.codeList[i]
 				,	"time": { "$gt": date, "$lt" : date + timedelta(days=1) }
 				}
 			)
-
 			if (stock_cursor.count() == 0):
 				continue
-
 			for row in stock_cursor:
 				items.append(row)
-
 			stock_csv = pandas.DataFrame.from_dict(items)
-
 			stock_csv["turn_over_ratio"] = stock_csv["volume"]/self.basicInfo["basicInfo"]["outstanding"][ self.codeList[i] ]/100
-
 			stock_csv.set_index("time",drop=False,inplace=True)
 			if (resample!=None):
 				stock_csv = stock_csv.resample(resample,how='last')
@@ -477,10 +350,11 @@ class Stock:
 		return self.sina
 
 	# 开启新浪L2 Websocket
-	def start_sina(self, callback=None):
+	def start_sina(self, callback=None, symbolList = None):
 		if (self.sina is None):
 			self.get_sina()
-
+		if (symbolList == None):
+			symbolList = self.symbolList
 		if not(self.sina.isLogin):
 			print("新浪没有登录成功，请重试")
 			return False
@@ -488,25 +362,20 @@ class Stock:
 		threads = []
 		# Cut symbolList
 		step = 30
-		symbolListSlice = [self.symbolList[ i : i + step] for i in range(0, len(self.symbolList), step)]
+		symbolListSlice = [symbolList[ i : i + step] for i in range(0, len(symbolList), step)]
 		for symbolList in symbolListSlice:
-
-			loop = asyncio.get_event_loop()
-			if loop.is_running():
-				loop = asyncio.new_event_loop()
-				asyncio.set_event_loop( loop )
-
+			loop = asyncio.new_event_loop()
 			t = threading.Thread(target = self.sina.start_ws,args=(symbolList,loop,callback) )
 			threads.append(t)
 		for t in threads:
-			t.setDaemon(True)
+			# t.setDaemon(True)
 			t.start()
 			print("开启线程：",t.name)
 		for t in threads:
 			t.join()
 
-	# thread_num代表同时开启的线程数量，默认15个
-	def sina_l2_hist(self,thread_num = 15, symbolList = None):
+	# thread_num代表同时开启的线程数量，默认5个
+	def sina_l2_hist(self,thread_num = 5, symbolList = None):
 		if (symbolList is None):
 			symbolList = self.symbolList
 		if (self.sina is None):
@@ -518,18 +387,20 @@ class Stock:
 		step = int( len(symbolList)/thread_num ) if ( int( len(symbolList)/thread_num )!=0 ) else 1
 		symbolListSlice = [symbolList[ i : i + step] for i in range(0, len(symbolList), step)]
 		for symbolList in symbolListSlice:
-
-			loop = asyncio.get_event_loop()
-			if loop.is_running():
-				loop = asyncio.new_event_loop()
-				asyncio.set_event_loop( loop )
-
+			loop = asyncio.new_event_loop()	#新建一个loop供一个线程使用
 			t = threading.Thread(target = self.sina.l2_hist_list, args=(symbolList,loop,) )
 			threads.append(t)
-
 		for t in threads:
-			t.setDaemon(True)
 			t.start()
 			print("开启线程：",t.name)
 		for t in threads:
 			t.join()
+		return
+
+	"""
+	下面是调用雪球部分
+	"""
+	def get_xueqiu(self):
+		from . import xueqiu
+		xq = xueqiu.Xueqiu()
+		return xq
