@@ -257,7 +257,7 @@ class Stock:
 		print( "data_time", data_time )
 		return time
 
-	def start_realtime(self):
+	def start_realtime(self, timeInterval = None):
 		time = datetime.now()
 		while True:
 			try:
@@ -267,11 +267,14 @@ class Stock:
 					print( "It's Too Early or Too late", start )
 					t.sleep(360)
 					continue
-				time = self.get_realtime( time )
+				if timeInterval is not None:
+					time = self.get_realtime( time )
+				else:
+					time.sleep(timeInterval)
+					time = self.get_realtime( time )
 				print( "time cost:", (datetime.now()-start) )
 			except Exception as e:
 				print( e )
-				traceback.print_exc()
 
 	def export_realtime_csv(	self
 							,	date=None
