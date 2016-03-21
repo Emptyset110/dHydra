@@ -243,7 +243,7 @@ class Stock:
 		return realtime
 
 	# First fetch_realtime, then insert it into mongodb
-	def get_realtime(self,time):
+	def get_realtime(self,time,symbolList = None):
 		realtime = self.fetch_realtime()
 
 		data_time = realtime.iloc[0]['time']
@@ -257,7 +257,8 @@ class Stock:
 		print( "data_time", data_time )
 		return time
 
-	def start_realtime(self, timeInterval = None):
+	def start_realtime(self, timeInterval = None, symbolList = None):
+		loop = asyncio.get_event_loop()
 		time = datetime.now()
 		while True:
 			try:
@@ -270,7 +271,7 @@ class Stock:
 				if timeInterval is not None:
 					time = self.get_realtime( time )
 				else:
-					time.sleep(timeInterval)
+					t.sleep(timeInterval)
 					time = self.get_realtime( time )
 				print( "time cost:", (datetime.now()-start) )
 			except Exception as e:
