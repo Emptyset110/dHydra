@@ -17,7 +17,7 @@ import asyncio
 import getpass
 import threading
 import gc
-from ctypes import cdll, CDLL
+import re
 
 class SinaFinance:
 	def __init__(self, username=None, pwd=None):
@@ -112,7 +112,6 @@ class SinaFinance:
 			totalCount += 1
 			l2df.to_csv('data/stock_l2/%s/%s.csv' % (date,symbol) )
 			del l2df
-			gc.collect()
 		print( "symbol = ",symbol, " 已完成： ", totalCount )
 		return True
 
@@ -173,7 +172,7 @@ class SinaFinance:
 	TODO: 目前websocket断开后的逻辑是重连。需要保持连接不断的逻辑与无缝重连的逻辑。
 	"""
 	@asyncio.coroutine
-	def create_ws(self, qlist, symbol, loop, callback = None ):
+	def create_ws(self, qlist, symbol, loop, callback = None, raw = False ):
 		asyncio.set_event_loop(loop)
 		token = yield from self.get_ws_token(qlist,symbol)
 
@@ -186,7 +185,9 @@ class SinaFinance:
 		while True:
 			try:
 				message = yield from ws.recv()
-				if callback == None:
+				if raw == False:
+					message = self.ws_parse(message = message)
+				if (callback is None):
 					callback = self.print_websocket
 				yield from callback(message)
 				del message
@@ -195,7 +196,7 @@ class SinaFinance:
 			except Exception as e:
 				print(e)
 				ws.close()
-				yield from self.create_ws(qlist,symbol,loop)
+				yield from self.create_ws(qlist = qlist,symbol = symbol,loop=loop, callback = callback, raw=raw)
 	
 	@asyncio.coroutine
 	def print_websocket(self, message):
@@ -203,7 +204,12 @@ class SinaFinance:
 		del message
 		return True
 
-	def start_ws(self, symbolList = None, loop = None, callback = None ):
+	# @asyncio.coroutine
+	# def print_websocket_df(self, message):
+	# 	df = pd.DataFrame.from_records(message)
+	# 	print(df)
+
+	def start_ws(self, symbolList = None, loop = None, callback = None, raw = False ):
 		asyncio.set_event_loop(loop)
 		qlist = ''
 		for symbol in symbolList:
@@ -212,5 +218,39 @@ class SinaFinance:
 		if loop.is_running():
 			loop = asyncio.new_event_loop()
 			asyncio.set_event_loop( loop )
-		loop.run_until_complete( self.create_ws(qlist,symbol=symbol, loop=loop, callback=callback) )
+		loop.run_until_complete( self.create_ws(qlist,symbol=symbol, loop=loop, callback=callback, raw = raw) )
 		loop.close()
+
+	def ws_parse(self, message):
+		dataList = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|orders|_i)?)(?:=)(.*)(?:\n))',message)
+		result = list()
+		for data in dataList:
+			if (len(data[0])==12):	# quotation
+				wstype = 'quotation'
+			elif ( (data[0][-2:]=='_0') | (data[0][-2:]=='_1') ):
+				wstype = 'deal'
+			elif ( data[0][-6:]=='orders' ):
+				wstype = 'orders'
+			elif ( (data[0][-2:]=='_i') ):
+				wstype = 'info'
+			else:
+				wstype = 'unknown'
+			result = self.ws_parse_to_list(wstype=wstype,symbol=data[1],data=data[2],result=result)
+		return result
+
+	def ws_parse_to_list(self,wstype,symbol,data,result):
+		data = data.split(',')
+		if (wstype == 'deal'):
+			for d in data:
+				x = list()
+				x.append(wstype)
+				x.append(symbol)
+				x.extend( d.split('|') )
+				result.append(x)
+		else:
+			x = list()
+			x.append(wstype)
+			x.append(symbol)
+			x.extend(data)
+			result.append(x)
+		return result

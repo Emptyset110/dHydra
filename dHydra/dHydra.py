@@ -365,7 +365,7 @@ class Stock:
 		return self.sina
 
 	# 开启新浪L2 Websocket
-	def start_sina(self, callback=None, symbolList = None):
+	def start_sina(self, callback=None, symbolList = None, raw = False):
 		if (self.sina is None):
 			self.get_sina()
 		if (symbolList == None):
@@ -380,7 +380,7 @@ class Stock:
 		symbolListSlice = [symbolList[ i : i + step] for i in range(0, len(symbolList), step)]
 		for symbolList in symbolListSlice:
 			loop = asyncio.new_event_loop()
-			t = threading.Thread(target = self.sina.start_ws,args=(symbolList,loop,callback) )
+			t = threading.Thread(target = self.sina.start_ws,args=(symbolList,loop,callback,raw) )
 			threads.append(t)
 		for t in threads:
 			# t.setDaemon(True)
