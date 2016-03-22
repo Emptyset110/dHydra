@@ -23,6 +23,10 @@ import os
 import re
 import requests
 
+# import inspect
+import traceback
+# import sys
+
 class Stock:
 	def __init__(self, lang='cn'):
 		self.loop = asyncio.get_event_loop()
@@ -143,7 +147,7 @@ class Stock:
 	# Will automatically call "update_basic_info" if needed
 	# @return [self.codeList, self.symbolList, self.basicInfo]
 	def fetch_basic_info(self):
-		result = self.db.basicInfo.find_one( 
+		result = self.db.basicInfo.find_one(
 			{
 				"lastUpdated": {"$exists":True, "$ne": None}
 			}
@@ -218,7 +222,9 @@ class Stock:
 
 	# fetch realtime data using TuShare
 	#	Thanks to tushare.org
-	def fetch_realtime(self):
+	def fetch_realtime(self, codeList = None):
+		if codeList is None:
+			codeList = self.codeList
 		i = 0
 		while ( self.codeList[i:i+500] != [] ):
 			if (i==0):
@@ -243,21 +249,25 @@ class Stock:
 		return realtime
 
 	# First fetch_realtime, then insert it into mongodb
-	def get_realtime(self,time,symbolList = None):
-		realtime = self.fetch_realtime()
+	def get_realtime(self,time,codeList = None):
+		realtime = self.fetch_realtime(codeList = codeList)
 
 		data_time = realtime.iloc[0]['time']
 		if (data_time>time):
 			time = data_time
 		else:
-			print( "No need", time )
+			print( "No need", data_time,time )
 			return data_time
 
 		self.db.realtime.insert_many( realtime.iloc[0:2900].to_dict(orient='records') )
 		print( "data_time", data_time )
-		return time
+		return data_time
 
-	def start_realtime(self, timeInterval = None, symbolList = None):
+	@asyncio.coroutine
+	def set_time_out(self, timeInterval):
+		yield from asyncio.sleep(timeInterval)
+
+	def start_realtime(self, timeInterval = None, codeList = None):
 		loop = asyncio.get_event_loop()
 		time = datetime.now()
 		while True:
@@ -269,13 +279,14 @@ class Stock:
 					t.sleep(360)
 					continue
 				if timeInterval is not None:
+					t.sleep(timeInterval)
 					time = self.get_realtime( time )
 				else:
-					t.sleep(timeInterval)
 					time = self.get_realtime( time )
 				print( "time cost:", (datetime.now()-start) )
 			except Exception as e:
 				print( e )
+				# traceback.print_exc()
 
 	def export_realtime_csv(	self
 							,	date=None
