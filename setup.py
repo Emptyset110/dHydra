@@ -20,16 +20,16 @@ NAME = "dHydra"
 名字，一般放你包的名字即可
 """
  
-PACKAGES = ["dHydra","dHydra.config","dHydra.movies"]
+PACKAGES = ["dHydra","dHydra.core","dHydra.producer","dHydra.vendor","dHydra.action","dHydra.config","dHydra.app","dHydra.auto"]
 
-DESCRIPTION = "A solution for saving & data mining Chinese Stocks based on TuShare"
+DESCRIPTION = "A framework for saving & data mining Chinese Stocks"
  
 LONG_DESCRIPTION = ""
 """
 参见read方法说明
 """
 
-KEYWORDS = ("Finance","Chinese Stock","Quant")
+KEYWORDS = ("Finance","Chinese Stock","Quant","Framework")
 """
 关于当前包的一些关键字，方便PyPI进行分类。
 """
@@ -40,7 +40,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
  
 URL = "http://dHydra.org"
 
-VERSION = "0.2.14"
+VERSION = "0.9.0"
 
 LICENSE = "Apache Software License"
  

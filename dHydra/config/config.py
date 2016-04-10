@@ -1,18 +1,8 @@
 # -*- coding: utf8 -*-
 """
-Config类
+Config系统设置
 Created on 02/22/2016
-@description:	Used for 
+@description:	用于配置路径，数据库，帐号等参数
 @author: 		Wen Gu
 @contact: 		emptyset110@gmail.com
 """
-import const
-
-class Config:
-
-	def __init__(self):
-		self.VERSION = const.VERSION
-
-	def reset(self):
-		self.__init__()
-		print "The configuration has been reset"

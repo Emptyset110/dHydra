@@ -1,5 +1,5 @@
-__version__ = '0.2.14'
+__version__ = '1.0.0'
 __author__ = 'Wen Gu'
-from dHydra.dHydra import Stock
-from dHydra.sinaFinance import SinaFinance
-from dHydra.movies.movies import Maoyan
+from . import producer
+from . import vendor
+from . import action
