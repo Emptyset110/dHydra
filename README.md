@@ -8,7 +8,8 @@
 
 **dHydra数据QQ群：458920407**
 
-
+> 传送门：如果是为了新浪Level2 10档盘口和逐笔推送实时行情来到这里的
+> 直接参考：http://doc.dhydra.org/built-in-producers/sinalevel2ws.html
 
 # 使用对象
 - 正在学习使用python进行数据分析/数据挖掘的同学
@@ -20,6 +21,7 @@
 # 运行环境
  - python 3.4以上 (开发环境Ubuntu 15.10, python 3.5)，**不对python2.7提供支持，多版本虚拟环境安装请参考安装dHydra文档**
  - mongodb 3.2
+ 
 ---
 
 
