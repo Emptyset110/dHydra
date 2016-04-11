@@ -20,7 +20,7 @@ NAME = "dHydra"
 名字，一般放你包的名字即可
 """
  
-PACKAGES = ["dHydra","dHydra.core","dHydra.producer","dHydra.vendor","dHydra.action","dHydra.config"]
+PACKAGES = ["dHydra","dHydra.core","dHydra.producer","dHydra.producer.SinaLevel2WS","dHydra.vendor","dHydra.vendor.Maoyan","dHydra.vendor.Xueqiu","dHydra.action","dHydra.action.PrintSinaL2","dHydra.action.Demo","dHydra.config"]
 
 DESCRIPTION = "A framework for saving & data mining Chinese Stocks"
  
@@ -40,7 +40,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
  
 URL = "http://dHydra.org"
 
-VERSION = "0.9.5"
+VERSION = "0.9.6"
 
 LICENSE = "Apache Software License"
  
