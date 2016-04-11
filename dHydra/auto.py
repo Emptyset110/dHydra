@@ -185,7 +185,7 @@ def init( demo = True ):
 		print("[创建失败]：app.py已经存在")
 	else:
 		if demo:
-			f = open( 'app.py', 'w' )
+			f = open( 'app.py', 'w', encoding = 'UTF-8' )
 			f.write(
 				"""# -*- coding: utf8 -*-
 from dHydra.app import *
