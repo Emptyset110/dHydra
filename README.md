@@ -61,6 +61,7 @@ auto.init()  # 新建目录结构
 auto.new_producer("Demo")
 auto.new_action("Demo")
 # 然后将app.py中的PrintSinaL2改为Demo
+```
 
 ## 运行
 在命令行下运行app.py
