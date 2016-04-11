@@ -13,6 +13,7 @@ class PrintSinaL2Action(Action):
 				"name"	:	"SinaLevel2WS"
 			,	"pName"	:	"PrintSinaL2.SinaLevel2"
 			,	"raw"	:	True	# 这是 SinaLevel2WSProducer的参数，若设置为True则将原始数据放入消息队列
+			# ,	"symbols":	["sz300204"]
 			}
 		]
 		# 设置进程检查消息队列的间隔
@@ -35,7 +36,7 @@ class PrintSinaL2Action(Action):
 	用于解析Sina l2的函数
 	"""
 	def ws_parse(self, message):
-		dataList = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|orders|_i)?)(?:=)(.*)(?:\n))',message)
+		dataList = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|_orders|_i)?)(?:=)(.*)(?:\n))',message)
 		result = list()
 		for data in dataList:
 			if (len(data[0])==12):	# quotation

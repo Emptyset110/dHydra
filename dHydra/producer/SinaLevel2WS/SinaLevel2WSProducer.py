@@ -45,6 +45,8 @@ class SinaLevel2WSProducer(Producer):
 		if symbols is None:
 			xq = V('Xueqiu')
 			self.symbols = list( xq.get_symbols() )
+		else:
+			self.symbols = symbols
 
 
 	def login(self):
@@ -191,8 +193,11 @@ class SinaLevel2WSProducer(Producer):
 		loop.close()
 
 
+	"""
+	用于解析Sina l2的函数
+	"""
 	def ws_parse(self, message):
-		dataList = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|orders|_i)?)(?:=)(.*)(?:\n))',message)
+		dataList = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|_orders|_i)?)(?:=)(.*)(?:\n))',message)
 		result = list()
 		for data in dataList:
 			if (len(data[0])==12):	# quotation
