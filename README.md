@@ -26,8 +26,9 @@
 
 
 # 快速开始
+
 ## 部署
-### 从github下载源码的方式
+ - 从github下载源码的方式
 将dHydra文件夹复制到你的工作区域(Workspace)，你的目录结构应该是这样的——
 ```
 dHydra工作区域
@@ -39,6 +40,17 @@ dHydra工作区域
     ├─            action
     └─            等等
 ```
+ - 用pip安装的方式
+```
+pip install dHydra
+```
+更新到最新版本
+```
+pip install dHydra --upgrade
+```
+
+---
+
 在你的workspace运行python脚本
 ```python
 import dHydra.auto as auto
@@ -49,10 +61,6 @@ auto.init()  # 新建目录结构
 auto.new_producer("Demo")
 auto.new_action("Demo")
 # 然后将app.py中的PrintSinaL2改为Demo
-```
-
-### 用pip安装的方式
-（pip上还未更新）
 
 ## 运行
 在命令行下运行app.py
