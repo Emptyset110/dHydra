@@ -8,7 +8,7 @@ def new_vendor(vendorName = None):
 	else:
 		os.makedirs( dirVendor )
 		# 创建vendorNameVendor.py
-		f = open( dirVendor + '/' + vendorName + 'Vendor.py' , 'w' )
+		f = open( dirVendor + '/' + vendorName + 'Vendor.py' , 'w' , encoding= 'UTF-8')
 		f.write(
 		"""# -*- coding: utf8 -*-
 \"\"\"
@@ -35,13 +35,13 @@ class {}(Vendor):
 			)
 		f.close()
 		# 创建config,connection,const, __init__.py
-		f = open( dirVendor + '/config.py', 'w' )
+		f = open( dirVendor + '/config.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirVendor + '/const.py', 'w' )
+		f = open( dirVendor + '/const.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirVendor + '/connection.py', 'w' )
+		f = open( dirVendor + '/connection.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirVendor + '/__init__.py', 'w' )
+		f = open( dirVendor + '/__init__.py', 'w', encoding= 'UTF-8' )
 		f.close()
 
 def new_producer(producerName = None):
@@ -51,7 +51,7 @@ def new_producer(producerName = None):
 	else:
 		os.makedirs( dirProducer )
 		# 创建producerNameProducer.py
-		f = open( dirProducer + '/' + producerName + 'Producer.py', 'w' )
+		f = open( dirProducer + '/' + producerName + 'Producer.py', 'w', encoding= 'UTF-8' )
 		if producerName == 'Demo':
 			demo = """
 		# handler是需要被重写的方法，以下demo每隔0.5秒产生一个数据
@@ -98,13 +98,13 @@ class {}Producer(Producer):
 			)
 		f.close()
 		# 创建config,connection,const, __init__.py
-		f = open( dirProducer + '/config.py', 'w' )
+		f = open( dirProducer + '/config.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirProducer + '/const.py', 'w' )
+		f = open( dirProducer + '/const.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirProducer + '/connection.py', 'w' )
+		f = open( dirProducer + '/connection.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirProducer + '/__init__.py', 'w' )
+		f = open( dirProducer + '/__init__.py', 'w', encoding= 'UTF-8' )
 		f.close()
 
 def new_action(actionName = None):
@@ -114,7 +114,7 @@ def new_action(actionName = None):
 	else:
 		os.makedirs( dirAction )
 		# 创建actionNameAction.py
-		f = open( dirAction + '/' + actionName + 'Action.py', 'w' )
+		f = open( dirAction + '/' + actionName + 'Action.py', 'w', encoding= 'UTF-8' )
 		if actionName == "Demo":
 			demo="""
 		while not self._queue.empty():
@@ -166,13 +166,13 @@ class %sAction(Action):
 			)
 		f.close()
 		# 创建config,connection,const, __init__.py
-		f = open( dirAction + '/config.py', 'w' )
+		f = open( dirAction + '/config.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirAction + '/const.py', 'w' )
+		f = open( dirAction + '/const.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirAction + '/connection.py', 'w' )
+		f = open( dirAction + '/connection.py', 'w', encoding= 'UTF-8' )
 		f.close()
-		f = open( dirAction + '/__init__.py', 'w' )
+		f = open( dirAction + '/__init__.py', 'w', encoding= 'UTF-8' )
 		f.close()
 
 def init( demo = True ):
