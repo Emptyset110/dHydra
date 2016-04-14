@@ -48,7 +48,7 @@ class PrintSinaL2Action(Action):
 			elif ( (data[0][-2:]=='_i') ):
 				wstype = 'info'
 			else:
-				wstype = 'unknown'
+				wstype = 'other'
 			result = self.ws_parse_to_list(wstype=wstype,symbol=data[1],data=data[2],result=result)
 		return result
 

@@ -43,8 +43,8 @@ class SinaLevel2WSProducer(Producer):
 		self.isLogin = self.login()
 		self.raw = raw
 		if symbols is None:
-			xq = V('Xueqiu')
-			self.symbols = list( xq.get_symbols() )
+			sina = V('Sina')
+			self.symbols = sina.get_symbols()
 		else:
 			self.symbols = symbols
 
