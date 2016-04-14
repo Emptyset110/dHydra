@@ -132,7 +132,12 @@ class SinaLevel2WSProducer(Producer):
 		url_wss = 'wss://ff.sinajs.cn/wskt?token=' + token + '&list=' + qlist
 
 		start = datetime.now()
-		ws = yield from websockets.connect(url_wss)
+		retry = True:
+			try:
+				ws = yield from websockets.connect(url_wss)
+				retry = False
+			except Exception as e:
+				print("Retrying..")
 
 		# 另开一个线程每40秒更新一次token，新建一个event_loop防止这个操作阻塞websocket
 		loopToken = asyncio.new_event_loop()
