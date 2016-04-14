@@ -54,7 +54,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
  
 URL = "http://dHydra.org"
 
-VERSION = "0.9.10"
+VERSION = "0.9.11"
 
 LICENSE = "Apache Software License"
  
@@ -69,7 +69,7 @@ setup(
     ,   'Intended Audience :: Financial and Insurance Industry'
     ,   'Operating System :: OS Independent'
     ]
-,   install_requires = ["requests","pandas","tushare","pymongo","websockets","rsa"]
+,   install_requires = ["requests","pandas","tushare","pymongo","websockets","rsa","ntplib"]
 ,   keywords = KEYWORDS
 ,   author = AUTHOR
 ,   author_email = AUTHOR_EMAIL
