@@ -62,7 +62,6 @@ class SinaFreeQuoteProducer(Producer):
 				elif shUpdate:
 					sh = self.sina.get_realtime_quotes( symbols = self.shSymbols , dataframe=True, loop = loop )
 				retry = False
-				loop.close()
 			except Exception as e:
 				print(e)
 		# print( time.time() - start )
@@ -82,8 +81,8 @@ class SinaFreeQuoteProducer(Producer):
 				q.put(eventSH)
 
 	def handler(self):
-		loop = asyncio.new_event_loop()
 		while self._active:
+			loop = asyncio.new_event_loop()
 			t = threading.Thread( target = functools.partial( self.thread_target, loop ) )
 			t.start()
 			time.sleep(1)
