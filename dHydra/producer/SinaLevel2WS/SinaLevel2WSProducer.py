@@ -132,7 +132,8 @@ class SinaLevel2WSProducer(Producer):
 		url_wss = 'wss://ff.sinajs.cn/wskt?token=' + token + '&list=' + qlist
 
 		start = datetime.now()
-		retry = True:
+		retry = True
+		while retry:
 			try:
 				ws = yield from websockets.connect(url_wss)
 				retry = False
