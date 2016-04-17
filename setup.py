@@ -54,7 +54,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
  
 URL = "http://dHydra.org"
 
-VERSION = "0.9.11"
+VERSION = "0.9.12"
 
 LICENSE = "Apache Software License"
  

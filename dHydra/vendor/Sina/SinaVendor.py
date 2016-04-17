@@ -19,16 +19,99 @@ from .config import *
 import requests
 import re
 from pandas import DataFrame
+import pandas as pd
 import asyncio
 import functools
 from datetime import datetime
 import json
+import base64,binascii,rsa
+import getpass
 
 
 class SinaVendor(Vendor):
-	def __init__(self):
+	def __init__(self, username = None, pwd = None):
 		self.session = requests.Session()
 		self.quote = None
+		self.isLogin = False
+		self.username = username
+		self.pwd = pwd
+
+	# RSA2 encoding
+	def get_sp(self, passwd, pubkey, servertime, nonce):
+		key = rsa.PublicKey(int(pubkey, 16), int('10001', 16))
+		message = str(servertime) + '\t' + str(nonce) + '\n' + str(passwd)
+		passwd = rsa.encrypt(message.encode('utf-8'), key)
+		return binascii.b2a_hex(passwd).decode('ascii')
+	def login(self):
+		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
+		if (self.username is None):
+			self.username = input('请输入新浪登录帐号：')
+		if (self.pwd is None):
+			self.pwd = getpass.getpass("输入登录密码（密码不会显示在屏幕上，输入后按回车确定）:")
+
+		su = base64.b64encode(self.username.encode('utf-8'))
+
+		preLogin = self.session.get( URL_PRELOGIN, params = PARAM_PRELOGIN( su ), headers = HEADERS_LOGIN)
+		preLogin = json.loads( preLogin.text[len("sinaSSOController.preloginCallBack("):-1] )
+
+		sp = self.get_sp( self.pwd, preLogin["pubkey"], int(preLogin["servertime"]), preLogin["nonce"] )
+
+		self.loginResponse = self.session.post(
+			URL_SSOLOGIN
+		,	params = PARAM_LOGIN()
+		,	data = DATA_LOGIN(
+				su = su
+			,	servertime = int( preLogin["servertime"] )
+			,	nonce = preLogin["nonce"]
+			,	rsakv = preLogin["rsakv"]
+			,	sp = sp
+			)
+		,	headers = HEADERS_LOGIN
+		)
+		if (self.loginResponse.json()["retcode"]=='0'):
+			print( "登录成功: %s, uid = %s" % ( self.loginResponse.json()["nick"], self.loginResponse.json()["uid"]) )
+
+			i = 0
+			for url in self.loginResponse.json()["crossDomainUrlList"]:
+				req = self.session.get( url,headers = HEADERS_CROSSDOMAIN( CROSSDOMAIN_HOST[i] ) )
+				i += 1
+			return True
+		else:
+			print( "Authentication Failed..." )
+			print( self.loginResponse.json() )
+			return False
+
+	def get_deal(self, symbol, stime = None, etime = None):
+		while not self.isLogin:
+			self.isLogin = self.login()
+
+		if stime is None:
+			stime = "09:25:00"
+		if etime is None:
+			etime = "15:05:00"
+		nextPage = True
+		page = 1
+		l2 = list()
+		while (nextPage):
+			data = self.session.get(	URL_L2HIST
+						,	params 	= 	PARAM_L2HIST(symbol=symbol, page=page, stime=stime, etime=etime)
+						,	headers = 	HEADERS_L2(symbol=symbol)
+			)
+			data = data.text[90:-2]
+			data = dict( json.loads(data) )
+			count = int( data["result"]["data"]["count"] )
+			if ( data["result"]["data"]["data"] is not None ):
+				l2.extend(data["result"]["data"]["data"])
+			if ( len(l2) == count ):
+				nextPage = False
+			page+=1
+		l2df = pd.DataFrame( l2 )
+		l2df = l2df.convert_objects(convert_dates=False,convert_numeric=True,convert_timedeltas=False)
+		if not(len(l2df)==0):
+			l2df = l2df.set_index("index").sort_index("index")
+		return l2df
+
+
 
 	# sz,sh的时间戳不同，强烈建议分开调用
 	# 如果开启split = True, 则会返回
@@ -38,7 +121,6 @@ class SinaVendor(Vendor):
 			symbols = self.get_symbols()
 		if loop is None:
 			loop = asyncio.get_event_loop()
-		# if loop.is_running:
 		else:
 			asyncio.set_event_loop(loop)
 

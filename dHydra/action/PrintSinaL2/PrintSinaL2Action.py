@@ -1,9 +1,11 @@
 # -*- coding: utf8 -*-
 from dHydra.core.Action import Action
+from dHydra.core import util
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
 from dHydra.core.Functions import *
 
 import re
+from datetime import datetime
 
 class PrintSinaL2Action(Action):
 	def __init__(self, name, **kwargs):
@@ -11,24 +13,34 @@ class PrintSinaL2Action(Action):
 		self._producerList = [
 			{	
 				"name"	:	"SinaLevel2WS"
-			,	"pName"	:	"PrintSinaL2.SinaLevel2"
-			,	"raw"	:	True	# 这是 SinaLevel2WSProducer的参数，若设置为True则将原始数据放入消息队列
-			# ,	"symbols":	["sz300204"]
+			,	"pName"	:	"PrintSinaL2.SinaLevel2-quotation"
+			,	"raw"	:	True	# 这是 SinaLevel2WSProducer的参数，若设置为True则将原始数据放入消息队列。推荐设置为True
+			# ,	"query"	:	['quotation']
+			# ,	"symbols":  ["sz300344"]
 			}
+		# ,	{
+		# 		"name"	:	"SinaLevel2WS"
+		# 	,	"pName"	:	"PrintSinaL2.SinaLevel2-deal"
+		# 	,	"raw"	:	True	# 这是 SinaLevel2WSProducer的参数，若设置为True则将原始数据放入消息队列。推荐设置为True
+		# 	,	"query"	:	['deal']
+		# 	}
 		]
 		# 设置进程检查消息队列的间隔
-		self._interval = 0.5
+		self._interval = 0.1
 		super().__init__(name, **kwargs)
 		print(self._name,"初始化")
+		self.count = 0
 
 	# 需要重写的方法
 	def handler(self):
 		while not self._queue.empty():
+			dt = datetime.now()
 			event = self._queue.get(True)
 			event.data = self.ws_parse(message = event.data)
 			if isinstance(event.data, list):
 				for data in event.data:
-					print("PrintSinaL2:\n", data)
+					print("PrintSinaL2:\n", data )
+					# print(self.count)
 			else:
 				print(event.data)
 
@@ -41,6 +53,7 @@ class PrintSinaL2Action(Action):
 		for data in dataList:
 			if (len(data[0])==12):	# quotation
 				wstype = 'quotation'
+				# self.count += 1
 			elif ( (data[0][-2:]=='_0') | (data[0][-2:]=='_1') ):
 				wstype = 'deal'
 			elif ( data[0][-6:]=='orders' ):

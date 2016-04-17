@@ -16,6 +16,8 @@ import pandas
 import os
 import ntplib
 from pandas import DataFrame
+from pymongo import MongoClient
+import re
 
 def _code_to_symbol(code):
 	"""
@@ -40,6 +42,11 @@ def symbol_list_to_code(symbolList):
 
 def _get_public_ip():
 	return requests.get('http://ipinfo.io/ip').text.strip()
+
+def get_client_ip():
+	response = requests.get( 'https://ff.sinajs.cn/?_=%s&list=sys_clientip' % int(time.time()*1000) ).text
+	ip = re.findall(r'\"(.*)\"', response)
+	return ip[0]
 
 # 用于将一个loop交给一个线程来完成一些任务
 def thread_loop(loop, tasks):
@@ -100,8 +107,8 @@ def get_network_time():
 	ts = response.tx_time 
 	return ts
 
-def check_time(precision = 0.02):
-	duration = 1.0
+def check_time(precision = 0.1):
+	duration = 2.0
 	while duration > precision:
 		try:
 			print("{}, 开始获取网络时间戳".format( time.time() ))
@@ -109,8 +116,8 @@ def check_time(precision = 0.02):
 			networkTime = get_network_time()
 			end = time.time()
 			duration = end-start
-		except:
-			print("获取网络时间出了点小状况，正重试")
+		except Exception as e:
+			print("获取网络时间出了点小状况，正重试", duration)
 	# print("网络耗时：{}".format( duration ) )
 	# print("{}, 网络时间戳".format( networkTime ) )
 	# print("{}, 现在时间戳".format( time.time()) )
@@ -123,3 +130,8 @@ def split_symbols(symbols):
 	sz = list(df[ df.s > 'sz' ]["s"])
 	sh = list(df[ df.s < 'sz' ]["s"])
 	return [ sz, sh ]
+
+def upper(dataList):
+	for i in range( 0, len(dataList) ):
+		dataList[i] = dataList[i].upper()
+	return dataList

@@ -27,7 +27,7 @@ import re
 
 
 class SinaLevel2WSProducer(Producer):
-	def __init__(self, name = None, username = None, pwd = None,raw = False, symbols = None, **kwargs):
+	def __init__(self, name = None, username = None, pwd = None,raw = False, symbols = None, query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
 		super().__init__( name=name, **kwargs )
 		if (username == None):
 			self.username = input('请输入新浪登录帐号：')
@@ -38,16 +38,16 @@ class SinaLevel2WSProducer(Producer):
 		else:
 			self.pwd = pwd
 		self.rsaPubkey = '10001'
-		self.ip = util._get_public_ip()
+		self.ip = util.get_client_ip()
 		self.session = requests.Session()
 		self.isLogin = self.login()
 		self.raw = raw
+		self.query = query
 		if symbols is None:
 			sina = V('Sina')
 			self.symbols = sina.get_symbols()
 		else:
 			self.symbols = symbols
-
 
 	def login(self):
 		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
@@ -108,10 +108,22 @@ class SinaLevel2WSProducer(Producer):
 	# 2cn_symbol_orders是挂单数据
 	# symbol_i是基本信息
 	def generate_qlist(self,qlist,symbol):
-		if qlist == '':
-			qlist = "2cn_%s,2cn_%s_0,2cn_%s_1,%s,%s_i,2cn_%s_orders" % (symbol,symbol,symbol,symbol,symbol,symbol)
-		else:
-			qlist = qlist + ',' + "2cn_%s,2cn_%s_0,2cn_%s_1,%s,%s_i,2cn_%s_orders" % (symbol,symbol,symbol,symbol,symbol,symbol)
+		if 'quotation' in self.query:
+			if qlist!='':
+				qlist += ','
+			qlist += "2cn_%s" % (symbol)
+		if 'orders' in self.query:
+			if qlist!='':
+				qlist += ','
+			qlist += "2cn_%s_orders" % (symbol)
+		if 'deal' in self.query:
+			if qlist!='':
+				qlist += ','
+			qlist += "2cn_%s_0,2cn_%s_1" % (symbol, symbol)
+		if 'info' in self.query:
+			if qlist!='':
+				qlist += ','
+			qlist += "2cn_%s_i" % (symbol)		
 		return qlist
 
 	def send(self, message, ws ):
@@ -242,7 +254,7 @@ class SinaLevel2WSProducer(Producer):
 		# symbolList = ['SZ300204,SZ000001']
 		threads = []
 		# Cut symbolList
-		step = 30
+		step = 15
 		symbolListSlice = [symbolList[ i : i + step] for i in range(0, len(symbolList), step)]
 		for symbolList in symbolListSlice:
 			loop = asyncio.new_event_loop()
@@ -251,6 +263,6 @@ class SinaLevel2WSProducer(Producer):
 		for t in threads:
 			t.setDaemon(True)
 			t.start()
-			print("开启线程：",t.name)
+			# print("开启线程：",t.name)
 		for t in threads:
 			t.join()
