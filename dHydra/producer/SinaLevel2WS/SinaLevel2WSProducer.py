@@ -254,7 +254,7 @@ class SinaLevel2WSProducer(Producer):
 		# symbolList = ['SZ300204,SZ000001']
 		threads = []
 		# Cut symbolList
-		step = 15
+		step = 13
 		symbolListSlice = [symbolList[ i : i + step] for i in range(0, len(symbolList), step)]
 		for symbolList in symbolListSlice:
 			loop = asyncio.new_event_loop()
