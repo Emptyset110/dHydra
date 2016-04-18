@@ -192,6 +192,7 @@ class SinaLevel2WSProducer(Producer):
 				yield from ws.send("*"+token)
 			except Exception as e:
 				print( "发送token失败, 原因： {}".format(e) )
+				continue
 			yield from asyncio.sleep(40)
 
 	"""
