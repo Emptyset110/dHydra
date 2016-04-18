@@ -8,6 +8,7 @@ Created on 03/27/2016
 """
 import multiprocessing
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
+from dHydra.core.Functions import get_logger
 import time
 from abc import ABCMeta
 import threading
@@ -16,10 +17,15 @@ class Producer(threading.Thread):
 	__metaclass__ = ABCMeta
 	def __init__(self, name, **kwargs):
 		super().__init__()
+		self.logger = self.get_logger()
 		self._name = name
 		self._subscriber = set()
 		self._active = False
 		self._running = False
+
+	def get_logger(self):
+		logger = get_logger(self.__class__.__name__)
+		return logger
 
 	def _activate(self):
 		self._active = True
@@ -29,7 +35,7 @@ class Producer(threading.Thread):
 		print(self._name,self._active)
 
 	def run(self):
-		print('[开启生产者]\t', self._name)
+		self.logger.info('[开启生产者]\t %s'% self._name)
 		self._running = True
 		while self._running:
 			self.handler()
@@ -46,7 +52,7 @@ class Producer(threading.Thread):
 		pass
 
 	def _end(self):
-		print("[Producer结束]", self._name)
+		self.logger.info("[Producer结束] %s" % self._name)
 		pass
 
 	# 添加订阅者
@@ -58,5 +64,5 @@ class Producer(threading.Thread):
 	def _remove_subscriber(self, queue):
 		self._subscriber.remove(queue)
 		if ( len(self._subscriber) == 0 ):
-			print("暂停Producer", self._name)
+			self.logger.info("暂停Producer %s" % self._name)
 			self._deactivate()

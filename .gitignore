@@ -1,4 +1,3 @@
 /dHydra.egg-info/*
 /dist/*
-/dHydra/__pycache__/*
-__pycache__
+__pycache__/

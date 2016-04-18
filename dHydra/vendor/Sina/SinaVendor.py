@@ -30,6 +30,7 @@ import getpass
 
 class SinaVendor(Vendor):
 	def __init__(self, username = None, pwd = None):
+		super().__init__()
 		self.session = requests.Session()
 		self.quote = None
 		self.isLogin = False

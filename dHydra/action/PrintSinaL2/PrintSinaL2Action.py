@@ -14,21 +14,19 @@ class PrintSinaL2Action(Action):
 			{	
 				"name"	:	"SinaLevel2WS"
 			,	"pName"	:	"PrintSinaL2.SinaLevel2-quotation"
-			,	"raw"	:	True	# 这是 SinaLevel2WSProducer的参数，若设置为True则将原始数据放入消息队列。推荐设置为True
-			# ,	"query"	:	['quotation']
+			,	"query"	:	['quotation']	#只获取10档行情
 			# ,	"symbols":  ["sz300344"]
 			}
 		# ,	{
 		# 		"name"	:	"SinaLevel2WS"
 		# 	,	"pName"	:	"PrintSinaL2.SinaLevel2-deal"
-		# 	,	"raw"	:	True	# 这是 SinaLevel2WSProducer的参数，若设置为True则将原始数据放入消息队列。推荐设置为True
 		# 	,	"query"	:	['deal']
 		# 	}
 		]
 		# 设置进程检查消息队列的间隔
 		self._interval = 0.1
 		super().__init__(name, **kwargs)
-		print(self._name,"初始化")
+		self.logger.info(self._name +"初始化")
 		self.count = 0
 
 	# 需要重写的方法
@@ -53,7 +51,7 @@ class PrintSinaL2Action(Action):
 		for data in dataList:
 			if (len(data[0])==12):	# quotation
 				wstype = 'quotation'
-				# self.count += 1
+				self.count += 1
 			elif ( (data[0][-2:]=='_0') | (data[0][-2:]=='_1') ):
 				wstype = 'deal'
 			elif ( data[0][-6:]=='orders' ):

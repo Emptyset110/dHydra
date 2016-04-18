@@ -10,7 +10,7 @@ import multiprocessing
 import time
 import threading
 from dHydra.core.Globals import *
-from dHydra.core.Functions import P
+from dHydra.core.Functions import *
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
 from abc import ABCMeta
 
@@ -18,6 +18,7 @@ class Action(threading.Thread):
 	__metaclass__ = ABCMeta
 	def __init__(self, name, **kwargs):
 		super().__init__()
+		self.logger = self.get_logger()
 		self._name = name
 		self._kwargs = kwargs
 		self._queue = multiprocessing.Queue()
@@ -38,6 +39,9 @@ class Action(threading.Thread):
 		self._running = False
 		self._auto_load_producers()
 
+	def get_logger(self):
+		logger = get_logger(self.__class__.__name__)
+		return logger
 
 	# action订阅producer
 	def _subscribe(self, instance):
