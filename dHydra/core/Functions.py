@@ -77,7 +77,7 @@ def P(name, pName, **kwargs):
 		# print(instance)
 		PRODUCER_NAME[pName] = instance
 		PRODUCER_HASH[producerHash] = instance
-		logger.info("生成Producer:\t",pName,"\t",className)
+		logger.info("生成Producer:\t{}\t{}".format(pName,className) )
 		return instance
 
 """

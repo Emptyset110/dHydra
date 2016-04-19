@@ -40,6 +40,8 @@ class SinaLevel2WSProducer(Producer):
 		self.rsaPubkey = '10001'
 		self.ip = util.get_client_ip()
 		self.session = requests.Session()
+		a = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=100)
+		self.session.mount("https://",a)
 		self.isLogin = self.login()
 		self.raw = raw
 		self.query = query
@@ -97,7 +99,7 @@ class SinaLevel2WSProducer(Producer):
 			URL_WSKT_TOKEN
 		,	params 	=	PARAM_WSKT_TOKEN(ip=self.ip,qlist=qlist)
 		,	headers =	HEADERS_WSKT_TOKEN()
-		,	verify	=	True
+		# ,	verify	=	True
 		,	timeout =	5
 		) )
 		req = yield from async_req
@@ -190,11 +192,17 @@ class SinaLevel2WSProducer(Producer):
 					yield from ws.send("*"+token)
 					self.logger.warning("token获取失败，正重试 %s" % threading.current_thread().name)
 
-			try:
-				yield from ws.send("*"+token)
-				yield from asyncio.sleep(40)
-			except Exception as e:
-				self.logger.error( "发送token失败, 原因： {} {}".format(e,threading.current_thread().name) )
+			trial = 0
+			while trial < 3:
+				try:
+					yield from ws.send("*"+token)
+					yield from asyncio.sleep(40)
+				except Exception as e:
+					if trial == 2:
+						trial += 1
+					self.logger.error( "发送token失败, 原因： {} {}".format(e,threading.current_thread().name) )
+				trial += 1
+			if trial == 4:	#说明3次发送都失败了，目测是websocket也关闭了，因此这个线程没有继续运行的必要了
 				break
 
 	"""
@@ -268,6 +276,6 @@ class SinaLevel2WSProducer(Producer):
 			t.setDaemon(True)
 			t.start()
 			self.logger.info("开启线程： %s" % t.name)
-			time.sleep(0.3)		# 开启线程的时候温柔一点，因为每个线程都会发出获取token的请求，挤在一起容易出错
+			time.sleep(0.2)		# 开启线程的时候温柔一点，因为每个线程都会发出获取token的请求，挤在一起容易出错
 		for t in threads:
 			t.join()

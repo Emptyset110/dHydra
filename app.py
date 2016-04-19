@@ -7,21 +7,26 @@ def init_loger():
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
+
+    # 屏幕日志打印设置
     consoleHandle = logging.StreamHandler()
     consoleHandle.setFormatter(formatter)
-    consoleHandle.setLevel(logging.DEBUG)
+    consoleHandle.setLevel(logging.ERROR)
     logger.addHandler(consoleHandle)
+
     if not os.path.exists('log'):
         os.makedirs('log')
-    #打开下面的输出到文件
-    # fileHandler = logging.FileHandler('log/error.log')
-    # fileHandler.setLevel(logging.ERROR)
-    # fileHandler2 = logging.FileHandler('log/log.log')
-    # fileHandler2.setLevel(logging.DEBUG)
+    # 打开下面的输出到文件
+    fileHandler = logging.FileHandler('log/error.log')
+    fileHandler.setLevel(logging.ERROR)
+    fileHandler.setFormatter(formatter)
+    fileHandler2 = logging.FileHandler('log/log.log')
+    fileHandler2.setLevel(logging.INFO)
+    fileHandler2.setFormatter(formatter)
     
-    # logger.setLevel(logging.DEBUG)
-    # logger.addHandler(fileHandler)
-    # logger.addHandler(fileHandler2)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(fileHandler)
+    logger.addHandler(fileHandler2)
 
 """
 初始化日志
