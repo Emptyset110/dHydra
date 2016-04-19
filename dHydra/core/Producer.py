@@ -8,10 +8,10 @@ Created on 03/27/2016
 """
 import multiprocessing
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
-from dHydra.core.Functions import get_logger
 import time
 from abc import ABCMeta
 import threading
+import logging
 
 class Producer(threading.Thread):
 	__metaclass__ = ABCMeta
@@ -24,7 +24,7 @@ class Producer(threading.Thread):
 		self._running = False
 
 	def get_logger(self):
-		logger = get_logger(self.__class__.__name__)
+		logger = logging.getLogger(self.__class__.__name__)
 		return logger
 
 	def _activate(self):
