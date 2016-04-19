@@ -1,4 +1,6 @@
 # -*- coding: utf8 -*-
+
+import logging
 from dHydra.core.Functions import *
 
 class Vendor:
@@ -6,5 +8,5 @@ class Vendor:
 		self.logger = self.get_logger()
 
 	def get_logger(self):
-		logger = get_logger(self.__class__.__name__)
+		logger = logging.getLogger(self.__class__.__name__)
 		return logger

@@ -9,6 +9,7 @@ Created on 03/30/2016
 import multiprocessing
 import time
 import threading
+import logging
 from dHydra.core.Globals import *
 from dHydra.core.Functions import *
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
@@ -40,7 +41,7 @@ class Action(threading.Thread):
 		self._auto_load_producers()
 
 	def get_logger(self):
-		logger = get_logger(self.__class__.__name__)
+		logger = logging.getLogger(self.__class__.__name__)
 		return logger
 
 	# action订阅producer
