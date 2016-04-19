@@ -151,7 +151,7 @@ class SinaLevel2WSProducer(Producer):
 
 		# 另开一个线程每40秒更新一次token，新建一个event_loop防止这个操作阻塞websocket
 		loopToken = asyncio.new_event_loop()
-		tasks = [ self.renew_token(ws, qlist) ]
+		tasks = [ self.renew_token(ws, qlist, token) ]
 		renewToken = threading.Timer(40, util.thread_loop, (loopToken,tasks) )
 		renewToken.start()
 		self.logger.info("开启线程：{} 为 {} 更新token".format(renewToken.name, threading.current_thread().name) )
@@ -177,12 +177,14 @@ class SinaLevel2WSProducer(Producer):
 	用于更新token的coroutine
 	"""
 	@asyncio.coroutine
-	def renew_token(self, ws, qlist):
+	def renew_token(self, ws, qlist, oldToken):
 		while True:
+			yield from ws.send("*"+oldToken)
 			retry = True
 			while retry:
 				try:
 					token = yield from self.get_ws_token(qlist)
+					oldToken = token
 					retry = False
 				except Exception as e:
 					self.logger.warning("token获取失败，正重试 %s" % threading.current_thread().name)
