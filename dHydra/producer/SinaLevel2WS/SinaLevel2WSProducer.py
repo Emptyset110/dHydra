@@ -187,6 +187,7 @@ class SinaLevel2WSProducer(Producer):
 					oldToken = token
 					retry = False
 				except Exception as e:
+					yield from ws.send("*"+token)
 					self.logger.warning("token获取失败，正重试 %s" % threading.current_thread().name)
 
 			try:
