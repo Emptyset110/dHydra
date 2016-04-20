@@ -189,7 +189,7 @@ class SinaLevel2WSProducer(Producer):
 					oldToken = token
 					retry = False
 				except Exception as e:
-					yield from ws.send("*"+token)
+					yield from ws.send("*"+oldToken)
 					self.logger.warning("token获取失败，正重试 %s" % threading.current_thread().name)
 
 			trial = 0
@@ -276,6 +276,6 @@ class SinaLevel2WSProducer(Producer):
 			t.setDaemon(True)
 			t.start()
 			self.logger.info("开启线程： %s" % t.name)
-			time.sleep(0.2)		# 开启线程的时候温柔一点，因为每个线程都会发出获取token的请求，挤在一起容易出错
+			time.sleep(0.3)		# 开启线程的时候温柔一点，因为每个线程都会发出获取token的请求，挤在一起容易出错
 		for t in threads:
 			t.join()
