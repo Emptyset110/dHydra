@@ -72,8 +72,8 @@ PARAM_PRELOGIN = lambda su : {
 ,	"client"		:	CLIENT
 ,	"_"				:	int(time.time()*1000)
 }
-PARAM_WSKT_TOKEN = lambda ip, qlist: {
-	"query"	:	"hq_pjb"
+PARAM_WSKT_TOKEN = lambda ip, qlist, hq: {
+	"query"	:	hq
 ,	"ip"	:	ip
 ,	"_"		:	random.uniform(0.1,0.2)
 ,	"kick"	:	1

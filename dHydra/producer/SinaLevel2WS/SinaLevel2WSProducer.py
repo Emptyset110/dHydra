@@ -25,9 +25,9 @@ import threading
 import functools
 import re
 
-
+# 如果是标准版用户可以设置hq = 'A_hq'
 class SinaLevel2WSProducer(Producer):
-	def __init__(self, name = None, username = None, pwd = None,raw = True, symbols = None, query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
+	def __init__(self, name = None, username = None, pwd = None, hq = 'hq_pjb', symbols = None, query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
 		super().__init__( name=name, **kwargs )
 		if (username == None):
 			self.username = input('请输入新浪登录帐号：')
@@ -43,7 +43,8 @@ class SinaLevel2WSProducer(Producer):
 		a = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=100)
 		self.session.mount("https://",a)
 		self.isLogin = self.login()
-		self.raw = raw
+
+		self.hq = hq
 		self.query = query
 		if symbols is None:
 			sina = V('Sina')
@@ -97,14 +98,15 @@ class SinaLevel2WSProducer(Producer):
 		loop = asyncio.get_event_loop()
 		async_req = loop.run_in_executor(None, functools.partial( self.session.get, 
 			URL_WSKT_TOKEN
-		,	params 	=	PARAM_WSKT_TOKEN(ip=self.ip,qlist=qlist)
+		,	params 	=	PARAM_WSKT_TOKEN(ip=self.ip,qlist=qlist, hq = self.hq)
 		,	headers =	HEADERS_WSKT_TOKEN()
-		# ,	verify	=	True
-		,	timeout =	5
+		,	timeout =	10
 		) )
 		req = yield from async_req
-		token = req.text[45:-17]
-		return token
+		self.logger.info(req.text)
+		response = re.findall(r'(\{.*\})',req.text)[0]
+		response = json.loads( response.replace(',',',"').replace('{','{"').replace(':','":') )
+		return response
 
 	# 2cn_是3秒一条的Level2 10档行情
 	# 2cn_symbol_0,2cn_symbol_1是逐笔数据
@@ -135,8 +137,12 @@ class SinaLevel2WSProducer(Producer):
 		retry = True
 		while retry:
 			try:
-				token = yield from self.get_ws_token(qlist)
-				retry = False
+				response = yield from self.get_ws_token(qlist)
+				if response["msg_code"] == 1:
+					token = response["result"]
+					retry = False
+				else:
+					self.logger.error(response["result"])
 			except Exception as e:
 				self.logger.warning(e)
 
@@ -154,7 +160,7 @@ class SinaLevel2WSProducer(Producer):
 		# 另开一个线程每40秒更新一次token，新建一个event_loop防止这个操作阻塞websocket
 		loopToken = asyncio.new_event_loop()
 		tasks = [ self.renew_token(ws, qlist, token) ]
-		renewToken = threading.Timer(40, util.thread_loop, (loopToken,tasks) )
+		renewToken = threading.Timer(20, util.thread_loop, (loopToken,tasks) )
 		renewToken.start()
 		self.logger.info("开启线程：{} 为 {} 更新token".format(renewToken.name, threading.current_thread().name) )
 
@@ -162,9 +168,6 @@ class SinaLevel2WSProducer(Producer):
 			try:
 				message = yield from ws.recv()
 				# 如果要的不是原始数据
-				if self.raw == False:
-					message = self.ws_parse(message = message)
-
 				event = Event(eventType = 'SinaLevel2WS', data = message)
 				
 				for q in self._subscriber:
@@ -181,26 +184,34 @@ class SinaLevel2WSProducer(Producer):
 	@asyncio.coroutine
 	def renew_token(self, ws, qlist, oldToken):
 		while True:
-			yield from ws.send("*"+oldToken)
+			yield from ws.send("")
+			self.logger.info("websocket Send:")
 			retry = True
 			while retry:
 				try:
-					token = yield from self.get_ws_token(qlist)
-					oldToken = token
-					retry = False
+					response = yield from self.get_ws_token(qlist)
+					if response["msg_code"] == 1:
+						token = response["result"]
+						retry = False
+					else:
+						self.logger.info(response["result"])
+						yield from ws.send("")
+						self.logger.info("Sent:")
 				except Exception as e:
-					yield from ws.send("*"+oldToken)
+					yield from ws.send("")
+					self.logger.info("Sent:")
 					self.logger.warning("token获取失败，正重试 %s" % threading.current_thread().name)
 
 			trial = 0
 			while trial < 3:
 				try:
 					yield from ws.send("*"+token)
+					self.logger.info("Sent:*"+token)
 					yield from asyncio.sleep(40)
-				except Exception as e:
+				except ConnectionClosed as e:
 					if trial == 2:
 						trial += 1
-					self.logger.error( "发送token失败, 原因： {} {}".format(e,threading.current_thread().name) )
+					self.logger.error( "发送token失败第{}次, 原因： {} {}".format(trial,e,threading.current_thread().name) )
 				trial += 1
 			if trial == 4:	#说明3次发送都失败了，目测是websocket也关闭了，因此这个线程没有继续运行的必要了
 				break
@@ -220,44 +231,6 @@ class SinaLevel2WSProducer(Producer):
 			asyncio.set_event_loop( loop )
 		loop.run_until_complete( self.create_ws(qlist,symbol=symbol, loop=loop) )
 		loop.close()
-
-
-	"""
-	用于解析Sina l2的函数
-	"""
-	def ws_parse(self, message):
-		dataList = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|_orders|_i)?)(?:=)(.*)(?:\n))',message)
-		result = list()
-		for data in dataList:
-			if (len(data[0])==12):	# quotation
-				wstype = 'quotation'
-			elif ( (data[0][-2:]=='_0') | (data[0][-2:]=='_1') ):
-				wstype = 'deal'
-			elif ( data[0][-6:]=='orders' ):
-				wstype = 'orders'
-			elif ( (data[0][-2:]=='_i') ):
-				wstype = 'info'
-			else:
-				wstype = 'unknown'
-			result = self.ws_parse_to_list(wstype=wstype,symbol=data[1],data=data[2],result=result)
-		return result
-
-	def ws_parse_to_list(self,wstype,symbol,data,result):
-		data = data.split(',')
-		if (wstype == 'deal'):
-			for d in data:
-				x = list()
-				x.append(wstype)
-				x.append(symbol)
-				x.extend( d.split('|') )
-				result.append(x)
-		else:
-			x = list()
-			x.append(wstype)
-			x.append(symbol)
-			x.extend(data)
-			result.append(x)
-		return result
 
 	def handler(self):
 		# 首先从新浪获取股票列表
