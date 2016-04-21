@@ -190,7 +190,11 @@ class SinaLevel2WSProducer(Producer):
 				self.logger.info(response["result"])
 		except Exception as e:
 			self.websockets[ symbol ]["trialTime"] += 1
-			yield from self.websockets[ symbol ]["ws"].send("")
+			try:
+				if self.websockets[ symbol ]["ws"].open:
+					yield from self.websockets[ symbol ]["ws"].send("")
+			except Exception:
+				pass
 			self.logger.warning("token获取失败第{}次，待会儿重试".format( self.websockets[ symbol ]["trialTime"] ))
 
 
@@ -244,7 +248,7 @@ class SinaLevel2WSProducer(Producer):
 			for symbol in self.websockets.keys():
 				ws = self.websockets[ symbol ]["ws"]
 				if ws.open:
-					if (datetime.now()-self.websockets[ symbol ]["renewed"]).total_seconds()>100:
+					if (datetime.now()-self.websockets[ symbol ]["renewed"]).total_seconds()>60:
 						tasks.append( self.renew_token( symbol ) )
 
 			if len(tasks)>0:
