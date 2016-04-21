@@ -190,7 +190,7 @@ class SinaLevel2WSProducer(Producer):
 				self.logger.info(response["result"])
 		except Exception as e:
 			self.websockets[ symbol ]["trialTime"] += 1
-			yield from self.websockets[ symbol ].send("")
+			yield from self.websockets[ symbol ]["ws"].send("")
 			self.logger.warning("token获取失败第{}次，待会儿重试".format( self.websockets[ symbol ]["trialTime"] ))
 
 
