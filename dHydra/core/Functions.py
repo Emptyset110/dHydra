@@ -14,7 +14,6 @@ from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
 import os
 import logging
 
-
 print("加载：Functions.py")
 
 
@@ -35,8 +34,10 @@ def V(name, vName = None):
 			instance = getattr( __import__("dHydra."+name, globals(),locals(),[className], 0), className )()
 		except Exception as e:
 			logger.critical(e)
+			pass
 	except Exception as e:
 		logger.critical(e)
+		pass
 
 	return instance
 
@@ -97,6 +98,8 @@ def A(name, aName = None, **kwargs):
 			return getattr( __import__("dHydra." + name, globals(),locals(),[className], 0), className )(name=aName, **kwargs)
 		except Exception as e:
 			logger.critical(e)
+			print(e)
+			pass
 
 """
 根据pName或者hash获取已经生成的Producer实例

@@ -53,7 +53,6 @@ class Producer(threading.Thread):
 
 	def _end(self):
 		self.logger.info("[Producer结束] %s" % self._name)
-		pass
 
 	# 添加订阅者
 	def _add_subscriber(self, queue):

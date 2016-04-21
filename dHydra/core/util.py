@@ -18,6 +18,7 @@ import ntplib
 from pandas import DataFrame
 from pymongo import MongoClient
 import re
+import random
 
 def _code_to_symbol(code):
 	"""
@@ -50,6 +51,7 @@ def get_client_ip():
 
 # 用于将一个loop交给一个线程来完成一些任务
 def thread_loop(loop, tasks):
+	# loop = asyncio.new_event_loop()
 	asyncio.set_event_loop(loop)
 	loop.run_until_complete( asyncio.wait(tasks) )
 	loop.close()

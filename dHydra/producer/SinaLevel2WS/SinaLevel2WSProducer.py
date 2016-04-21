@@ -25,9 +25,8 @@ import threading
 import functools
 import re
 
-# 如果是标准版用户可以设置hq = 'A_hq'
 class SinaLevel2WSProducer(Producer):
-	def __init__(self, name = None, username = None, pwd = None, hq = 'hq_pjb', symbols = None, query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
+	def __init__(self, name = None, username = None, pwd = None, symbols = None, hq = 'hq_pjb', query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
 		super().__init__( name=name, **kwargs )
 		if (username == None):
 			self.username = input('请输入新浪登录帐号：')
@@ -40,17 +39,15 @@ class SinaLevel2WSProducer(Producer):
 		self.rsaPubkey = '10001'
 		self.ip = util.get_client_ip()
 		self.session = requests.Session()
-		a = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=100)
-		self.session.mount("https://",a)
-		self.isLogin = self.login()
-
 		self.hq = hq
+		self.isLogin = self.login()
 		self.query = query
 		if symbols is None:
 			sina = V('Sina')
 			self.symbols = sina.get_symbols()
 		else:
 			self.symbols = symbols
+		self.websockets = dict()
 
 	def login(self):
 		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
@@ -128,127 +125,146 @@ class SinaLevel2WSProducer(Producer):
 		if 'info' in self.query:
 			if qlist!='':
 				qlist += ','
-			qlist += "2cn_%s_i" % (symbol)		
+			qlist += "%s_i" % (symbol)		
 		return qlist
 
 	@asyncio.coroutine
-	def create_ws(self, qlist, symbol, loop ):
-		asyncio.set_event_loop(loop)
+	def create_ws(self, qlist, symbolList ):
 		retry = True
 		while retry:
 			try:
 				response = yield from self.get_ws_token(qlist)
 				if response["msg_code"] == 1:
 					token = response["result"]
+					self.logger.info("成功获取到token, symbolList = {}".format(symbolList) )
 					retry = False
 				else:
-					self.logger.error(response["result"])
+					self.logger.info(response["result"])
 			except Exception as e:
 				self.logger.warning(e)
 
 		url_wss = 'wss://ff.sinajs.cn/wskt?token=' + token + '&list=' + qlist
 
-		start = datetime.now()
-		retry = True
-		while retry:
+		while True:	# 建立websocket连接
 			try:
 				ws = yield from websockets.connect(url_wss)
-				retry = False
+				self.websockets[ symbolList[0] ] = dict()
+				self.websockets[ symbolList[0] ]["ws"] = ws
+				self.websockets[ symbolList[0] ]["qlist"] = qlist
+				self.websockets[ symbolList[0] ]["token"] = token
+				self.websockets[ symbolList[0] ]["renewed"] = datetime.now()
+				self.websockets[ symbolList[0] ]["tokenSent"] = True
+				self.logger.info("成功建立ws连接, {}, symbolList = {}".format(threading.current_thread().name, symbolList))
+				break
 			except Exception as e:
-				self.logger.warning("重试 websockets.connect , %s " % threading.current_thread().name )
-
-		# 另开一个线程每40秒更新一次token，新建一个event_loop防止这个操作阻塞websocket
-		loopToken = asyncio.new_event_loop()
-		tasks = [ self.renew_token(ws, qlist, token) ]
-		renewToken = threading.Timer(20, util.thread_loop, (loopToken,tasks) )
-		renewToken.start()
-		self.logger.info("开启线程：{} 为 {} 更新token".format(renewToken.name, threading.current_thread().name) )
+				self.logger.warning("重试 websockets.connect , {}, symbolList = {}".format(threading.current_thread().name, symbolList) )
 
 		while self._active:
 			try:
 				message = yield from ws.recv()
-				# 如果要的不是原始数据
+				# if message[0:3] != '2cn':
+				# 	self.logger.error("{}, symbolList = {}".format(message,symbolList) )
 				event = Event(eventType = 'SinaLevel2WS', data = message)
-				
+
 				for q in self._subscriber:
 					q.put(event)
 
 			except Exception as e:
 				self.logger.error("{},{}".format(e, threading.current_thread().name) )
 				ws.close()
-				yield from self.create_ws(qlist = qlist,symbol = symbol,loop=loop)
-	
-	"""
-	用于更新token的coroutine
-	"""
+				yield from self.create_ws(qlist = qlist, symbolList = symbolList)
+
 	@asyncio.coroutine
-	def renew_token(self, ws, qlist, oldToken):
-		while True:
-			yield from ws.send("")
-			self.logger.info("websocket Send:")
-			retry = True
-			while retry:
-				try:
-					response = yield from self.get_ws_token(qlist)
-					if response["msg_code"] == 1:
-						token = response["result"]
-						retry = False
-					else:
-						self.logger.info(response["result"])
-						yield from ws.send("")
-						self.logger.info("Sent:")
-				except Exception as e:
-					yield from ws.send("")
-					self.logger.info("Sent:")
-					self.logger.warning("token获取失败，正重试 %s" % threading.current_thread().name)
+	def renew_token(self, symbol):
+		try:
+			response = yield from self.get_ws_token( self.websockets[ symbol ]["qlist"] )
+			if response["msg_code"] == 1:
+				token = response["result"]
+				self.websockets[ symbol ]["token"] = token
+				self.websockets[ symbol ]["renewed"] = datetime.now()
+				self.websockets[ symbol ]["tokenSent"] = False
+			else:
+				self.logger.info(response["result"])
+		except Exception as e:
+			self.logger.warning("token获取失败，待会儿重试")
 
-			trial = 0
-			while trial < 3:
-				try:
-					yield from ws.send("*"+token)
-					self.logger.info("Sent:*"+token)
-					yield from asyncio.sleep(40)
-				except ConnectionClosed as e:
-					if trial == 2:
-						trial += 1
-					self.logger.error( "发送token失败第{}次, 原因： {} {}".format(trial,e,threading.current_thread().name) )
-				trial += 1
-			if trial == 4:	#说明3次发送都失败了，目测是websocket也关闭了，因此这个线程没有继续运行的必要了
-				break
 
-	"""
-	供线程调用的开启新浪WebSocket的方法
-	"""
-	def start_ws(self, symbolList = None, loop = None ):
+	def websocket_creator(self):
+		loop = asyncio.new_event_loop()
 		asyncio.set_event_loop(loop)
-		qlist = ''
-		for symbol in symbolList:
-			qlist = self.generate_qlist(qlist=qlist,symbol=symbol)
-
-		qlist = qlist.lower()
-		if loop.is_running():
-			loop = asyncio.new_event_loop()
-			asyncio.set_event_loop( loop )
-		loop.run_until_complete( self.create_ws(qlist,symbol=symbol, loop=loop) )
-		loop.close()
-
-	def handler(self):
 		# 首先从新浪获取股票列表
 		symbolList = self.symbols
-		# symbolList = ['SZ300204,SZ000001']
-		threads = []
 		# Cut symbolList
 		weight = (len(self.query)+1) if ('deal' in self.query) else len(self.query)
 		step = int(64/weight)
 		symbolListSlice = [symbolList[ i : i + step] for i in range(0, len(symbolList), step)]
+
+		tasks = list()
 		for symbolList in symbolListSlice:
+			qlist = ''
+			for symbol in symbolList:
+				qlist = self.generate_qlist(qlist=qlist,symbol=symbol)
+			qlist = qlist.lower()
+			tasks.append( self.create_ws(qlist,symbolList = symbolList) )
+
+		loop.run_until_complete( asyncio.wait(tasks) )
+		loop.close()
+
+	# 用于定时发送空字符串或者token
+	def token_sender(self):
+		while True:
+			self.logger.info("开启话唠模式每30秒的定时与服务器聊天")
+			start = datetime.now()
+			tasks = list()
 			loop = asyncio.new_event_loop()
-			t = threading.Thread(target = self.start_ws,args=(symbolList,loop) )
-			threads.append(t)
-		for t in threads:
-			t.setDaemon(True)
-			t.start()
-			self.logger.info("开启线程： %s" % t.name)
-			time.sleep(0.3)		# 开启线程的时候温柔一点，因为每个线程都会发出获取token的请求，挤在一起容易出错
-		for t in threads:
-			t.join()
+			asyncio.set_event_loop(loop)
+
+			for symbol in self.websockets.keys():
+				ws = self.websockets[ symbol ]["ws"]
+				if ws.open:
+					if self.websockets[symbol]["tokenSent"]:
+						tasks.append( ws.send("") )
+						# self.logger.info( "websocket send:" )
+					else:
+						tasks.append( ws.send("*" + self.websockets[ symbol ][ "token" ]) )
+						self.logger.info( "websocket send:*"+self.websockets[ symbol ][ "token" ] )
+						self.websockets[symbol]["tokenSent"] = True
+
+			if len(tasks)>0:
+				loop.run_until_complete( asyncio.wait(tasks) )
+				loop.close()
+			self.logger.info("消息全部发送完毕. 耗时：%s" % (datetime.now()-start).total_seconds() )
+			time.sleep(30)
+
+	# 持续检查一次更新token
+	def token_renewer(self):
+		while True:
+			loop = asyncio.new_event_loop()
+			asyncio.set_event_loop(loop)
+			tasks = list()
+			for symbol in self.websockets.keys():
+				ws = self.websockets[ symbol ]["ws"]
+				if ws.open:
+					if (datetime.now()-self.websockets[ symbol ]["renewed"]).total_seconds()>100:
+						tasks.append( self.renew_token( symbol ) )
+
+			if len(tasks)>0:
+				loop.run_until_complete( asyncio.wait(tasks) )
+				loop.close()
+			time.sleep(1)
+
+	def handler(self):
+		# 开启token manager
+		tokenRenewer = threading.Thread( target = self.token_renewer )
+		tokenSender = threading.Thread( target = self.token_sender )
+
+		# creatorLoop = asyncio.new_event_loop()
+		websocketCreator = threading.Thread( target = self.websocket_creator )
+
+		tokenRenewer.start()		# 用于更新token
+		tokenSender.start()			# 用于定时发送token
+		websocketCreator.start()	# 用于建立websocket并接收消息
+
+		tokenRenewer.join()
+		tokenSender.join()
+		websocketCreator.join()

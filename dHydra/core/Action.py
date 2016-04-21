@@ -70,8 +70,9 @@ class Action(threading.Thread):
 		print('[开启Action]\t', self._name)
 		while self._running:
 			if self._active:
-				timer = threading.Timer(0, self.handler)
-				timer.start()
+				t = threading.Thread( target=self.handler )
+				t.start()
+				# t.join()
 			time.sleep(self._interval)
 		self._end()
 
