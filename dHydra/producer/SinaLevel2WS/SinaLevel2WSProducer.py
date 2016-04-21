@@ -97,7 +97,7 @@ class SinaLevel2WSProducer(Producer):
 			URL_WSKT_TOKEN
 		,	params 	=	PARAM_WSKT_TOKEN(ip=self.ip,qlist=qlist, hq = self.hq)
 		,	headers =	HEADERS_WSKT_TOKEN()
-		,	timeout =	10
+		,	timeout =	5
 		) )
 		req = yield from async_req
 		self.logger.info(req.text)
@@ -154,6 +154,7 @@ class SinaLevel2WSProducer(Producer):
 				self.websockets[ symbolList[0] ]["token"] = token
 				self.websockets[ symbolList[0] ]["renewed"] = datetime.now()
 				self.websockets[ symbolList[0] ]["tokenSent"] = True
+				self.websockets[ symbolList[0] ]["trialTime"] = 0
 				self.logger.info("成功建立ws连接, {}, symbolList = {}".format(threading.current_thread().name, symbolList))
 				break
 			except Exception as e:
@@ -183,10 +184,13 @@ class SinaLevel2WSProducer(Producer):
 				self.websockets[ symbol ]["token"] = token
 				self.websockets[ symbol ]["renewed"] = datetime.now()
 				self.websockets[ symbol ]["tokenSent"] = False
+				self.websockets[ symbol ]["trialTime"] = 0
 			else:
+				self.websockets[ symbol ]["trialTime"] += 1
 				self.logger.info(response["result"])
 		except Exception as e:
-			self.logger.warning("token获取失败，待会儿重试")
+			self.websockets[ symbol ]["trialTime"] += 1
+			self.logger.warning("token获取失败第{}次，待会儿重试".format( self.websockets[ symbol ]["trialTime"] ))
 
 
 	def websocket_creator(self):
