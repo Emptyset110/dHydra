@@ -153,7 +153,7 @@ class SinaLevel2WSProducer(Producer):
 				self.websockets[ symbolList[0] ]["qlist"] = qlist
 				self.websockets[ symbolList[0] ]["token"] = token
 				self.websockets[ symbolList[0] ]["renewed"] = datetime.now()
-				self.websockets[ symbolList[0] ]["tokenSent"] = True
+				# self.websockets[ symbolList[0] ]["tokenSent"] = True
 				self.websockets[ symbolList[0] ]["trialTime"] = 0
 				self.logger.info("成功建立ws连接, {}, symbolList = {}".format(threading.current_thread().name, symbolList))
 				break
@@ -183,7 +183,7 @@ class SinaLevel2WSProducer(Producer):
 				token = response["result"]
 				self.websockets[ symbol ]["token"] = token
 				self.websockets[ symbol ]["renewed"] = datetime.now()
-				self.websockets[ symbol ]["tokenSent"] = False
+				yield from self.websockets[ symbol ]["ws"].send("*"+token)
 				self.websockets[ symbol ]["trialTime"] = 0
 			else:
 				self.websockets[ symbol ]["trialTime"] += 1
@@ -215,10 +215,10 @@ class SinaLevel2WSProducer(Producer):
 		loop.run_until_complete( asyncio.wait(tasks) )
 		loop.close()
 
-	# 用于定时发送空字符串或者token
+	# 用于定时发送空字符串
 	def token_sender(self):
 		while True:
-			self.logger.info("开启话唠模式每30秒的定时与服务器聊天")
+			self.logger.info("开启话唠模式每55秒的定时与服务器聊天")
 			start = datetime.now()
 			tasks = list()
 			loop = asyncio.new_event_loop()
@@ -227,19 +227,13 @@ class SinaLevel2WSProducer(Producer):
 			for symbol in self.websockets.keys():
 				ws = self.websockets[ symbol ]["ws"]
 				if ws.open:
-					if self.websockets[symbol]["tokenSent"]:
-						tasks.append( ws.send("") )
-						# self.logger.info( "websocket send:" )
-					else:
-						tasks.append( ws.send("*" + self.websockets[ symbol ][ "token" ]) )
-						self.logger.info( "websocket send:*"+self.websockets[ symbol ][ "token" ] )
-						self.websockets[symbol]["tokenSent"] = True
+					tasks.append( ws.send("") )
 
 			if len(tasks)>0:
 				loop.run_until_complete( asyncio.wait(tasks) )
 				loop.close()
 			self.logger.info("消息全部发送完毕. 耗时：%s" % (datetime.now()-start).total_seconds() )
-			time.sleep(30)
+			time.sleep(55)
 
 	# 持续检查一次更新token
 	def token_renewer(self):
