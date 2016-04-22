@@ -39,10 +39,10 @@ URL_XUEQIU_QUOTE_ORDER = lambda page,columns,stockType : "https://xueqiu.com/sto
 CONST_XUEQIU_QUOTE_ORDER_COLUMN = "symbol,name,current,chg,percent,last_close,open,high,low,volume,amount,market_capital,pe_ttm,high52w,low52w,hasexist"
 
 # 用于获取k线
-# fq_type: before,normal,after,
+# fqType: before,normal,after,
 # start,end: 13位时间戳
 # period = 1day(1d),5day(5d),1week,1month
-URL_XUEQIU_KLINE = lambda symbol,period,fq_type,begin,end: "https://xueqiu.com/stock/forchartk/stocklist.json?symbol=%s&period=%s&type=%s&begin=%s&end=%s&_=%s" % ( symbol,period,fq_type,begin,end,int(time.time()*1000) )
+URL_XUEQIU_KLINE = lambda symbol,period,fqType,begin,end: "https://xueqiu.com/stock/forchartk/stocklist.json?symbol=%s&period=%s&type=%s&begin=%s&end=%s&_=%s" % ( symbol,period,fqType,begin,end,int(time.time()*1000) )
 URL_XUEQIU_CHART = lambda symbol,period: "https://xueqiu.com/stock/forchart/stocklist.json?symbol=%s&period=%s&one_min=1&_%s" % ( symbol,period,int(time.time()*1000) )
 
 # 用于获取基本面或者实时quote
