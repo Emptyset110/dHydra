@@ -24,6 +24,7 @@ import asyncio
 import threading
 import functools
 import re
+import gc
 
 class SinaLevel2WSProducer(Producer):
 	def __init__(self, name = None, username = None, pwd = None, symbols = None, hq = 'hq_pjb', query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
@@ -103,6 +104,7 @@ class SinaLevel2WSProducer(Producer):
 		self.logger.info(req.text)
 		response = re.findall(r'(\{.*\})',req.text)[0]
 		response = json.loads( response.replace(',',',"').replace('{','{"').replace(':','":') )
+		gc.collect()
 		return response
 
 	# 2cn_是3秒一条的Level2 10档行情
@@ -159,6 +161,8 @@ class SinaLevel2WSProducer(Producer):
 			except Exception as e:
 				self.logger.warning("重试 websockets.connect , {}, symbolList = {}".format(threading.current_thread().name, symbolList) )
 
+		# gc.collect()
+
 		while self._active:
 			try:
 				message = yield from ws.recv()
@@ -193,6 +197,7 @@ class SinaLevel2WSProducer(Producer):
 			except Exception:
 				pass
 			self.logger.warning("token获取失败第{}次，待会儿重试".format( self.websockets[ symbol ]["trialTime"] ))
+		gc.collect()
 
 
 	def websocket_creator(self):
@@ -252,6 +257,7 @@ class SinaLevel2WSProducer(Producer):
 				loop.run_until_complete( asyncio.wait(tasks) )
 				loop.close()
 			time.sleep(1)
+			gc.collect()
 
 
 	def handler(self):
