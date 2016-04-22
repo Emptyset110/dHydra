@@ -191,11 +191,6 @@ class SinaLevel2WSProducer(Producer):
 				self.logger.info(response["result"])
 		except Exception as e:
 			self.websockets[ symbol ]["trialTime"] += 1
-			try:
-				if self.websockets[ symbol ]["ws"].open:
-					yield from self.websockets[ symbol ]["ws"].send("")
-			except Exception:
-				pass
 			self.logger.warning("token获取失败第{}次，待会儿重试".format( self.websockets[ symbol ]["trialTime"] ))
 		gc.collect()
 

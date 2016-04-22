@@ -93,6 +93,9 @@ def datetime_to_timestamp(dt, timeFormat = 'ms'):
 def date_to_timestamp(date, dateFormat = '%Y-%m-%d', timeFormat = 'ms'):
 	return datetime_to_timestamp( dt = datetime.strptime(date, dateFormat) , timeFormat = timeFormat)
 
+def string_to_date(date):
+	return datetime.strptime(date, "%Y-%m-%d").date()
+
 def timestamp_to_datetime(timestamp, timeFormat='ms'):
 	if timeFormat == 'ms':
 		timestamp = timestamp/1000
