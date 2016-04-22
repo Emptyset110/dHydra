@@ -153,7 +153,6 @@ class SinaLevel2WSProducer(Producer):
 				self.websockets[ symbolList[0] ]["qlist"] = qlist
 				self.websockets[ symbolList[0] ]["token"] = token
 				self.websockets[ symbolList[0] ]["renewed"] = datetime.now()
-				# self.websockets[ symbolList[0] ]["tokenSent"] = True
 				self.websockets[ symbolList[0] ]["trialTime"] = 0
 				self.logger.info("成功建立ws连接, {}, symbolList = {}".format(threading.current_thread().name, symbolList))
 				break
@@ -163,8 +162,6 @@ class SinaLevel2WSProducer(Producer):
 		while self._active:
 			try:
 				message = yield from ws.recv()
-				# if message[0:3] != '2cn':
-				# 	self.logger.error("{}, symbolList = {}".format(message,symbolList) )
 				event = Event(eventType = 'SinaLevel2WS', data = message)
 
 				for q in self._subscriber:
@@ -231,7 +228,7 @@ class SinaLevel2WSProducer(Producer):
 			for symbol in self.websockets.keys():
 				ws = self.websockets[ symbol ]["ws"]
 				if ws.open:
-					tasks.append( ws.send("") )
+					tasks.append( ws.send("*"+self.websockets[symbol]["token"]) )
 
 			if len(tasks)>0:
 				loop.run_until_complete( asyncio.wait(tasks) )
@@ -248,13 +245,14 @@ class SinaLevel2WSProducer(Producer):
 			for symbol in self.websockets.keys():
 				ws = self.websockets[ symbol ]["ws"]
 				if ws.open:
-					if (datetime.now()-self.websockets[ symbol ]["renewed"]).total_seconds()>60:
+					if (datetime.now()-self.websockets[ symbol ]["renewed"]).total_seconds()>180:
 						tasks.append( self.renew_token( symbol ) )
 
 			if len(tasks)>0:
 				loop.run_until_complete( asyncio.wait(tasks) )
 				loop.close()
 			time.sleep(1)
+
 
 	def handler(self):
 		# 开启token manager
