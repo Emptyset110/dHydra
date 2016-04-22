@@ -9,7 +9,10 @@
 **dHydra数据QQ群：458920407**
 
 > 传送门：如果是为了新浪Level2 10档盘口和逐笔推送实时行情来到这里的
+> 
 > 直接参考：http://doc.dhydra.org/built-in-producers/sinalevel2ws.html
+>
+> 2016-04-22 SinaLevel2WS模块做了一些大改动。在此之前的版本连接Level2行情会不稳定。请更新一下。
 
 # 使用对象
 - 正在学习使用python进行数据分析/数据挖掘的同学
