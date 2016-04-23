@@ -77,7 +77,7 @@ python app.py
 > 好吧万一你没想调用新浪Level2，那么我这个Quick Start的例子就太无聊了。所以我们看看还有哪些现成的实用功能。
 
 #### 如果我不想要复杂的框架功能，只想调用一些数据到我的代码里该怎么做？
-所有的Vendor模块是可以被单独调用的。假设你已经用pip安装好dHydra了。我们翻阅一下[文档中关于Vendor的内容](built-in-vendors/Xueqiu.html)...嗯，好像有个叫Xueqiu的和Sina的Vendor，Vendor在这里泛指数据的供应者。我们先尝试一下SinaVendor
+所有的Vendor模块是可以被单独调用的。假设你已经用pip安装好dHydra了。我们翻阅一下[文档中关于Vendor的内容](http://doc.dhydra.org/built-in-vendors/Xueqiu.html)...嗯，好像有个叫Xueqiu的和Sina的Vendor，Vendor在这里泛指数据的供应者。我们先尝试一下SinaVendor
 ```
 from dHydra.core.Functions import *
 
