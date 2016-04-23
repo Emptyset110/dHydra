@@ -36,6 +36,7 @@ class SinaVendor(Vendor):
 		self.isLogin = False
 		self.username = username
 		self.pwd = pwd
+		self.symbols = self.get_symbols()
 
 	# RSA2 encoding
 	def get_sp(self, passwd, pubkey, servertime, nonce):
@@ -119,7 +120,7 @@ class SinaVendor(Vendor):
 	def get_realtime_quotes(self, symbols = None, dataframe = True, loop = None, split = False):
 		self.quote = None
 		if symbols is None:
-			symbols = self.get_symbols()
+			symbols = self.symbols
 		if loop is None:
 			loop = asyncio.get_event_loop()
 		else:
