@@ -6,7 +6,7 @@ import traceback
 import sys
 import os
 
-print("加载：app.py")
+# print("加载：app.py")
 
 from dHydra.core.Globals import *
 from dHydra.core.Functions import *
@@ -19,4 +19,3 @@ def start_action(actionList):
 		actionDict[action].start()
 	for action in actionList:
 		actionDict[action].join()
-

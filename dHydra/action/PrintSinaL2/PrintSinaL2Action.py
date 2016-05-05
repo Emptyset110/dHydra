@@ -15,8 +15,8 @@ class PrintSinaL2Action(Action):
 			{	
 				"name"	:	"SinaLevel2WS"
 			,	"pName"	:	"PrintSinaL2.SinaLevel2-quotation"
-			# ,	"query"	:	['quotation']	#只获取10档行情
-			# ,	"symbols":  ["sz300204"]
+			,	"query"	:	['quotation']	#只获取10档行情
+			,	"symbols":  ["sz000001"]
 			}
 		# ,	{
 		# 		"name"	:	"SinaLevel2WS"
@@ -25,7 +25,7 @@ class PrintSinaL2Action(Action):
 		# 	}
 		]
 		# 设置进程检查消息队列的间隔
-		self._interval = 1
+		self._interval = 0.1
 		super().__init__(name, **kwargs)
 		self.logger.info(self._name +"初始化")
 		self.count = 0
@@ -39,10 +39,13 @@ class PrintSinaL2Action(Action):
 			if isinstance(event.data, list):
 				for data in event.data:
 					print("PrintSinaL2:\n", data )
+
 					# print(self.count)
 					pass
 			else:
+				print( datetime.now() )
 				print(event.data)
+				
 		# self.logger.info("线程退出")
 
 	"""

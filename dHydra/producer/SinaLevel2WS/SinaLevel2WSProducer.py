@@ -8,6 +8,7 @@ from dHydra.core.Event import Event
 from dHydra.config import connection as CON
 from dHydra.config import const as C
 from dHydra.core.Functions import *
+from dHydra.core.Globals import *
 # --- 导入自定义配置
 from .connection import *
 from .const import *
@@ -29,12 +30,18 @@ import gc
 class SinaLevel2WSProducer(Producer):
 	def __init__(self, name = None, username = None, pwd = None, symbols = None, hq = 'hq_pjb', query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
 		super().__init__( name=name, **kwargs )
-		if (username == None):
-			self.username = input('请输入新浪登录帐号：')
+		if (username is None):
+			if config["sinaUsername"] is not None:
+				self.username = config["sinaUsername"]
+			else:
+				self.username = input('请输入新浪登录帐号：')
 		else:
 			self.username=username
-		if (pwd == None):
-			self.pwd = getpass.getpass("输入登录密码（密码不会显示在屏幕上，输入后按回车确定）:")
+		if (pwd is None):
+			if config["sinaPassword"] is not None:
+				self.pwd = config["sinaPassword"]
+			else:
+				self.pwd = getpass.getpass("输入登录密码（密码不会显示在屏幕上，输入后按回车确定）:")
 		else:
 			self.pwd = pwd
 		self.rsaPubkey = '10001'

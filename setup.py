@@ -33,6 +33,7 @@ PACKAGES = [	"dHydra"
 			,	"dHydra.action.SinaTickToMongo"
 			,	"dHydra.action.PrintSinaL2"
 			,	"dHydra.action.Demo"
+			,	"dHydra.action.SinaL2TCP"
 			,	"dHydra.config"
 			]
 
@@ -54,7 +55,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
  
 URL = "http://dHydra.org"
 
-VERSION = "0.10.1"
+VERSION = "0.10.2"
 
 LICENSE = "Apache Software License"
  
@@ -69,7 +70,7 @@ setup(
     ,   'Intended Audience :: Financial and Insurance Industry'
     ,   'Operating System :: OS Independent'
     ]
-,   install_requires = ["requests","pandas","tushare","pymongo","websockets","rsa","ntplib"]
+,   install_requires = ["requests","numpy","pandas","lxml","tushare","pymongo","websockets","rsa","ntplib"]
 ,   keywords = KEYWORDS
 ,   author = AUTHOR
 ,   author_email = AUTHOR_EMAIL

@@ -269,59 +269,6 @@ class XueqiuVendor(Vendor):
 		else:
 			return False
 
-	# def get_realtime_quote_sync(self, symbols, dataframe = True):
-	# 	print("正在从雪球获取股票行情(同步方式)...")
-	# 	symbolListSlice = util.slice_list( step = 50, dataList = list(symbols) )
-	# 	for symbolList in symbolListSlice:
-	# 		if 'quote' in locals().keys():
-	# 			if dataframe:
-	# 				quote = quote.append( self.get_realtime_quote(symbols = symbolList, dataframe = dataframe) )
-	# 			else:
-	# 				quote.update( self.get_realtime_quote(symbols = symbolList, dataframe = dataframe) )
-	# 		else:
-	# 			quote = self.get_realtime_quote(symbols = symbolList, dataframe = dataframe)
-	# 	return quote
-
-	# def get_realtime_quote_async(self, symbols, dataframe = True):
-	# 	if 'quote' in self.__dict__.keys():
-	# 		del(self.quote)
-	# 	print("正在从雪球获取股票行情(异步方式)...")
-	# 	symbolListSlice = util.slice_list( step = 50, dataList = list(symbols) )
-	# 	loop = asyncio.new_event_loop()
-	# 	asyncio.set_event_loop(loop)
-	# 	tasks = list()
-	# 	for symbolList in symbolListSlice:
-	# 		symbols = util.symbols_to_string( symbolList )
-	# 		tasks.append( self.get_realtime_quote_coroutine(symbols, loop) )
-	# 	loop.run_until_complete( asyncio.wait(tasks) )
-
-	# 	if dataframe:
-	# 		return DataFrame.from_records( self.quote ).T
-	# 	return self.quote
-
-	# @asyncio.coroutine
-	# def get_realtime_quote_coroutine(self, symbols, loop):
-	# 	async_req = loop.run_in_executor(None, functools.partial( self.session.get
-	# 	,	URL_XUEQIU_QUOTE(symbols)
-	# 	,	headers = HEADERS_XUEQIU
-	# 	) )
-	# 	quote = yield from async_req
-	# 	quote = quote.json()
-	# 	if 'quote' not in self.__dict__.keys():
-	# 		self.quote = quote
-	# 	else:
-	# 		self.quote.update( quote )
-
-	# def get_realtime_quote(self, symbols, dataframe = True):
-	# 	symbols = util.symbols_to_string(symbols)
-	# 	quote = self.session.get(
-	# 			URL_XUEQIU_QUOTE(symbols)
-	# 		,	headers = HEADERS_XUEQIU
-	# 		).json()
-	# 	if dataframe:
-	# 		return DataFrame.from_records( quote ).T
-	# 	return quote
-
 	"""
 	雪球键盘助手
 	"""

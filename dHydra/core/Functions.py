@@ -14,7 +14,7 @@ from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
 import os
 import logging
 
-print("加载：Functions.py")
+# print("加载：Functions.py")
 
 
 """
