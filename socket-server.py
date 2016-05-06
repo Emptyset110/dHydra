@@ -5,11 +5,17 @@ import time
 
 def tcplink(sock, addr):
     print('Accept new connection from %s:%s...' % addr)
-    sock.send(b'Welcome!')
+    data = b''
+    # sock.send(b'Welcome!')
     while True:
-        data = sock.recv(10240)
-        print( data.decode("utf-8") )
-        time.sleep(1)
+        while True:
+            newdata = sock.recv(10240)
+            data += newdata
+            try:
+                print( data.decode("utf-8") )
+                data = b''
+            except:
+                continue
     sock.close()
     print('Connection from %s:%s closed.' % addr)
 
