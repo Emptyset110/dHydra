@@ -31,14 +31,14 @@ class SinaLevel2WSProducer(Producer):
 	def __init__(self, name = None, username = None, pwd = None, symbols = None, hq = 'hq_pjb', query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
 		super().__init__( name=name, **kwargs )
 		if (username is None):
-			if config["sinaUsername"] is not None:
+			if "sinaUsername" in config.keys():
 				self.username = config["sinaUsername"]
 			else:
 				self.username = input('请输入新浪登录帐号：')
 		else:
 			self.username=username
 		if (pwd is None):
-			if config["sinaPassword"] is not None:
+			if "sinaPassword" in config.keys():
 				self.pwd = config["sinaPassword"]
 			else:
 				self.pwd = getpass.getpass("输入登录密码（密码不会显示在屏幕上，输入后按回车确定）:")
