@@ -16,7 +16,6 @@ class PrintSinaL2Action(Action):
 				"name"	:	"SinaLevel2WS"
 			,	"pName"	:	"PrintSinaL2.SinaLevel2-quotation"
 			,	"query"	:	['quotation']	#只获取10档行情
-			,	"symbols":  ["sz000001"]
 			}
 		# ,	{
 		# 		"name"	:	"SinaLevel2WS"

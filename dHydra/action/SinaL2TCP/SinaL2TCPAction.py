@@ -16,6 +16,7 @@ from dHydra.core.Functions import *
 # --- 导入自定义配置
 import socket
 import time
+import threading
 
 # 以上是自动生成的 #
 class SinaL2TCPAction(Action):
@@ -30,7 +31,7 @@ class SinaL2TCPAction(Action):
 					]
 				,	addr = "127.0.0.1"
 				,	port 	= 9999
-				,	interval = 0.1
+				,	interval = 0.2
 				, 	**kwargs
 				):
 		# 用户自定义自动加载的_producerList
@@ -46,13 +47,25 @@ class SinaL2TCPAction(Action):
 			except Exception as e:
 				self.logger.error( "{}:{}建立socket连接失败, {}\n5秒后重试".format(addr,port,e) )
 				time.sleep(5)
+		self.mutex = threading.Lock()
 
 	# 需要重写的方法
 	def handler(self):
 		while not self._queue.empty():
+			self.mutex.acquire()
 			event = self._queue.get(True)
+			self.mutex.release()
 			if isinstance(event.data, list):
 				for data in event.data:
-					self.s.send( event.data.encode(encoding="utf-8") )
+					try:
+						self.s.send( event.data.encode(encoding="utf-8") )
+					except Exception as e:
+						self.logger.error( "{}".format(e) )
+						time.sleep(2)
 			else:
-				self.s.send( event.data.encode(encoding="utf-8") )
+				try:
+					print( "发送{}".format(event.data) )
+					self.s.send( event.data.encode(encoding="utf-8") )
+				except Exception as e:
+					self.logger.error( "{}".format(e) )
+					time.sleep(2)
