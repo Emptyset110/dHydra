@@ -64,7 +64,7 @@ class SinaL2TCPAction(Action):
 						time.sleep(2)
 			else:
 				try:
-					print( "发送{}".format(event.data) )
+					# print( "发送{}".format(event.data) )
 					self.s.send( event.data.encode(encoding="utf-8") )
 				except Exception as e:
 					self.logger.error( "{}".format(e) )
