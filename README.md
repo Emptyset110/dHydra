@@ -12,7 +12,11 @@
 > 
 > 直接参考：http://doc.dhydra.org/built-in-producers/sinalevel2ws.html
 >
+> 如果要将新浪Level2行情以TCP方式转发出去(或许你用C#来做行情处理，只用python作为数据接收)，可以直接调用SinaL2TCPAction，
+> 参考：http://doc.dhydra.org/built-in-actions/SinaL2TCP.html
+>
 > 2016-04-22 SinaLevel2WS模块做了一些大改动。在此之前的版本连接Level2行情会不稳定。请更新一下。
+>
 
 # 使用对象
 - 正在学习使用python进行数据分析/数据挖掘的同学
@@ -65,6 +69,15 @@ auto.init()  # 新建目录结构
 # 然后将app.py中的PrintSinaL2改为Demo
 ```
 
+## 在config.json中设置参数，比如新浪的用户名和密码可以这样设置
+`config.json`
+
+```
+{
+  "sinaUsername" : "登录新浪的用户名",
+  "sinaPassword" : "你的密码"
+}
+```
 
 
 ## 运行
