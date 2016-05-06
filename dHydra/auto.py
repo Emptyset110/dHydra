@@ -181,6 +181,12 @@ def init( demo = True ):
 	os.makedirs( "vendor" , exist_ok=True )
 	os.makedirs( "action" , exist_ok=True )
 	print("目录结构已经生成")
+	f = open('config.json', 'w', encoding="UTF-8")
+	f.write(
+		"""{
+
+}""")
+	f.close()
 	f = open('test.py', 'w', encoding='UTF-8')
 	f.write(
 		"""# -*- coding: utf8 -*-
