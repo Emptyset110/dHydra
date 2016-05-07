@@ -11,7 +11,7 @@ import os
 from dHydra.core.Globals import *
 from dHydra.core.Functions import *
 
-def start_action(actionList, actionArgs):
+def start_action(actionList, actionArgs = {}):
 	for action in actionList:
 		if action in actionArgs.keys():
 			print(actionArgs[action])
