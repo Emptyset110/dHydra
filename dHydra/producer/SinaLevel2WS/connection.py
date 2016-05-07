@@ -79,7 +79,7 @@ PARAM_WSKT_TOKEN = lambda ip, qlist, hq: {
 ,	"kick"	:	1
 ,	"list"	:	qlist
 }
-DATA_LOGIN = lambda su,servertime,nonce,rsakv,sp: {
+DATA_LOGIN = lambda su,servertime,nonce,rsakv,sp,door: {
 	"entry"			:	"finance"
 ,	"gateway"		:	1
 ,	"from"			:	""
@@ -100,6 +100,7 @@ DATA_LOGIN = lambda su,servertime,nonce,rsakv,sp: {
 ,	"domain"		:	"sina.com.cn"
 ,	"prelt"			:	72
 ,	"returntype"	:	"TEXT"
+,	"door"			:	door
 }
 
 URL_CROSSDOMAIN = "http://login.sina.com.cn/sso/crossdomain.php"

@@ -26,6 +26,7 @@ import threading
 import functools
 import re
 import gc
+import os
 
 class SinaLevel2WSProducer(Producer):
 	def __init__(self, name = None, username = None, pwd = None, symbols = None, hq = 'hq_pjb', query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
@@ -57,7 +58,16 @@ class SinaLevel2WSProducer(Producer):
 			self.symbols = symbols
 		self.websockets = dict()
 
-	def login(self):
+	def get_verify_code(self):
+		verify_code_response = self.session.get("http://login.sina.com.cn/cgi/pin.php", stream = True)
+		# 保存验证码
+		image_path = os.path.join(os.getcwd(), 'vcode')
+		with open(image_path, 'wb') as f:
+			f.write(verify_code_response.content)
+		verifyCode = input( "验证码图片保存在{}，\n请输入验证码：".format(image_path) )
+		return verifyCode
+
+	def login(self, verify = False):
 		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
 		su = base64.b64encode(self.username.encode('utf-8'))
 
@@ -65,6 +75,11 @@ class SinaLevel2WSProducer(Producer):
 		preLogin = json.loads( preLogin.text[len("sinaSSOController.preloginCallBack("):-1] )
 
 		sp = self.get_sp( self.pwd, preLogin["pubkey"], int(preLogin["servertime"]), preLogin["nonce"] )
+
+		if verify:
+			verifyCode = self.get_verify_code()
+		else:
+			verifyCode = ''
 
 		self.loginResponse = self.session.post(
 			URL_SSOLOGIN
@@ -75,6 +90,7 @@ class SinaLevel2WSProducer(Producer):
 			,	nonce = preLogin["nonce"]
 			,	rsakv = preLogin["rsakv"]
 			,	sp = sp
+			,	door = verifyCode
 			)
 		,	headers = HEADERS_LOGIN
 		)
@@ -86,8 +102,14 @@ class SinaLevel2WSProducer(Producer):
 				req = self.session.get( url,headers = HEADERS_CROSSDOMAIN( CROSSDOMAIN_HOST[i] ) )
 				i += 1
 			return True
+		elif (self.loginResponse.json()["retcode"] == '4049'):
+			print( self.loginResponse.json() )
+			self.isLogin = self.login(verify = True)
+			if self.isLogin:
+				return True
+			else:
+				return False
 		else:
-			print( "Authentication Failed..." )
 			print( self.loginResponse.json() )
 			return False
 
