@@ -67,7 +67,7 @@ class SinaL2TCPAction(Action):
 						self.s.send( event.data.encode(encoding="utf-8") )
 					except Exception as e:
 						self.logger.error( "{},{}".format(e,e.errno) )
-						if e.errno == 32:
+						if e.errno == 32 or e.errno == 10054:
 							self.logger.error( "TCP服务端关闭，现在重连" )
 							self.s.close()
 							self.establish_connection()
@@ -78,7 +78,7 @@ class SinaL2TCPAction(Action):
 					self.s.send( event.data.encode(encoding="utf-8") )
 				except Exception as e:
 						self.logger.error( "{},{}".format(e,e.errno) )
-						if e.errno == 32:
+						if e.errno == 32 or e.errno == 10054:
 							self.logger.error( "TCP服务端关闭，现在重连" )
 							self.s.close()
 							self.establish_connection()
