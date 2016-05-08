@@ -39,15 +39,21 @@ class SinaL2TCPAction(Action):
 		# 设置进程检查消息队列的间隔
 		self._interval = interval
 		super().__init__(name, **kwargs)
+		self.addr = addr
+		self.port = port
+		self.establish_connection()
+		self.mutex = threading.Lock()
+
+	def establish_connection(self):
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		while True:
 			try:
-				self.s.connect( ( addr, port ) )
+				self.s.connect( ( self.addr, self.port ) )
 				break
 			except Exception as e:
-				self.logger.error( "{}:{}建立socket连接失败, {}\n5秒后重试".format(addr,port,e) )
+				self.logger.error( "{}:{}建立socket连接失败, {}\n5秒后重试".format(self.addr,self.port,e) )
 				time.sleep(5)
-		self.mutex = threading.Lock()
+		self.logger.info("建立socket成功")
 
 	# 需要重写的方法
 	def handler(self):
@@ -60,12 +66,20 @@ class SinaL2TCPAction(Action):
 					try:
 						self.s.send( event.data.encode(encoding="utf-8") )
 					except Exception as e:
-						self.logger.error( "{}".format(e) )
+						self.logger.error( "{},{}".format(e,e.errno) )
+						if e.errno == 32:
+							self.logger.error( "TCP服务端关闭，现在重连" )
+							self.s.close()
+							self.establish_connection()
 						time.sleep(2)
 			else:
 				try:
 					# print( "发送{}".format(event.data) )
 					self.s.send( event.data.encode(encoding="utf-8") )
 				except Exception as e:
-					self.logger.error( "{}".format(e) )
-					time.sleep(2)
+						self.logger.error( "{},{}".format(e,e.errno) )
+						if e.errno == 32:
+							self.logger.error( "TCP服务端关闭，现在重连" )
+							self.s.close()
+							self.establish_connection()
+						time.sleep(2)
