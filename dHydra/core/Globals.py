@@ -14,7 +14,9 @@ PRODUCER_NAME = dict()
 
 actionDict = dict()
 
-
 # 读取配置
-f_config = open( os.getcwd() + "/config.json" )
-config = json.load( f_config )
+try:
+	f_config = open( os.getcwd() + "/config.json" )
+	config = json.load( f_config )
+except Exception as e:
+	print( "未能正确加载{}，请检查路径，json文档格式，或者\n可以忽略此警告（当不采用config.json来配置账号时）".format( os.getcwd() + "/config.json" ) )
