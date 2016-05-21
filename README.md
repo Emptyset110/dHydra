@@ -92,14 +92,14 @@ python app.py
 #### 如果我不想要复杂的框架功能，只想调用一些数据到我的代码里该怎么做？
 所有的Vendor模块是可以被单独调用的。假设你已经用pip安装好dHydra了。我们翻阅一下[文档中关于Vendor的内容](http://doc.dhydra.org/built-in-vendors/Xueqiu.html)...嗯，好像有个叫Xueqiu的和Sina的Vendor，Vendor在这里泛指数据的供应者。我们先尝试一下SinaVendor
 ```
-from dHydra.console import *
+from dHydra.core.Functions import *
 
 sina = V("Sina")
 sina.get_realtime_quotes()
 ```
 如果不设置参数，它就会自动返回全部沪深股票的实时行情。测试一下接口速度吧——
 ```python
-from dHydra.console import *
+from dHydra.core.Functions import *
 import time
 
 sina = V("Sina")
