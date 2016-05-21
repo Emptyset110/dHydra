@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 新浪财经
 FROM ssologin.js(v1.4.18)
@@ -78,29 +78,6 @@ PARAM_WSKT_TOKEN = lambda ip, qlist, hq: {
 ,	"_"		:	random.uniform(0.1,0.2)
 ,	"kick"	:	1
 ,	"list"	:	qlist
-}
-DATA_LOGIN = lambda su,servertime,nonce,rsakv,sp,door: {
-	"entry"			:	"finance"
-,	"gateway"		:	1
-,	"from"			:	""
-,	"savestate" 	:	30
-,	"useticket" 	:	0
-,	"pagerefer" 	:	""
-,	"vsnf"			:	"1"
-,	"su"			:	su
-,	"service"		:	"sso"
-,	"servertime"	:	servertime
-,	"nonce"			:	nonce
-,	"pwencode"		:	"rsa2"
-,	"rsakv"			:	rsakv
-,	"sp"			:	sp
-,	"sr" 			:	"1920*1080"
-,	"encoding"		:	"UTF-8"
-,	"cdult"			:	3
-,	"domain"		:	"sina.com.cn"
-,	"prelt"			:	72
-,	"returntype"	:	"TEXT"
-,	"door"			:	door
 }
 
 URL_CROSSDOMAIN = "http://login.sina.com.cn/sso/crossdomain.php"

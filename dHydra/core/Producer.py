@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 Producer类（生产者类，负责把数据推送进消息队列）
 所有producer需要继承这个类

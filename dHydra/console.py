@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 import logging
 from dHydra.app import *
 
@@ -8,27 +8,26 @@ def init_loger():
 	logger.setLevel(logging.DEBUG)
 
 	# 屏幕日志打印设置
-	consoleHandle = logging.StreamHandler()
-	consoleHandle.setFormatter(formatter)
-	consoleHandle.setLevel(logging.ERROR)
-	logger.addHandler(consoleHandle)
+	console_handler = logging.StreamHandler()
+	console_handler.setFormatter(formatter)
+	console_handler.setLevel(logging.ERROR)
+	logger.addHandler(console_handler)
 
 	if not os.path.exists('log'):
 		os.makedirs('log')
 	# 打开下面的输出到文件
-	fileHandler = logging.FileHandler('log/error.log')
-	fileHandler.setLevel(logging.ERROR)
-	fileHandler.setFormatter(formatter)
-	fileHandler2 = logging.FileHandler('log/log.log')
-	fileHandler2.setLevel(logging.INFO)
-	fileHandler2.setFormatter(formatter)
-	
+	file_handler = logging.FileHandler('log/error.log')
+	file_handler.setLevel(logging.ERROR)
+	file_handler.setFormatter(formatter)
+	file_handler2 = logging.FileHandler('log/debug.log')
+	file_handler2.setLevel(logging.DEBUG)
+	file_handler2.setFormatter(formatter)
+
 	logger.setLevel(logging.INFO)
-	logger.addHandler(fileHandler)
-	logger.addHandler(fileHandler2)
+	logger.addHandler(file_handler)
+	logger.addHandler(file_handler2)
 
 """
 初始化日志
 """
 init_loger()
-

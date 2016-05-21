@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 全局变量在这里定义
 """
@@ -12,7 +12,8 @@ import json
 PRODUCER_HASH = dict()
 PRODUCER_NAME = dict()
 
-actionDict = dict()
+action_dict = dict()
+
 
 # 读取配置
 try:

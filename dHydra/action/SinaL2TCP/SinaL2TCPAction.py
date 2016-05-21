@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 # Created on 05/06/2016
 # @author: Emptyset
@@ -21,24 +21,20 @@ import threading
 # 以上是自动生成的 #
 class SinaL2TCPAction(Action):
 	def __init__(	self
-				,	name
-				,	producerList = [
-					{	
-						"name"	:	"SinaLevel2WS"
-					,	"pName"	:	"SinaL2TCP.quotation"
-					,	"query"	:	['quotation']	#只获取10档行情
-					} 
-					]
+				# ,	name
+				# ,	producer_list = [
+				# 	{
+				# 		"name"	:	"SinaLevel2WS"
+				# 	,	"producer_name"	:	"SinaL2TCP.quotation"
+				# 	,	"query"	:	['quotation']	#只获取10档行情
+				# 	}
+				# 	]
 				,	addr = "127.0.0.1"
 				,	port 	= 9999
-				,	interval = 0.2
 				, 	**kwargs
 				):
-		# 用户自定义自动加载的_producerList
-		self._producerList = producerList
 		# 设置进程检查消息队列的间隔
-		self._interval = interval
-		super().__init__(name, **kwargs)
+		super().__init__( **kwargs )
 		self.addr = addr
 		self.port = port
 		self.establish_connection()
@@ -56,28 +52,24 @@ class SinaL2TCPAction(Action):
 		self.logger.info("建立socket成功")
 
 	# 需要重写的方法
-	def handler(self):
-		while not self._queue.empty():
-			self.mutex.acquire()
-			event = self._queue.get(True)
-			self.mutex.release()
-			if isinstance(event.data, list):
-				for data in event.data:
-					try:
-						self.s.send( event.data.encode(encoding="utf-8") )
-					except Exception as e:
-						self.logger.error( "{},{}".format(e,e.errno) )
-						self.logger.error( "TCP服务端关闭，现在重连" )
-						self.s.close()
-						self.establish_connection()
-						time.sleep(2)
-			else:
+	def handler(self, event):
+		if isinstance(event.data, list):
+			for data in event.data:
 				try:
-					# print( "发送{}".format(event.data) )
 					self.s.send( event.data.encode(encoding="utf-8") )
 				except Exception as e:
-						self.logger.error( "{},{}".format(e,e.errno) )
-						self.logger.error( "TCP服务端关闭，现在重连" )
-						self.s.close()
-						self.establish_connection()
-						time.sleep(2)
+					self.logger.error( "{},{}".format(e,e.errno) )
+					self.logger.error( "TCP服务端关闭，现在重连" )
+					self.s.close()
+					self.establish_connection()
+					time.sleep(2)
+		else:
+			try:
+				# print( "发送{}".format(event.data) )
+				self.s.send( event.data.encode(encoding="utf-8") )
+			except Exception as e:
+					self.logger.error( "{},{}".format(e,e.errno) )
+					self.logger.error( "TCP服务端关闭，现在重连" )
+					self.s.close()
+					self.establish_connection()
+					time.sleep(2)

@@ -1,8 +1,8 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 # Created on 2016/04/12
-# @author: 
-# @contact: 
+# @author:
+# @contact:
 """
 # 以下是自动生成的 #
 # --- 导入系统配置
@@ -10,6 +10,7 @@ import dHydra.core.util as util
 from dHydra.core.Vendor import Vendor
 from dHydra.config import connection as CON
 from dHydra.config import const as C
+from dHydra.core.Globals import *
 # --- 导入自定义配置
 from .connection import *
 from .const import *
@@ -31,32 +32,49 @@ import getpass
 class SinaVendor(Vendor):
 	def __init__(self, username = None, pwd = None):
 		super().__init__()
+		if (username is None):
+			if "sinaUsername" in config.keys():
+				self.username = config["sinaUsername"]
+			else:
+				self.username = input('请输入新浪登录帐号：')
+		else:
+			self.username=username
+		if (pwd is None):
+			if "sinaPassword" in config.keys():
+				self.pwd = config["sinaPassword"]
+			else:
+				self.pwd = getpass.getpass("输入登录密码（密码不会显示在屏幕上，输入后按回车确定）:")
+		else:
+			self.pwd = pwd
+		self.rsa_pubkey = '10001'
+		self.ip = util.get_client_ip()
 		self.session = requests.Session()
 		self.quote = None
-		self.isLogin = False
-		self.username = username
-		self.pwd = pwd
+		self.is_login = False
 		self.symbols = self.get_symbols()
 
-	# RSA2 encoding
-	def get_sp(self, passwd, pubkey, servertime, nonce):
-		key = rsa.PublicKey(int(pubkey, 16), int('10001', 16))
-		message = str(servertime) + '\t' + str(nonce) + '\n' + str(passwd)
-		passwd = rsa.encrypt(message.encode('utf-8'), key)
-		return binascii.b2a_hex(passwd).decode('ascii')
-	def login(self):
-		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
-		if (self.username is None):
-			self.username = input('请输入新浪登录帐号：')
-		if (self.pwd is None):
-			self.pwd = getpass.getpass("输入登录密码（密码不会显示在屏幕上，输入后按回车确定）:")
+	def get_verify_code(self):
+		verify_code_response = self.session.get("http://login.sina.com.cn/cgi/pin.php")
+		# 保存验证码
+		image_path = os.path.join(os.getcwd(), 'vcode.png')
+		with open(image_path, 'wb') as f:
+			f.write(verify_code_response.content)
+		verifyCode = input( "验证码图片保存在{}，\n请输入验证码：".format(image_path) )
+		return verifyCode
 
+	def login(self, verify = False):
+		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
 		su = base64.b64encode(self.username.encode('utf-8'))
 
 		preLogin = self.session.get( URL_PRELOGIN, params = PARAM_PRELOGIN( su ), headers = HEADERS_LOGIN)
 		preLogin = json.loads( preLogin.text[len("sinaSSOController.preloginCallBack("):-1] )
 
 		sp = self.get_sp( self.pwd, preLogin["pubkey"], int(preLogin["servertime"]), preLogin["nonce"] )
+
+		if verify:
+			verifyCode = self.get_verify_code()
+		else:
+			verifyCode = ''
 
 		self.loginResponse = self.session.post(
 			URL_SSOLOGIN
@@ -67,6 +85,7 @@ class SinaVendor(Vendor):
 			,	nonce = preLogin["nonce"]
 			,	rsakv = preLogin["rsakv"]
 			,	sp = sp
+			,	door = verifyCode
 			)
 		,	headers = HEADERS_LOGIN
 		)
@@ -78,14 +97,27 @@ class SinaVendor(Vendor):
 				req = self.session.get( url,headers = HEADERS_CROSSDOMAIN( CROSSDOMAIN_HOST[i] ) )
 				i += 1
 			return True
+		elif (self.loginResponse.json()["retcode"] == '4049'):
+			print( self.loginResponse.json() )
+			self.is_login = self.login(verify = True)
+			if self.is_login:
+				return True
+			else:
+				return False
 		else:
-			print( "Authentication Failed..." )
 			print( self.loginResponse.json() )
 			return False
 
+	# RSA2 encoding
+	def get_sp(self, passwd, pubkey, servertime, nonce):
+		key = rsa.PublicKey(int(pubkey, 16), int('10001', 16))
+		message = str(servertime) + '\t' + str(nonce) + '\n' + str(passwd)
+		passwd = rsa.encrypt(message.encode('utf-8'), key)
+		return binascii.b2a_hex(passwd).decode('ascii')
+
 	def get_deal(self, symbol, stime = None, etime = None):
-		while not self.isLogin:
-			self.isLogin = self.login()
+		while not self.is_login:
+			self.is_login = self.login()
 
 		if stime is None:
 			stime = "09:25:00"
@@ -154,7 +186,7 @@ class SinaVendor(Vendor):
 					self.quote = self.quote.append(quote, ignore_index=True)
 				else:
 					self.quote.extend(quote)
-					
+
 
 	@asyncio.coroutine
 	def get_quote_coroutine(self, symbols, dataframe):
@@ -164,7 +196,7 @@ class SinaVendor(Vendor):
 		elif isinstance(symbols, str):
 			symbolList = symbols.split(',')
 		symbols = util.symbols_to_string(symbols)
-		url = URL_QUOTATION(symbols) 
+		url = URL_QUOTATION(symbols)
 
 		retry = True
 		while retry:
@@ -280,8 +312,8 @@ class SinaVendor(Vendor):
 		retry = True
 		while retry:
 			try:
-				quote  =self.session.get( 
-						URL_QUOTATION(symbols) 
+				quote  =self.session.get(
+						URL_QUOTATION(symbols)
 					,	timeout = 0.1
 					).text
 				retry = False

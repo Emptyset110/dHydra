@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 import sys
 import os
 def new_vendor(vendorName = None):
@@ -10,7 +10,7 @@ def new_vendor(vendorName = None):
 		# 创建vendorNameVendor.py
 		f = open( dirVendor + '/' + vendorName + 'Vendor.py' , 'w' , encoding= 'UTF-8')
 		f.write(
-		"""# -*- coding: utf8 -*-
+		"""# -*- coding: utf-8 -*-
 \"\"\"
 # Created on 
 # @author: 
@@ -59,7 +59,7 @@ def new_producer(producerName = None):
 		import time
 		i = 0
 		while ( self._active ):
-			event = Event(eventType = 'Demo', data = i)
+			event = Event(event_type = 'Demo', data = i)
 			for q in self._subscriber:
 				q.put(event)
 				print("DemoProducer:", event.data)
@@ -69,7 +69,7 @@ def new_producer(producerName = None):
 		else:
 			demo = ""
 		f.write(
-		"""# -*- coding: utf8 -*-
+		"""# -*- coding: utf-8 -*-
 \"\"\"
 # Created on 
 # @author: 
@@ -127,7 +127,7 @@ def new_action(actionName = None):
 		else:
 			demo = """
 		pass"""
-		f.write("""# -*- coding: utf8 -*-
+		f.write("""# -*- coding: utf-8 -*-
 \"\"\"
 # Created on 
 # @author: 
@@ -147,11 +147,11 @@ from dHydra.core.Functions import *
 # 以上是自动生成的 #
 class %sAction(Action):
 	def __init__(self, name, **kwargs):
-		# 用户自定义自动加载的_producerList
-		self._producerList = [
+		# 用户自定义自动加载的_producer_list
+		self._producer_list = [
 			{	
 				"name"	:	"Demo"
-			,	"pName"	:	"Demo.Demo"		#这是在action内部给producer起的自定义名字，可随意。一般最好遵守<actionName.producerName>
+			,	"producer_name"	:	"Demo.Demo"		#这是在action内部给producer起的自定义名字，可随意。一般最好遵守<actionName.producerName>
 			}
 		]
 		# 设置进程检查消息队列的间隔
@@ -189,7 +189,7 @@ def init( demo = True ):
 	f.close()
 	f = open('test.py', 'w', encoding='UTF-8')
 	f.write(
-		"""# -*- coding: utf8 -*-
+		"""# -*- coding: utf-8 -*-
 import logging
 from dHydra.app import *
 
@@ -199,24 +199,24 @@ def init_loger():
 	logger.setLevel(logging.DEBUG)
 
 	# 屏幕日志打印设置
-	consoleHandle = logging.StreamHandler()
-	consoleHandle.setFormatter(formatter)
-	consoleHandle.setLevel(logging.ERROR)
-	logger.addHandler(consoleHandle)
+	console_handler = logging.StreamHandler()
+	console_handler.setFormatter(formatter)
+	console_handler.setLevel(logging.ERROR)
+	logger.addHandler(console_handler)
 
 	if not os.path.exists('log'):
 		os.makedirs('log')
 	# 打开下面的输出到文件
-	fileHandler = logging.FileHandler('log/error.log')
-	fileHandler.setLevel(logging.ERROR)
-	fileHandler.setFormatter(formatter)
-	fileHandler2 = logging.FileHandler('log/log.log')
-	fileHandler2.setLevel(logging.INFO)
-	fileHandler2.setFormatter(formatter)
+	file_handler = logging.FileHandler('log/error.log')
+	file_handler.setLevel(logging.ERROR)
+	file_handler.setFormatter(formatter)
+	file_handler2 = logging.FileHandler('log/log.log')
+	file_handler2.setLevel(logging.INFO)
+	file_handler2.setFormatter(formatter)
 	
 	logger.setLevel(logging.INFO)
-	logger.addHandler(fileHandler)
-	logger.addHandler(fileHandler2)
+	logger.addHandler(file_handler)
+	logger.addHandler(file_handler2)
 
 \"\"\"
 初始化日志
@@ -231,7 +231,7 @@ init_loger()
 		if demo:
 			f = open( 'app.py', 'w', encoding= 'UTF-8' )
 			f.write(
-				"""# -*- coding: utf8 -*-
+				"""# -*- coding: utf-8 -*-
 
 import logging
 from dHydra.app import *
@@ -242,24 +242,24 @@ def init_loger():
     logger.setLevel(logging.DEBUG)
 
     # 屏幕日志打印设置
-    consoleHandle = logging.StreamHandler()
-    consoleHandle.setFormatter(formatter)
-    consoleHandle.setLevel(logging.ERROR)
-    logger.addHandler(consoleHandle)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.ERROR)
+    logger.addHandler(console_handler)
 
     if not os.path.exists('log'):
         os.makedirs('log')
     # 打开下面的输出到文件
-    fileHandler = logging.FileHandler('log/error.log')
-    fileHandler.setLevel(logging.ERROR)
-    fileHandler.setFormatter(formatter)
-    fileHandler2 = logging.FileHandler('log/log.log')
-    fileHandler2.setLevel(logging.INFO)
-    fileHandler2.setFormatter(formatter)
+    file_handler = logging.FileHandler('log/error.log')
+    file_handler.setLevel(logging.ERROR)
+    file_handler.setFormatter(formatter)
+    file_handler2 = logging.FileHandler('log/log.log')
+    file_handler2.setLevel(logging.INFO)
+    file_handler2.setFormatter(formatter)
     
     logger.setLevel(logging.INFO)
-    logger.addHandler(fileHandler)
-    logger.addHandler(fileHandler2)
+    logger.addHandler(file_handler)
+    logger.addHandler(file_handler2)
 
 \"\"\"
 初始化日志
@@ -270,11 +270,11 @@ init_loger()
 \"\"\"
 读取数据处理模块(Action)列表
 \"\"\"
-actionList = ['PrintSinaL2']
+action_list = ['PrintSinaL2']
 \"\"\"
 生成Action对象并开启actions
 \"\"\"
-start_action(actionList)
+start_action(action_list)
 
 \"\"\"
 嗯……只要这样就可以了

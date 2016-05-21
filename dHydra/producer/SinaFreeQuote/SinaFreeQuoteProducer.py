@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 # Created on 2016/04/12
 # @author: Emptyset
@@ -66,14 +66,14 @@ class SinaFreeQuoteProducer(Producer):
 				print(e)
 		# print( time.time() - start )
 		if sz is not None:
-			eventSZ = Event( eventType = 'SinaFreeQuote', data = sz )
+			eventSZ = Event( event_type = 'SinaFreeQuote', data = sz )
 			eventSZ.time = szTime
 			eventSZ.localtime = time.time()
 			eventSZ.exchange = 'SZ'
 			for q in self._subscriber:
 				q.put(eventSZ)
 		if sh is not None:
-			eventSH = Event( eventType = 'SinaFreeQuote', data = sh )
+			eventSH = Event( event_type = 'SinaFreeQuote', data = sh )
 			eventSH.time = shTime
 			eventSH.localtime = time.time()
 			eventSH.exchange = 'SH'

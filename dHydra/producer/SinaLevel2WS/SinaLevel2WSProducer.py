@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 # 以下是自动生成的 #
 # --- 导入系统配置
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
@@ -31,99 +31,25 @@ import os
 class SinaLevel2WSProducer(Producer):
 	def __init__(self, name = None, username = None, pwd = None, symbols = None, hq = 'hq_pjb', query = ['quotation', 'orders', 'deal', 'info'], **kwargs):
 		super().__init__( name=name, **kwargs )
-		if (username is None):
-			if "sinaUsername" in config.keys():
-				self.username = config["sinaUsername"]
-			else:
-				self.username = input('请输入新浪登录帐号：')
-		else:
-			self.username=username
-		if (pwd is None):
-			if "sinaPassword" in config.keys():
-				self.pwd = config["sinaPassword"]
-			else:
-				self.pwd = getpass.getpass("输入登录密码（密码不会显示在屏幕上，输入后按回车确定）:")
-		else:
-			self.pwd = pwd
-		self.rsaPubkey = '10001'
 		self.ip = util.get_client_ip()
-		self.session = requests.Session()
 		self.hq = hq
-		self.isLogin = self.login()
 		self.query = query
+		# 登录模块在V('Sina')中
+		self.sina = V('Sina')
+		self.is_login = self.login()
 		if symbols is None:
-			sina = V('Sina')
-			self.symbols = sina.get_symbols()
+			self.symbols = self.sina.get_symbols()
 		else:
 			self.symbols = symbols
 		self.websockets = dict()
 
-	def get_verify_code(self):
-		verify_code_response = self.session.get("http://login.sina.com.cn/cgi/pin.php", stream = True)
-		# 保存验证码
-		image_path = os.path.join(os.getcwd(), 'vcode')
-		with open(image_path, 'wb') as f:
-			f.write(verify_code_response.content)
-		verifyCode = input( "验证码图片保存在{}，\n请输入验证码：".format(image_path) )
-		return verifyCode
-
 	def login(self, verify = False):
-		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
-		su = base64.b64encode(self.username.encode('utf-8'))
-
-		preLogin = self.session.get( URL_PRELOGIN, params = PARAM_PRELOGIN( su ), headers = HEADERS_LOGIN)
-		preLogin = json.loads( preLogin.text[len("sinaSSOController.preloginCallBack("):-1] )
-
-		sp = self.get_sp( self.pwd, preLogin["pubkey"], int(preLogin["servertime"]), preLogin["nonce"] )
-
-		if verify:
-			verifyCode = self.get_verify_code()
-		else:
-			verifyCode = ''
-
-		self.loginResponse = self.session.post(
-			URL_SSOLOGIN
-		,	params = PARAM_LOGIN()
-		,	data = DATA_LOGIN(
-				su = su
-			,	servertime = int( preLogin["servertime"] )
-			,	nonce = preLogin["nonce"]
-			,	rsakv = preLogin["rsakv"]
-			,	sp = sp
-			,	door = verifyCode
-			)
-		,	headers = HEADERS_LOGIN
-		)
-		if (self.loginResponse.json()["retcode"]=='0'):
-			print( "登录成功: %s, uid = %s" % ( self.loginResponse.json()["nick"], self.loginResponse.json()["uid"]) )
-
-			i = 0
-			for url in self.loginResponse.json()["crossDomainUrlList"]:
-				req = self.session.get( url,headers = HEADERS_CROSSDOMAIN( CROSSDOMAIN_HOST[i] ) )
-				i += 1
-			return True
-		elif (self.loginResponse.json()["retcode"] == '4049'):
-			print( self.loginResponse.json() )
-			self.isLogin = self.login(verify = True)
-			if self.isLogin:
-				return True
-			else:
-				return False
-		else:
-			print( self.loginResponse.json() )
-			return False
-
-	# RSA2 encoding
-	def get_sp(self, passwd, pubkey, servertime, nonce):
-		key = rsa.PublicKey(int(pubkey, 16), int('10001', 16))
-		message = str(servertime) + '\t' + str(nonce) + '\n' + str(passwd)
-		passwd = rsa.encrypt(message.encode('utf-8'), key)
-		return binascii.b2a_hex(passwd).decode('ascii')
+		return self.sina.login(verify = verify)
 
 	@asyncio.coroutine
 	def get_ws_token(self,qlist):
 		loop = asyncio.get_event_loop()
-		async_req = loop.run_in_executor(None, functools.partial( self.session.get, 
+		async_req = loop.run_in_executor(None, functools.partial( self.sina.session.get,
 			URL_WSKT_TOKEN
 		,	params 	=	PARAM_WSKT_TOKEN(ip=self.ip,qlist=qlist, hq = self.hq)
 		,	headers =	HEADERS_WSKT_TOKEN()
@@ -156,7 +82,7 @@ class SinaLevel2WSProducer(Producer):
 		if 'info' in self.query:
 			if qlist!='':
 				qlist += ','
-			qlist += "%s_i" % (symbol)		
+			qlist += "%s_i" % (symbol)
 		return qlist
 
 	@asyncio.coroutine
@@ -190,15 +116,14 @@ class SinaLevel2WSProducer(Producer):
 			except Exception as e:
 				self.logger.warning("重试 websockets.connect , {}, symbolList = {}".format(threading.current_thread().name, symbolList) )
 
-		# gc.collect()
-
 		while self._active:
 			try:
 				message = yield from ws.recv()
-				event = Event(eventType = 'SinaLevel2WS', data = message)
+				event = Event(event_type = 'SinaLevel2WS', data = message)
 
 				for q in self._subscriber:
 					q.put(event)
+					# print( "Producer:\n{},{}".format( event.data,datetime.now() ) )
 
 			except Exception as e:
 				self.logger.error("{},{}".format(e, threading.current_thread().name) )
@@ -289,7 +214,6 @@ class SinaLevel2WSProducer(Producer):
 		tokenRenewer = threading.Thread( target = self.token_renewer )
 		tokenSender = threading.Thread( target = self.token_sender )
 
-		# creatorLoop = asyncio.new_event_loop()
 		websocketCreator = threading.Thread( target = self.websocket_creator )
 
 		tokenRenewer.start()		# 用于更新token

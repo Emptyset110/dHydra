@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 # Created on 
 # @author: 
@@ -10,7 +10,7 @@ from dHydra.core.Globals import *
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write( "{}".format( json.dumps(actionDict,indent=2) ) )
+        self.write( "{}".format( json.dumps(action_dict,indent=2) ) )
 
 def make_app():
     return tornado.web.Application([

@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 import time
 # 高速行情接口
 URL_QUOTATION = lambda symbols: "http://hq.sinajs.cn/?rn=%s&list=%s" % ( int( time.time() )*1000, symbols )
@@ -15,7 +15,7 @@ SINA_QUOTE_COLUMNS_2 = [	'name', 'open'
 					,	'a1_v',	'a1_p', 'a2_v', 'a2_p', 'a3_v', 'a3_p', 'a4_v', 'a4_p', 'a5_v', 'a5_p'
 					,	'date', 'time', 'ms', 'symbol']
 
-DATA_LOGIN = lambda su,servertime,nonce,rsakv,sp: {
+DATA_LOGIN = lambda su,servertime,nonce,rsakv,sp,door: {
 	"entry"			:	"finance"
 ,	"gateway"		:	1
 ,	"from"			:	""
@@ -36,6 +36,7 @@ DATA_LOGIN = lambda su,servertime,nonce,rsakv,sp: {
 ,	"domain"		:	"sina.com.cn"
 ,	"prelt"			:	72
 ,	"returntype"	:	"TEXT"
+,	"door"			:	door
 }
 
 URL_CROSSDOMAIN = "http://login.sina.com.cn/sso/crossdomain.php"
@@ -106,7 +107,7 @@ URL_L2HIST = 'http://stock.finance.sina.com.cn/stock/api/openapi.php/StockLevel2
 URL_API_MARKET_CENTER_GETHQNODEDATA = lambda node: "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?num=5000&sort=symbol&asc=0&node=%s&symbol=&_s_r_a=page&page=1" % node
 # node = hs_a, hs_b
 # 数据格式中key缺少双引号
-# [	
+# [
 # 	{
 # 		symbol:"sh600006"
 # 	,	code:"600006"

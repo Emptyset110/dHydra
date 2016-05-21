@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 # Created on 04/12/2016
 # @author: Emptyset
@@ -23,11 +23,11 @@ from datetime import datetime
 # 以上是自动生成的 #
 class SinaTickToMongoAction(Action):
 	def __init__(self, name, **kwargs):
-		# 用户自定义自动加载的_producerList
-		self._producerList = [
+		# 用户自定义自动加载的_producer_list
+		self._producer_list = [
 			{	
 				"name"	:	"SinaFreeQuote"
-			,	"pName"	:	"SinaTickToMongo.SinaFreeQuote"		#这是在action内部给producer起的自定义名字，可随意。一般最好遵守<actionName.producerName>
+			,	"producer_name"	:	"SinaTickToMongo.SinaFreeQuote"		#这是在action内部给producer起的自定义名字，可随意。一般最好遵守<actionName.producerName>
 			}
 		]
 		# 设置进程检查消息队列的间隔

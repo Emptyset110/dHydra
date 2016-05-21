@@ -1,9 +1,9 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 """
 为了规范推送数据的格式
 推荐用Event对象进行数据推送
 通常需要设置几个参数：
-	eventType指这个事件的类型：
+	event_type指这个事件的类型：
 		由于action从不同的producer获取Event，action需要被告知这个event是什么类型的
 	dataType是指data的数据类型：
 		例如dataframe，json等等
@@ -18,11 +18,11 @@ class Event:
 
 	def __init__(
 					self
-				,	eventType = None
+				,	event_type = None
 				,	dataType = None
 				,	timestamp = None
 				,	data = None):
-		self.eventType = eventType
+		self.event_type = event_type
 		self.dataType = dataType
 		self.timestamp = timestamp
 		self.data = data
