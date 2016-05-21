@@ -1,47 +1,58 @@
-# -*- coding: utf8 -*-
-
+# -*- coding: utf-8 -*-
 import logging
 from dHydra.app import *
+from dHydra.core.Globals import *
 
 def init_loger():
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s')
+	logger = logging.getLogger()
+	logger.setLevel(logging.INFO)
 
-    # 屏幕日志打印设置
-    consoleHandle = logging.StreamHandler()
-    consoleHandle.setFormatter(formatter)
-    consoleHandle.setLevel(logging.ERROR)
-    logger.addHandler(consoleHandle)
+	# 屏幕日志打印设置
+	console_handler = logging.StreamHandler()
+	console_handler.setFormatter(formatter)
+	console_handler.setLevel(logging.INFO)
+	logger.addHandler(console_handler)
 
-    if not os.path.exists('log'):
-        os.makedirs('log')
-    # 打开下面的输出到文件
-    fileHandler = logging.FileHandler('log/error.log')
-    fileHandler.setLevel(logging.ERROR)
-    fileHandler.setFormatter(formatter)
-    fileHandler2 = logging.FileHandler('log/log.log')
-    fileHandler2.setLevel(logging.INFO)
-    fileHandler2.setFormatter(formatter)
-    
-    logger.setLevel(logging.INFO)
-    logger.addHandler(fileHandler)
-    logger.addHandler(fileHandler2)
+	if not os.path.exists('log'):
+		os.makedirs('log')
+	# 打开下面的输出到文件
+	file_handler = logging.FileHandler('log/error.log')
+	file_handler.setLevel(logging.ERROR)
+	file_handler.setFormatter(formatter)
+	file_handler2 = logging.FileHandler('log/debug.log')
+	file_handler2.setLevel(logging.INFO)
+	file_handler2.setFormatter(formatter)
+
+	logger.addHandler(file_handler)
+	logger.addHandler(file_handler2)
 
 """
 初始化日志
 """
-
 init_loger()
 
 """
 读取数据处理模块(Action)列表
 """
-actionList = ['PrintSinaL2']
+action_list = ['PrintSinaL2']
+action_args = {
+	"PrintSinaL2": {
+		"producer_list" : [
+		{
+			"name"	  :	"SinaLevel2WS"
+		,   "producer_name"	 :   "L2.Quotation"
+		,   "query"	 :   ['quotation','deal']
+		}
+		]
+		,	"raw" : False
+	}
+}
+
 """
 生成Action对象并开启actions
 """
-start_action(actionList)
+start_action(action_list,action_args)
 
 """
 嗯……只要这样就可以了

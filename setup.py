@@ -3,7 +3,7 @@
 import codecs
 import os
 import sys
- 
+
 try:
     from setuptools import setup
 except:
@@ -14,12 +14,12 @@ except:
 
 def read(fname):
     return codecs.open(os.path.join(os.path.dirname(__file__), fname)).read()
- 
+
 NAME = "dHydra"
 """
 名字，一般放你包的名字即可
 """
- 
+
 PACKAGES = [	"dHydra"
 			,	"dHydra.core"
 			,	"dHydra.producer"
@@ -38,7 +38,7 @@ PACKAGES = [	"dHydra"
 			]
 
 DESCRIPTION = "A framework for saving & data mining Chinese Stocks"
- 
+
 LONG_DESCRIPTION = ""
 """
 参见read方法说明
@@ -48,17 +48,17 @@ KEYWORDS = ("Finance","Chinese Stock","Quant","Framework")
 """
 关于当前包的一些关键字，方便PyPI进行分类。
 """
- 
+
 AUTHOR = "Wen Gu"
- 
+
 AUTHOR_EMAIL = "emptyset110@gmail.com"
- 
+
 URL = "http://dHydra.org"
 
-VERSION = "0.10.14"
+VERSION = "0.10.15"
 
 LICENSE = "Apache Software License"
- 
+
 setup(
     name = NAME
 ,   version = VERSION
