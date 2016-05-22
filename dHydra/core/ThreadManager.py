@@ -33,7 +33,6 @@ class Thread(threading.Thread):
             result = self.__target()
             if self.__cancel_thread is not None:
                 self.__cancel = ( self.__cancel_thread() ) and ( self._manager.threads_num >= self._manager.num_min )
-                print(self.__cancel)
 
         if self.on_finished is not None:
             self.on_finished( result )
