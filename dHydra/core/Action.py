@@ -29,7 +29,7 @@ class Action(threading.Thread):
 				,	on_finished = None
 				,	set_daemon = True
 				,	lower_threshold = 1
-				,	upper_threshold = 10000	# 当消息队列数量超过upper_threshold时候，会动态添加
+				,	upper_threshold = 3000	# 当消息队列数量超过upper_threshold时候，会动态添加
 				,	**kwargs
 				):
 		super().__init__()
@@ -93,8 +93,8 @@ class Action(threading.Thread):
 		-------
 		return:	True/False
 		"""
-		if ( self._queue.qsize() < self.lower_threshold ) and ():
-			self.logger.info( "消息队列中消息数量: {}, 需要减少线程".format( self._queue.qsize() ) )
+		if ( self._queue.qsize() < self.lower_threshold ):
+			self.logger.debug( "消息队列中消息数量: {}, 需要减少线程".format( self._queue.qsize() ) )
 			return True
 		else:
 			return False
@@ -160,8 +160,11 @@ class Action(threading.Thread):
 				producer.start()
 
 	def thread_target(self):
-		event = self._queue.get(True)
-		return self.handler(event = event)
+		try:
+			event = self._queue.get(True, timeout = 3)
+			return self.handler(event = event)
+		except Exception as e:
+			return None
 
 	# 需要在子类中重写的数据处理方法
 	def handler(self, event):

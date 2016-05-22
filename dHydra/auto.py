@@ -12,9 +12,9 @@ def new_vendor(vendorName = None):
 		f.write(
 		"""# -*- coding: utf-8 -*-
 \"\"\"
-# Created on
-# @author:
-# @contact:
+# Created on 
+# @author: 
+# @contact: 
 \"\"\"
 # 以下是自动生成的 #
 # --- 导入系统配置
@@ -71,9 +71,9 @@ def new_producer(producerName = None):
 		f.write(
 		"""# -*- coding: utf-8 -*-
 \"\"\"
-# Created on
-# @author:
-# @contact:
+# Created on 
+# @author: 
+# @contact: 
 \"\"\"
 # 以下是自动生成的 #
 # --- 导入系统配置
@@ -129,9 +129,9 @@ def new_action(actionName = None):
 		pass"""
 		f.write("""# -*- coding: utf-8 -*-
 \"\"\"
-# Created on
-# @author:
-# @contact:
+# Created on 
+# @author: 
+# @contact: 
 \"\"\"
 # 以下是自动生成的 #
 # --- 导入系统配置
@@ -149,7 +149,7 @@ class %sAction(Action):
 	def __init__(self, name, **kwargs):
 		# 用户自定义自动加载的_producer_list
 		self._producer_list = [
-			{
+			{	
 				"name"	:	"Demo"
 			,	"producer_name"	:	"Demo.Demo"		#这是在action内部给producer起的自定义名字，可随意。一般最好遵守<actionName.producerName>
 			}
@@ -213,7 +213,7 @@ def init_loger():
 	file_handler2 = logging.FileHandler('log/log.log')
 	file_handler2.setLevel(logging.INFO)
 	file_handler2.setFormatter(formatter)
-
+	
 	logger.setLevel(logging.INFO)
 	logger.addHandler(file_handler)
 	logger.addHandler(file_handler2)
@@ -256,7 +256,7 @@ def init_loger():
     file_handler2 = logging.FileHandler('log/log.log')
     file_handler2.setLevel(logging.INFO)
     file_handler2.setFormatter(formatter)
-
+    
     logger.setLevel(logging.INFO)
     logger.addHandler(file_handler)
     logger.addHandler(file_handler2)
@@ -271,22 +271,10 @@ init_loger()
 读取数据处理模块(Action)列表
 \"\"\"
 action_list = ['PrintSinaL2']
-action_args = {
-	"PrintSinaL2": {
-		"producer_list" : [
-		{
-			"name"	  :	"SinaLevel2WS"
-		,   "producer_name"	 :   "L2.Quotation"
-		,   "query"	 :   ['quotation']
-		}
-		]
-		,	"raw" : False
-	}
-}
 \"\"\"
 生成Action对象并开启actions
 \"\"\"
-start_action(action_list,action_args)
+start_action(action_list)
 
 \"\"\"
 嗯……只要这样就可以了

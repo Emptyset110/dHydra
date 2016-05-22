@@ -234,9 +234,9 @@ class SinaVendor(Vendor):
 			try:
 				response = self.session.get(
 					URL_API_MARKET_CENTER_GETHQNODEDATA(node)
-				,	headers = { "Connection" : "close" }
+				,	headers = HEADERS_GET_TODAY_ALL
 				,	timeout = 3
-					).text
+				).text
 				retry = False
 			except:
 				print("获取数据超时，正在重试")

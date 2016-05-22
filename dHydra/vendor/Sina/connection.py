@@ -69,6 +69,16 @@ PARAM_L2HIST = lambda symbol,page,stime,etime: {
 ,	"num"				:	'20'
 ,	"_"					:	int(time.time()*1000)
 }
+HEADERS_GET_TODAY_ALL = {
+	"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+,	"Accept-Encoding" 	: "gzip, deflate, sdch"
+,	"Accept-Language"	: "en-US,en;q=0.8"
+,	"Cache-Control"		: "max-age=0"
+,	"Connection"		: "keep-alive"
+,	"Host"				: "vip.stock.finance.sina.com.cn"
+,	"Upgrade-Insecure-Requests":"1"
+,	"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36"
+}
 HEADERS_LOGIN = {
 	"Accept" : '*/*'
 ,	"Accept-Encoding" : 'gzip, deflate, sdch'

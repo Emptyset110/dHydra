@@ -25,14 +25,15 @@ class Thread(threading.Thread):
         return False
 
     def del_thread(self):
-        print( "Deleting: {}".format( threading.current_thread().name ) )
+        self.logger.info( "Deleting: {}".format( threading.current_thread().name ) )
         return self.__del_thread( name = threading.current_thread().name )
 
     def run(self):
         while self.__cancel is False:
             result = self.__target()
             if self.__cancel_thread is not None:
-                self.__cancel = ( self.__cancel_thread() ) and ( self._manager.threads_num <= self._manger.num_min )
+                self.__cancel = ( self.__cancel_thread() ) and ( self._manager.threads_num >= self._manager.num_min )
+                print(self.__cancel)
 
         if self.on_finished is not None:
             self.on_finished( result )
@@ -94,6 +95,7 @@ class Manager():
         t.start()
         return
 
+    @property
     def threads_num(self):
         return len(self.__threads)
 
@@ -110,13 +112,13 @@ class Manager():
                     self.logger.warning( "需要增加线程，但是已达到用户设置的线程数量上限" )
                 else:
                     self.new_thread()
-                    print( "增加了一个线程" )
+                    self.logger.info( "增加了一个线程" )
             time.sleep(3)
 
     def del_thread(self, name):
-        print( self.__threads )
+        self.logger.info( "{}".format( self.__threads ) )
         if name in self.__threads.keys():
-            print( "删除线程: {}".format( name ) )
+            self.logger.info( "删除线程: {}".format( name ) )
             del self.__threads[ name ]
             return True
         else:
@@ -141,12 +143,12 @@ class Manager():
 
     def start(self,):
         self.check_status()
-        print("start线程")
+        self.logger.info("start线程")
         for k in self.__threads.keys():
             thread = self.__threads[ k ]
             thread.start()
         self.is_running = True
-        print("线程全部开启完毕")
+        self.logger.info("线程全部开启完毕")
 
         self.check_status()
         return True
@@ -155,5 +157,5 @@ class Manager():
         key_list = list( self.__threads.keys() )
         for k in key_list:
             thread = self.__threads[ k ]
-            print("thread.name ={}, thread.ident ={}, thread.is_alive = {}"\
+            self.logger.debug("thread.name ={}, thread.ident ={}, thread.is_alive = {}"\
             .format( thread.name, thread.ident, thread.is_alive() ) )

@@ -38,8 +38,11 @@ class Producer(threading.Thread):
 		self.logger.info('[开启生产者]\t %s'% self._name)
 		self._running = True
 		while self._running:
-			self.handler()
-			time.sleep(0.5)
+			try:
+				self.handler()
+			except Exception as e:
+				self.logger.error( "{}".format( e ) )
+			time.sleep(1)
 		self._end()
 
 	def is_active(self):
