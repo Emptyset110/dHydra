@@ -234,6 +234,7 @@ class SinaVendor(Vendor):
 			try:
 				response = self.session.get(
 					URL_API_MARKET_CENTER_GETHQNODEDATA(node)
+				,	headers = { "Connection" : "close" }
 				,	timeout = 3
 					).text
 				retry = False
