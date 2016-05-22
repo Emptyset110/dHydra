@@ -277,7 +277,7 @@ action_args = {
 		{
 			"name"	  :	"SinaLevel2WS"
 		,   "producer_name"	 :   "L2.Quotation"
-		,   "query"	 :   ['quotation','deal']
+		,   "query"	 :   ['quotation']
 		}
 		]
 		,	"raw" : False
@@ -286,7 +286,7 @@ action_args = {
 \"\"\"
 生成Action对象并开启actions
 \"\"\"
-start_action(action_list)
+start_action(action_list,action_args)
 
 \"\"\"
 嗯……只要这样就可以了

@@ -42,7 +42,7 @@ action_args = {
 		{
 			"name"	  :	"SinaLevel2WS"
 		,   "producer_name"	 :   "L2.Quotation"
-		,   "query"	 :   ['quotation','deal']
+		,   "query"	 :   ['quotation']
 		}
 		]
 		,	"raw" : False
