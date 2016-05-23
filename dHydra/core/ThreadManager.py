@@ -107,7 +107,7 @@ class Manager():
         while True:
             num_threads = len( self.__threads )
             if self.__need_new_thread():
-                if num_threads >= self.__num_max:
+                if num_threads >= self.num_max:
                     self.logger.warning( "需要增加线程，但是已达到用户设置的线程数量上限" )
                 else:
                     self.new_thread()
@@ -124,7 +124,7 @@ class Manager():
             return False
 
     def new_thread(self, ):
-        if len(self.__threads) < self.__num_max:
+        if len(self.__threads) < self.num_max:
             t = Thread( target = self.__target
                     ,   args = self.__args
                     ,   kwargs = self.__kwargs
