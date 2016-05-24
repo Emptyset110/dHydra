@@ -20,7 +20,7 @@ from pymongo import MongoClient
 import re
 import random
 
-def _code_to_symbol(code):
+def _code_to_symbol(code, index = True):
 	"""
 		生成symbol代码标志
 		@author: Jimmy Liu
@@ -34,7 +34,10 @@ def _code_to_symbol(code):
 		if len(code) != 6 :
 			return ''
 		else:
-			return 'sh%s'%code if code[:1] in ['5', '6', '9', '0' ] else 'sz%s'%code
+			if index is True:
+				return 'sh%s'%code if code[:1] in ['5', '6', '9', '0' ] else 'sz%s'%code
+			else:
+				return 'sh%s'%code if code[:1] in ['5', '6', '9' ] else 'sz%s'%code
 
 def symbol_list_to_code(symbolList):
 	codeList = []

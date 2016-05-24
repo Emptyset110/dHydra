@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-雪球社区接口类 
+雪球社区接口类
 Created on 03/17/2016
 @author: Wen Gu
 @contact: emptyset110@gmail.com

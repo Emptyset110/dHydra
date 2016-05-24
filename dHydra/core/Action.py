@@ -21,19 +21,20 @@ class Action(threading.Thread):
 	def __init__(	self
 				,	name = None
 				,	producer_list = list()
-				,	num_start = 5
-				,	num_min = 2
+				,	num_start = 10
+				,	num_min = 5
 				,	num_max = 100
 				,	need_new_thread = None
 				,	cancel_thread = None
 				,	on_finished = None
 				,	set_daemon = True
 				,	lower_threshold = 1
-				,	upper_threshold = 3000	# 当消息队列数量超过upper_threshold时候，会动态添加
+				,	upper_threshold = 700	# 当消息队列数量超过upper_threshold时候，会动态添加
+				,	log_level = "INFO" # "DEBUG","INFO","WARNING"
 				,	**kwargs
 				):
 		super().__init__()
-		self.logger = self.get_logger()
+		self.logger = self.get_logger( level = log_level )
 		self._name = name
 		self._kwargs = kwargs
 		self._queue = multiprocessing.Queue()
@@ -66,8 +67,20 @@ class Action(threading.Thread):
 		self._running = False		# _running表示：( Deprecated ) Action是否开启，这个flag无用
 		self._auto_load_producers()
 
-	def get_logger(self):
+	def get_logger(self, level):
 		logger = logging.getLogger(self.__class__.__name__)
+		if level is "DEBUG":
+			logger.setLevel(10)
+		elif level is "INFO":
+			logger.setLevel(20)
+		elif level is "WARNING":
+			logger.setLevel(30)
+		elif level is "ERROR":
+			logger.setLevel(40)
+		elif level is "CRITICAL":
+			logger.setLevel(50)
+		else:
+			logger.setLevel(20)
 		return logger
 
 	def handler_callback( self, result ):
@@ -80,7 +93,7 @@ class Action(threading.Thread):
 		--------
 		return:	True/False
 		"""
-		if self._queue.qsize() > self.upper_threshold:
+		if (self._queue.qsize() > self.upper_threshold):
 			self.logger.info( "消息队列中消息数量: {}, 需要增加线程".format( self._queue.qsize() ) )
 			return True
 		else:
@@ -161,7 +174,7 @@ class Action(threading.Thread):
 
 	def thread_target(self):
 		try:
-			event = self._queue.get(True, timeout = 3)
+			event = self._queue.get(True, timeout = 30)
 			return self.handler(event = event)
 		except Exception as e:
 			return None

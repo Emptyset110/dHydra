@@ -63,7 +63,7 @@ class SinaVendor(Vendor):
 		return verifyCode
 
 	def login(self, verify = False):
-		self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
+		# self.session.get("http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml")
 		su = base64.b64encode(self.username.encode('utf-8'))
 
 		preLogin = self.session.get( URL_PRELOGIN, params = PARAM_PRELOGIN( su ), headers = HEADERS_LOGIN)
@@ -93,9 +93,9 @@ class SinaVendor(Vendor):
 			print( "登录成功: %s, uid = %s" % ( self.loginResponse.json()["nick"], self.loginResponse.json()["uid"]) )
 
 			i = 0
-			for url in self.loginResponse.json()["crossDomainUrlList"]:
-				req = self.session.get( url,headers = HEADERS_CROSSDOMAIN( CROSSDOMAIN_HOST[i] ) )
-				i += 1
+			# for url in self.loginResponse.json()["crossDomainUrlList"]:
+			# 	req = self.session.get( url,headers = HEADERS_CROSSDOMAIN( CROSSDOMAIN_HOST[i] ) )
+			# 	i += 1
 			return True
 		elif (self.loginResponse.json()["retcode"] == '4049'):
 			print( self.loginResponse.json() )

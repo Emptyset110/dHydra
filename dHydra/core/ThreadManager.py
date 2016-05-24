@@ -92,6 +92,9 @@ class Manager():
         t = threading.Thread( target = self.manager )
         t.setDaemon(True)
         t.start()
+        t = threading.Thread( target = self.threads_monitor )
+        t.setDaemon(True)
+        t.start()
         return
 
     @property
@@ -100,6 +103,7 @@ class Manager():
 
     def get_logger(self):
         logger = logging.getLogger(self.__class__.__name__)
+        logger.setLevel(logging.INFO)
         return logger
 
     # 开启一个独立的线程，来动态平衡线程数量
@@ -113,6 +117,12 @@ class Manager():
                     self.new_thread()
                     self.logger.info( "增加了一个线程" )
             time.sleep(3)
+
+    # 开启一个独立线程来定时检查当前用于执行handler的线程池
+    def threads_monitor(self):
+        while True:
+            self.logger.info("当前线程池（30秒显示一次）：{}".format( self.__threads ))
+            time.sleep(30)
 
     def del_thread(self, name):
         self.logger.info( "{}".format( self.__threads ) )

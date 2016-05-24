@@ -29,6 +29,7 @@ PACKAGES = [	"dHydra"
 			,	"dHydra.vendor.Maoyan"
 			,	"dHydra.vendor.Xueqiu"
 			,	"dHydra.vendor.Sina"
+			,	"dHydra.vendor.DB"
 			,	"dHydra.action"
 			,	"dHydra.action.SinaTickToMongo"
 			,	"dHydra.action.PrintSinaL2"
@@ -55,7 +56,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
 
 URL = "http://dHydra.org"
 
-VERSION = "0.10.19"
+VERSION = "0.10.21"
 
 LICENSE = "Apache Software License"
 
