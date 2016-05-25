@@ -76,19 +76,24 @@ class SinaVendor(Vendor):
 		else:
 			verifyCode = ''
 
-		self.loginResponse = self.session.post(
-			URL_SSOLOGIN
-		,	params = PARAM_LOGIN()
-		,	data = DATA_LOGIN(
-				su = su
-			,	servertime = int( preLogin["servertime"] )
-			,	nonce = preLogin["nonce"]
-			,	rsakv = preLogin["rsakv"]
-			,	sp = sp
-			,	door = verifyCode
-			)
-		,	headers = HEADERS_LOGIN
-		)
+		while True:
+			try:
+				self.loginResponse = self.session.post(
+					URL_SSOLOGIN
+				,	params = PARAM_LOGIN()
+				,	data = DATA_LOGIN(
+						su = su
+					,	servertime = int( preLogin["servertime"] )
+					,	nonce = preLogin["nonce"]
+					,	rsakv = preLogin["rsakv"]
+					,	sp = sp
+					,	door = verifyCode
+					)
+				,	headers = HEADERS_LOGIN
+				)
+				break
+			except Exception as e:
+				self.logger.warning("{}".format(e))
 		if (self.loginResponse.json()["retcode"]=='0'):
 			print( "登录成功: %s, uid = %s" % ( self.loginResponse.json()["nick"], self.loginResponse.json()["uid"]) )
 
