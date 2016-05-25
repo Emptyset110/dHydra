@@ -99,11 +99,16 @@ class SinaVendor(Vendor):
 			return True
 		elif (self.loginResponse.json()["retcode"] == '4049'):
 			print( self.loginResponse.json() )
-			self.is_login = self.login(verify = True)
-			if self.is_login:
-				return True
-			else:
-				return False
+			while True:
+				try:
+					self.is_login = self.login(verify = True)
+					if self.is_login:
+						return True
+					else:
+						return False
+					break
+				except Exception as e:
+					self.logger.warning( "{}".format(e) )
 		else:
 			print( self.loginResponse.json() )
 			return False

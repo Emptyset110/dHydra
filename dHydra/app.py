@@ -6,12 +6,10 @@ import traceback
 import sys
 import os
 
-# print("加载：app.py")
-
 from dHydra.core.Globals import *
 from dHydra.core.Functions import *
 
-def start_action(action_list, action_args = {}):
+def start_action(action_list, action_args = {}, web = False):
 	for action in action_list:
 		if action in action_args.keys():
 			print(action_args[action])
@@ -20,6 +18,9 @@ def start_action(action_list, action_args = {}):
 			actionInstance = A(action)
 		action_dict[action] = actionInstance
 	for action in action_list:
+		if web is True:
+			action_dict[action].setDaemon(True)
 		action_dict[action].start()
-	for action in action_list:
-		action_dict[action].join()
+		if web is False:
+			for action in action_list:
+				action_dict[action].join()

@@ -225,7 +225,10 @@ class XueqiuVendor(Vendor):
 			self.logger.info("开始更新symbol = {} \t {}".format(symbol, fqType))
 			kline = None
 			while kline is None:
-				kline = self.get_kline(symbol, begin = begin)
+				try:
+					kline = self.get_kline(symbol, begin = begin)
+				except Exception as e:
+					kline = None					
 
 			if len(kline)>0:
 				kline["type"] = fqType

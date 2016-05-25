@@ -65,6 +65,7 @@ class Action(threading.Thread):
 		#	_running==False & _active==False	: Action完全停止
 		self._active = False		# _active表示：是否处理数据
 		self._running = False		# _running表示：( Deprecated ) Action是否开启，这个flag无用
+		self.mutex = threading.Lock()
 		self._auto_load_producers()
 
 	def get_logger(self, level):
@@ -174,9 +175,11 @@ class Action(threading.Thread):
 
 	def thread_target(self):
 		try:
-			event = self._queue.get(True, timeout = 30)
-			return self.handler(event = event)
+			event = self._queue.get(True, timeout = 10)
+			result =self.handler(event = event)
+			return result
 		except Exception as e:
+			self.logger.error("{}".format(e) )
 			return None
 
 	# 需要在子类中重写的数据处理方法

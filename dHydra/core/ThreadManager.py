@@ -32,7 +32,7 @@ class Thread(threading.Thread):
         while self.__cancel is False:
             result = self.__target()
             if self.__cancel_thread is not None:
-                self.__cancel = ( self.__cancel_thread() ) and ( self._manager.threads_num >= self._manager.num_min )
+                self.__cancel = ( self.__cancel_thread() ) and ( self._manager.threads_num > self._manager.num_min )
 
         if self.on_finished is not None:
             self.on_finished( result )
@@ -54,7 +54,7 @@ class Manager():
                 ,   kwargs = dict()
                 ,   num_start = 10
                 ,   num_max = 100
-                ,   num_min = 3
+                ,   num_min = 5
                 ,   set_daemon = True
                 ,   need_new_thread = None
                 ,   cancel_thread = None
@@ -116,6 +116,8 @@ class Manager():
                 else:
                     self.new_thread()
                     self.logger.info( "增加了一个线程" )
+            # else:
+            #     self.logger.info("无需增加线程：{}".format(self.__threads))
             time.sleep(3)
 
     # 开启一个独立线程来定时检查当前用于执行handler的线程池
@@ -127,9 +129,10 @@ class Manager():
     def del_thread(self, name):
         self.logger.info( "{}".format( self.__threads ) )
         if name in self.__threads.keys():
-            self.logger.info( "删除线程: {}".format( name ) )
-            del self.__threads[ name ]
-            return True
+            if self.threads_num > self.num_min:
+                self.logger.info( "删除线程: {}".format( name ) )
+                del self.__threads[ name ]
+                return True
         else:
             return False
 
