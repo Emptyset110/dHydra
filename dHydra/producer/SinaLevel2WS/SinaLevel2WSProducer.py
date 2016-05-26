@@ -56,10 +56,10 @@ class SinaLevel2WSProducer(Producer):
 		,	timeout =	5
 		) )
 		req = yield from async_req
-		self.logger.info(req.text)
+		# self.logger.info(req.text)
 		response = re.findall(r'(\{.*\})',req.text)[0]
 		response = json.loads( response.replace(',',',"').replace('{','{"').replace(':','":') )
-		gc.collect()
+		# gc.collect()
 		return response
 
 	# 2cn_是3秒一条的Level2 10档行情
@@ -146,7 +146,7 @@ class SinaLevel2WSProducer(Producer):
 		except Exception as e:
 			self.websockets[ symbol ]["trialTime"] += 1
 			self.logger.warning("token获取失败第{}次，待会儿重试".format( self.websockets[ symbol ]["trialTime"] ))
-		gc.collect()
+		# gc.collect()
 
 
 	def websocket_creator(self):
@@ -206,7 +206,7 @@ class SinaLevel2WSProducer(Producer):
 				loop.run_until_complete( asyncio.wait(tasks) )
 				loop.close()
 			time.sleep(1)
-			gc.collect()
+			# gc.collect()
 
 
 	def handler(self):

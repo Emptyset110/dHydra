@@ -179,7 +179,7 @@ class Action(threading.Thread):
 			result =self.handler(event = event)
 			return result
 		except Exception as e:
-			self.logger.error("{}".format(e) )
+			# self.logger.error("{}".format(e) )
 			return None
 
 	# 需要在子类中重写的数据处理方法

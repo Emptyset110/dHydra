@@ -228,7 +228,7 @@ class XueqiuVendor(Vendor):
 				try:
 					kline = self.get_kline(symbol, begin = begin)
 				except Exception as e:
-					kline = None					
+					kline = None
 
 			if len(kline)>0:
 				kline["type"] = fqType

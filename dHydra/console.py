@@ -10,7 +10,7 @@ def init_loger():
 	# 屏幕日志打印设置
 	console_handler = logging.StreamHandler()
 	console_handler.setFormatter(formatter)
-	console_handler.setLevel(logging.ERROR)
+	console_handler.setLevel(logging.INFO)
 	logger.addHandler(console_handler)
 
 	if not os.path.exists('log'):

@@ -51,6 +51,7 @@ class SinaVendor(Vendor):
 		self.session = requests.Session()
 		self.quote = None
 		self.is_login = False
+		self.logger.info("正在从新浪获取全市场代码")
 		self.symbols = self.get_symbols()
 
 	def get_verify_code(self):

@@ -19,6 +19,7 @@ from pandas import DataFrame
 from pymongo import MongoClient
 import re
 import random
+import json
 
 def _code_to_symbol(code, index = True):
 	"""
@@ -55,8 +56,13 @@ def _get_public_ip():
 	return requests.get('http://ipinfo.io/ip').text.strip()
 
 def get_client_ip():
-	response = requests.get( 'https://ff.sinajs.cn/?_=%s&list=sys_clientip' % int(time.time()*1000) ).text
-	ip = re.findall(r'\"(.*)\"', response)
+	while True:
+		try:
+			response = requests.get( 'https://ff.sinajs.cn/?_=%s&list=sys_clientip' % int(time.time()*1000) ).text
+			ip = re.findall(r'\"(.*)\"', response)
+			break
+		except:
+			pass
 	return ip[0]
 
 # 用于将一个loop交给一个线程来完成一些任务
@@ -314,3 +320,21 @@ def symbol_type( symbol ):
 	------
 	"""
 	return symbol_type
+
+def read_config( file_path ):
+	# 读取配置
+	try:
+		f_config = open( file_path )
+		cfg = json.load( f_config )
+	except Exception as e:
+		print("{}".format(e))
+		cfg = dict()
+		print( "未能正确加载{}，请检查路径，json文档格式，或者忽略此警告".format( file_path ) )
+	return cfg
+
+def write_config( cfg, file_path ):
+	# 将配置写入
+	print( "写入配置：\n{}".format( json.dumps(cfg, indent = 2) ) )
+	f = open(file_path, 'w', encoding= 'UTF-8')
+	f.write( json.dumps( cfg, indent = 2 ) )
+	f.close()
