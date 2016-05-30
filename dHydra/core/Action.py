@@ -21,9 +21,9 @@ class Action(threading.Thread):
 	def __init__(	self
 				,	name = None
 				,	producer_list = list()
-				,	num_start = 10
-				,	num_min = 5
-				,	num_max = 100
+				,	num_start = 1
+				,	num_min = 1
+				,	num_max = 20
 				,	need_new_thread = None
 				,	cancel_thread = None
 				,	on_finished = None
@@ -67,6 +67,15 @@ class Action(threading.Thread):
 		self._running = False		# _running表示：( Deprecated ) Action是否开启，这个flag无用
 		self.mutex = threading.Lock()
 		self._auto_load_producers()
+		# 开启定时打印消息队列堆积数据量的线程
+		t = threading.Thread(target=self.log_queue)
+		t.setDaemon(True)
+		t.start()
+
+	def log_queue(self):
+		while True:
+			print( "消息队列中消息数量: {}".format( self._queue.qsize() ) )
+			time.sleep(10)
 
 	def get_logger(self, level):
 		logger = logging.getLogger(self.__class__.__name__)

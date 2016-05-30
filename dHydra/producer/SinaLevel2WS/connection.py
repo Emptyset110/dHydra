@@ -20,7 +20,7 @@ HEADERS_LOGIN = {
 ,	"Connection" : 'keep-alive'
 ,	"Host" : 'login.sina.com.cn'
 ,	"Referer" : 'http://finance.sina.com.cn/'
-,	"User-Agent" : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
+,	"User-Agent" : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36'
 }
 PARAM_L2HIST = lambda symbol,page: {
 	"symbol"			:	symbol
@@ -37,7 +37,7 @@ HEADERS_L2 = lambda symbol	: {
 	'Host'				:	'stock.finance.sina.com.cn'
 ,	'Connection'		:	'keep-alive'
 ,	'Accept'			:	'*/*'
-,	'User-Agent'		:	'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
+,	'User-Agent'		:	'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36'
 ,	'Referer'			:	'http://vip.stock.finance.sina.com.cn/quotes_service/view/l2_tradedetail.php?symbol=%s' % symbol
 ,	'Accept-Encoding'	:	'gzip, deflate, sdch'
 ,	'Accept-Language'	:	'en-US,en;q=0.8'
@@ -48,12 +48,12 @@ HEADERS_WSKT_TOKEN = lambda 	:	{
 ,	'Accept-Language'			:	'en-US,en;q=0.8'
 ,	'Connection'				:	'keep-alive'
 ,	'Host'						:	'current.sina.com.cn'
-,	'User-Agent'				:	'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
-,	'Referer'					:	'http://finance.sina.com.cn/realstock/company/sz300204/l2.shtml'
+,	'User-Agent'				:	'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36'
+,	'Upgrade-Insecure-Requests'	:	'1'
 }
 HEADERS_CROSSDOMAIN = lambda host	:	{
 	'Host'							:	host
-,	'User-Agent'					:	'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
+,	'User-Agent'					:	'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36'
 ,	'Accept'						: 	'*/*'
 ,	'Accept-Language'				:	'en-US,en;q=0.5'
 ,	'Accept-Encoding'				:	'gzip, deflate'

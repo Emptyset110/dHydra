@@ -46,20 +46,15 @@ class SinaLevel2WSProducer(Producer):
 	def login(self, verify = False):
 		return self.sina.login(verify = verify)
 
-	@asyncio.coroutine
 	def get_ws_token(self,qlist):
-		loop = asyncio.get_event_loop()
-		async_req = loop.run_in_executor(None, functools.partial( self.sina.session.get,
-			URL_WSKT_TOKEN
+		req = self.sina.session.get(	URL_WSKT_TOKEN
 		,	params 	=	PARAM_WSKT_TOKEN(ip=self.ip,qlist=qlist, hq = self.hq)
 		,	headers =	HEADERS_WSKT_TOKEN()
 		,	timeout =	5
-		) )
-		req = yield from async_req
-		# self.logger.info(req.text)
+		)
+		time.sleep(0.1)
 		response = re.findall(r'(\{.*\})',req.text)[0]
 		response = json.loads( response.replace(',',',"').replace('{','{"').replace(':','":') )
-		# gc.collect()
 		return response
 
 	# 2cn_是3秒一条的Level2 10档行情
@@ -90,15 +85,22 @@ class SinaLevel2WSProducer(Producer):
 		retry = True
 		while retry:
 			try:
-				response = yield from self.get_ws_token(qlist)
+				response = self.get_ws_token(qlist)
 				if response["msg_code"] == 1:
 					token = response["result"]
 					self.logger.info("成功获取到token, symbolList = {}".format(symbolList) )
 					retry = False
 				else:
-					self.logger.info(response["result"])
+					self.logger.warning( "{},{}".format(response,qlist) )
+					if response["msg_code"] == -11:
+						time.sleep(2)
+						self.logger.warning( "尝试重新登录新浪" )
+						self.sina = V("Sina")
+						self.sina.login( verify = False )
+						time.sleep(1)
 			except Exception as e:
 				self.logger.warning(e)
+			yield from asyncio.sleep(1)
 
 		url_wss = 'wss://ff.sinajs.cn/wskt?token=' + token + '&list=' + qlist
 
@@ -114,7 +116,7 @@ class SinaLevel2WSProducer(Producer):
 				self.logger.info("成功建立ws连接, {}, symbolList = {}".format(threading.current_thread().name, symbolList))
 				break
 			except Exception as e:
-				self.logger.warning("重试 websockets.connect , {}, symbolList = {}".format(threading.current_thread().name, symbolList) )
+				("重试 websockets.connect , {}, symbolList = {}".format(threading.current_thread().name, symbolList) )
 
 		while self._active:
 			try:
@@ -123,7 +125,6 @@ class SinaLevel2WSProducer(Producer):
 
 				for q in self._subscriber:
 					q.put(event)
-					# print( "Producer:\n{},{}".format( event.data,datetime.now() ) )
 
 			except Exception as e:
 				self.logger.error("{},{}".format(e, threading.current_thread().name) )
@@ -133,7 +134,7 @@ class SinaLevel2WSProducer(Producer):
 	@asyncio.coroutine
 	def renew_token(self, symbol):
 		try:
-			response = yield from self.get_ws_token( self.websockets[ symbol ]["qlist"] )
+			response = self.get_ws_token( self.websockets[ symbol ]["qlist"] )
 			if response["msg_code"] == 1:
 				token = response["result"]
 				self.websockets[ symbol ]["token"] = token
@@ -142,7 +143,7 @@ class SinaLevel2WSProducer(Producer):
 				self.websockets[ symbol ]["trialTime"] = 0
 			else:
 				self.websockets[ symbol ]["trialTime"] += 1
-				self.logger.info(response["result"])
+				self.logger.warning(response["result"])
 		except Exception as e:
 			self.websockets[ symbol ]["trialTime"] += 1
 			self.logger.warning("token获取失败第{}次，待会儿重试".format( self.websockets[ symbol ]["trialTime"] ))

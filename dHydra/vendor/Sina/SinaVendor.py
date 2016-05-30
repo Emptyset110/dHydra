@@ -97,8 +97,7 @@ class SinaVendor(Vendor):
 				self.logger.warning("{}".format(e))
 		if (self.loginResponse.json()["retcode"]=='0'):
 			print( "登录成功: %s, uid = %s" % ( self.loginResponse.json()["nick"], self.loginResponse.json()["uid"]) )
-
-			i = 0
+			# i = 0
 			# for url in self.loginResponse.json()["crossDomainUrlList"]:
 			# 	req = self.session.get( url,headers = HEADERS_CROSSDOMAIN( CROSSDOMAIN_HOST[i] ) )
 			# 	i += 1

@@ -61,8 +61,12 @@ def get_client_ip():
 			response = requests.get( 'https://ff.sinajs.cn/?_=%s&list=sys_clientip' % int(time.time()*1000) ).text
 			ip = re.findall(r'\"(.*)\"', response)
 			break
-		except:
-			pass
+		except Exception as e:
+			try:
+				ip = _get_public_ip()
+				return ip
+			except:
+				pass
 	return ip[0]
 
 # 用于将一个loop交给一个线程来完成一些任务

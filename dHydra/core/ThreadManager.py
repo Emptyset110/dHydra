@@ -156,8 +156,12 @@ class Manager():
     def start(self,):
         self.check_status()
         self.logger.info("start线程")
-        for k in self.__threads.keys():
-            thread = self.__threads[ k ]
+        t_keys = list(self.__threads.keys())
+        for k in t_keys:
+            try:
+                thread = self.__threads[ k ]
+            except Exception as e:
+                self.logger.warning( "{}".format(e) )
             thread.start()
         self.is_running = True
         self.logger.info("线程全部开启完毕")
