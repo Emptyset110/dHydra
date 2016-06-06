@@ -87,10 +87,10 @@ class XueqiuVendor(Vendor):
 			# Cut symbolList
 		symbolList = list(symbolSet)
 		threads = []
-		symbolListSlice = util.slice_list(num = threadNum,dataList = symbolList)
+		symbolListSlice = util.slice_list(num = threadNum,data_list = symbolList)
 		for symbolList in symbolListSlice:
 			loop = asyncio.new_event_loop()
-			symbolsList = util.slice_list(step=50, dataList = symbolList)
+			symbolsList = util.slice_list(step=50, data_list = symbolList)
 			tasks = [self.get_quotation_task(symbols=symbols) for symbols in symbolsList]
 			t = threading.Thread(target = util.thread_loop,args=(loop,tasks) )
 			threads.append(t)

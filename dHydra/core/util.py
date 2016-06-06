@@ -21,7 +21,7 @@ import re
 import random
 import json
 
-def _code_to_symbol(code, index = True):
+def _code_to_symbol(code, index = False):
 	"""
 		生成symbol代码标志
 		@author: Jimmy Liu
@@ -46,10 +46,10 @@ def symbol_list_to_code(symbolList):
 		codeList.append(symbol[2:8])
 	return codeList
 
-def code_list_to_symbol(codeList):
+def code_list_to_symbol(codeList, index = False):
 	symbolList = []
 	for code in codeList:
-		symbolList.append( _code_to_symbol(code) )
+		symbolList.append( _code_to_symbol(code, index = index) )
 	return symbolList
 
 def _get_public_ip():
@@ -77,11 +77,11 @@ def thread_loop(loop, tasks):
 	loop.close()
 
 # 用于将一个list按一定步长切片，返回这个list切分后的list
-def slice_list(step = None, num = None, dataList=None):
+def slice_list(step = None, num = None, data_list=None):
 	if not ( (step is None) & (num is None) ):
 		if num is not None:
-			step = math.ceil(len(dataList)/num)
-		return [dataList[ i : i + step] for i in range(0, len(dataList), step)]
+			step = math.ceil(len(data_list)/num)
+		return [data_list[ i : i + step] for i in range(0, len(data_list), step)]
 	else:
 		print("step和num不能同时为空")
 		return False
@@ -162,18 +162,18 @@ def split_symbols(symbols):
 	sh = list(df[ df.s < 'sz' ]["s"])
 	return [ sz, sh ]
 
-def upper(dataList):
-	for i in range( 0, len(dataList) ):
-		dataList[i] = dataList[i].upper()
-	return dataList
+def upper(data_list):
+	for i in range( 0, len(data_list) ):
+		data_list[i] = data_list[i].upper()
+	return data_list
 
 """
 用于解析Sina l2的函数
 """
 def ws_parse( message, to_dict = False ):
-	dataList = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|_orders|_i)?)(?:=)(.*)(?:\n))',message)
+	data_list = re.findall(r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})(?:_0|_1|_orders|_i)?)(?:=)(.*)(?:\n))',message)
 	result = list()
-	for data in dataList:
+	for data in data_list:
 		if (len(data[0])==12):	# quotation
 			wstype = 'quotation'
 		elif ( (data[0][-2:]=='_0') | (data[0][-2:]=='_1') ):

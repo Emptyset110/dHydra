@@ -10,22 +10,6 @@ import threading
 
 class PrintSinaL2Action(Action):
 	def __init__(self, **kwargs):
-		# 用户自定义自动加载的_producer_list
-		# if "producer_list" in kwargs.keys():
-		# 	self._producer_list = kwargs["producer_list"]
-		# else:
-		# 	self._producer_list = [
-		# 		{
-		# 			"name"	:	"SinaLevel2WS"
-		# 		,	"producer_name"	:	"PrintSinaL2.SinaLevel2-quotation"
-		# 		,	"query"	:	['quotation']	#只获取10档行情
-		# 		}
-		# 	# ,	{
-		# 	# 		"name"	:	"SinaLevel2WS"
-		# 	# 	,	"producer_name"	:	"PrintSinaL2.SinaLevel2-deal"
-		# 	# 	,	"query"	:	['deal']
-		# 	# 	}
-		# 	]
 
 		if "raw" in kwargs.keys():
 			self.raw = kwargs["raw"]
@@ -43,8 +27,10 @@ class PrintSinaL2Action(Action):
 			event.data = util.ws_parse(message = event.data)
 		if isinstance(event.data, list):
 			for data in event.data:
-				print("PrintSinaL2:{}\n{}".format( dt,data ) )
+				self.count += 1
+				print("PrintSinaL2:{}, Count:{}\n{}".format( dt,self.count,data ) )
 		else:
-			print("PrintSinaL2:{}\n{}".format( dt,event.data ) )
+			self.count += 1
+			print("PrintSinaL2:{}, Count:{}\n{}".format( dt,self.count,data ) )
 
 		# self.logger.info("线程退出")

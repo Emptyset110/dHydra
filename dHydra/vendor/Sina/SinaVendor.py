@@ -173,8 +173,8 @@ class SinaVendor(Vendor):
 		else:
 			symbolList = list(symbols)
 		[ symbols_sz, symbols_sh ] = util.split_symbols(symbolList)
-		symbolListSlice = util.slice_list(step = 800, dataList = symbols_sz)
-		symbolListSlice.extend( util.slice_list(step = 800, dataList = symbols_sh) )
+		symbolListSlice = util.slice_list(step = 800, data_list = symbols_sz)
+		symbolListSlice.extend( util.slice_list(step = 800, data_list = symbols_sh) )
 		loop.run_until_complete( self.get_quote_task(symbolListSlice=symbolListSlice, dataframe = dataframe) )
 		if dataframe:
 			self.quote = self.quote.drop( 'ms', axis = 1 )

@@ -14,6 +14,7 @@ from dHydra.core.Globals import *
 from dHydra.core.Functions import *
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
 import dHydra.core.ThreadManager as ThreadManager
+import dHydra.core.util as util
 from abc import ABCMeta
 
 class Action(threading.Thread):
