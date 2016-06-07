@@ -174,7 +174,7 @@ class Action(threading.Thread):
 	# action根据self._producer_list来自动加载producers
 	def _auto_load_producers(self):
 		for kwargs in self._producer_list:
-			instance = P(**kwargs, **self._kwargs)
+			instance = P(**kwargs)
 			self._producers.add( instance )
 			self._subscribe(instance)
 

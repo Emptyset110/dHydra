@@ -32,12 +32,20 @@ class MainHandler(tornado.web.RequestHandler):
 
 # 首页根目录
 class IndexHandler(tornado.web.RequestHandler):
+	def prepare(self):
+		"""
+		单入口做URI路由转发，交给对应Handler处理
+		"""
+		request = self.request
+		application = self.application
+		# kwargs = self.kwargs
+		uri = self.request.uri
+		VendorHandler(application=application,request=request)
+		print("This is IndexHandler")
+
 	def get(self, *args ):
 		self.render( "index.html" )
 		print(args)
-
-	def prepare(self):
-		print("This is IndexHandler")
 
 	def get_template_path(self):
 		"""
@@ -96,7 +104,7 @@ def make_app():
 	"""
 	return tornado.web.Application([
 		# (r"/favicon.ico", tornado.web.StaticFileHandler ),
-		(r"(?:/)(.*(?:/))", IndexHandler),
+		(r"/(.*)", IndexHandler),
 		# (r"(?:([a-zA-Z0-9_-]+)/?)+", VendorHandler),
 		# (r"([^/]+)(?:/|$)", VendorHandler)
 		# (r"/vendor/(?:([a-zA-Z0-9_-]+)\/?)+", VendorHandler),
