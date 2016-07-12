@@ -54,6 +54,25 @@ class SinaVendor(Vendor):
 		self.logger.info("正在从新浪获取全市场代码")
 		self.symbols = self.get_symbols()
 
+	def get_history_data(self, code, year, season):
+		"""
+		新浪历史复权数据接口
+		"""
+		res = self.session.get( url = URL_HISTORY_DATA(code,year,season) )
+		if res.status_code == 200:
+			pattern_data = r'<div align="center">([\d\.]+)</div>'
+			data = re.findall( pattern_data, res.text )
+			records = util.slice_list( step = 7, data_list = data )
+			print(records)
+			df = DataFrame.from_records( records, columns = ['open','high','close','low','volume','amount','restoration_factor'] )
+			pattern_date = r'date=([\d]{4}-[\d]{2}-[\d]{2})'
+			date = re.findall( pattern_date, res.text )
+			df["date"] = date
+			return df
+		else:
+			self.logger.debug( "Status Code: {}".format(res.status_code) )
+			return False
+
 	def get_verify_code(self):
 		verify_code_response = self.session.get("http://login.sina.com.cn/cgi/pin.php")
 		# 保存验证码

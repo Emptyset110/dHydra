@@ -52,9 +52,9 @@ class Manager():
                 ,   target
                 ,   args = list()
                 ,   kwargs = dict()
-                ,   num_start = 10
-                ,   num_max = 100
-                ,   num_min = 5
+                ,   num_start = 1
+                ,   num_max = 1
+                ,   num_min = 1
                 ,   set_daemon = True
                 ,   need_new_thread = None
                 ,   cancel_thread = None

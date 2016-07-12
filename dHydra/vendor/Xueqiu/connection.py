@@ -2,7 +2,7 @@
 """
 Connection Settings
 Created on 02/26/2016
-@description:	Used for 
+@description:	Used for
 @author: 		Wen Gu
 @contact: 		emptyset110@gmail.com
 """
@@ -38,6 +38,14 @@ URL_XUEQIU_HQ = "https://xueqiu.com/hq"
 URL_XUEQIU_QUOTE_ORDER = lambda page,columns,stockType : "https://xueqiu.com/stock/quote_order.json?page=%s&size=90&order=desc&exchange=CN&stockType=%s&column=%s&orderBy=symbol&_=%s"	% ( page,stockType, columns,int(time.time()*1000) )
 CONST_XUEQIU_QUOTE_ORDER_COLUMN = "symbol,name,current,chg,percent,last_close,open,high,low,volume,amount,market_capital,pe_ttm,high52w,low52w,hasexist"
 
+URL_XUEQIU_LOGIN = "https://xueqiu.com/user/login"
+DATA_XUEQIU_LOGIN = lambda username, password:{
+	"areacode": "86"
+,	"password": password
+,	"remember_me": "on"
+,	"telephone": username
+}
+
 # 用于获取k线
 # fqType: before,normal,after,
 # start,end: 13位时间戳
@@ -50,11 +58,11 @@ URL_XUEQIU_CHART = lambda symbol,period: "https://xueqiu.com/stock/forchart/stoc
 URL_XUEQIU_QUOTE = lambda symbols : "http://xueqiu.com/v4/stock/quote.json?code=%s&_=%s" % (symbols, int(time.time()*1000) )
 CONST_XUEQIU_QUOTE_COLUMN = "symbol,exchange,code,name,current,percentage,change,open,high,low,close,last_close,high52week,low52week,volume,volumeAverage,marketCapital,eps,pe_ttm,pe_lyr_beta,totalShares,time,afterHours,afterHoursPct,afterHoursChg,updateAt,dividednd,yield,turnover_rate,instOwn,rise_stop,fall_stop,currency_unit,amount,net_assets,hasexist,has_warrant,type,flag,rest_day,amplitude,lot_size,tick_size,kzz_stock_symbol,kzz_stock_name,kzz_stock_current,kzz_convert_price,kzz_convert_value"
 {	"SZ000001":
-		{	
+		{
 			"symbol"			:	"SZ000001"			# 代码
 		,	"exchange"			:	"SZ"				# SZ/SH
 		,	"code"				:	"000001"			# code
-		,	"name"				:	"平安银行"			# 中文名	
+		,	"name"				:	"平安银行"			# 中文名
 		,	"current"			:	"10.59"				# 当前价
 		,	"percentage"		:	"-1.21"				# 涨幅
 		,	"change"			:	"-0.13"				# 与开盘价差值
@@ -66,12 +74,12 @@ CONST_XUEQIU_QUOTE_COLUMN = "symbol,exchange,code,name,current,percentage,change
 		,	"high52week"		:	"19.8"				# 52周最高价
 		,	"low52week"			:	"9.3"				# 52周最低价
 		,	"volume"			:	"3.7771959E7"		# 成交量
-		,	"volumeAverage"		:	"86076925"			# 
+		,	"volumeAverage"		:	"86076925"			#
 		,	"marketCapital"		:	"1.5152888031201E11"#
 		,	"eps"				:	"1.56"				# 每股收益
 		,	"pe_ttm"			:	"6.9302"			# 市盈率TTM
 		,	"pe_lyr"			:	"6.9302"			# 市盈率LYR
-		,	"beta"				:	"0.0"				# beta值		
+		,	"beta"				:	"0.0"				# beta值
 		,	"totalShares"		:	"14308676139"		# 总股本
 		,	"time"				:	"Thu Apr 07 15:14:55 +0800 2016"	# 时间
 		,	"afterHours"		:	"0.0"
@@ -86,7 +94,7 @@ CONST_XUEQIU_QUOTE_COLUMN = "symbol,exchange,code,name,current,percentage,change
 		,	"fall_stop"			:	"9.65"				# 跌停
 		,	"currency_unit"		:	"CNY"				# 货币
 		,	"amount"			:	"4.0194905057E8"	# 成交额
-		,	"net_assets"		:	"11.2869"			# 
+		,	"net_assets"		:	"11.2869"			#
 		,	"hasexist"			:	""
 		,	"has_warrant"		:	"0"
 		,	"type"				:	"11"				# 11=深A，12=沪A
@@ -144,7 +152,7 @@ CONST_XUEQIU_QUOTE_COLUMN = "symbol,exchange,code,name,current,percentage,change
 # 实时盘口
 URL_XUEQIU_QUOTEC = lambda symbol : "http://xueqiu.com/v4/stock/quotec.json?code=%s&_=%s" % (symbol, int(time.time()*1000) )
 URL_XUEQIU_PANKOU = lambda symbol : "https://xueqiu.com/stock/pankou.json?symbol=%s&_=%s" % (symbol, int(time.time()*1000) )
-{	
+{
 	"symbol"	:	"SZ300061"
 ,	"time"		:	"Mar 18, 2016 10:38:12 AM"
 ,	"bp1"		:	21.4	,	"bc1"		:	15112
@@ -168,6 +176,6 @@ URL_XUEQIU_PANKOU = lambda symbol : "https://xueqiu.com/stock/pankou.json?symbol
 ,	"sc8"		:	0		,	"sp9"		:	0.0
 ,	"sc9"		:	0		,	"sp10"		:	0.0
 ,	"sc10"		:	0		,	"buypct"	:	100.0
-,	"sellpct"	:	0.0		,	"diff"		:	15256	
+,	"sellpct"	:	0.0		,	"diff"		:	15256
 ,	"ratio"		:	100.0
 }

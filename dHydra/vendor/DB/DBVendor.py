@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-# Created on 
-# @author: 
-# @contact: 
+# Created on
+# @author:
+# @contact:
 """
 # 以下是自动生成的 #
 # --- 导入系统配置
@@ -20,15 +20,14 @@ from pymongo import MongoClient
 
 class DBVendor(Vendor):
 	def __init__(self):
-		pass
-	
+		super().__init__()
+
 	def get_mongodb(self, host = "localhost", port = 27017, timeout = 1500):
-		# connect to mongodb named: stock
 		try:
-			print("尝试连接到Mongodb")
+			self.logger.info("尝试连接到Mongodb")
 			client = MongoClient(host=host,port=port,serverSelectionTimeoutMS=timeout)
 			client.server_info()
-			print("已经成功连接到mongodb")
+			self.logger.info("已经成功连接到mongodb")
 			return client
 		except:
 			self.logger.warning(">>>>>>>>>>>>>>>>>>连接到mongodb失败<<<<<<<<<<<<<<<<<<<")
