@@ -40,6 +40,24 @@ class XueqiuVendor(Vendor):
 		)
 		self.mongodb = None
 
+	def login(self, cfg_path = None):
+		import os
+		import hashlib
+		if cfg_path is None:
+			cfg = util.read_config( os.getcwd() + "/config.json" )
+		else:
+			cfg = util.read_config( cfg_path )
+		username = cfg["xueqiuUsername"]
+		pwd = cfg["xueqiuPassword"].encode("utf8")
+		pwd = hashlib.md5( pwd ).hexdigest().upper()
+		res = self.session.post( url = URL_XUEQIU_LOGIN, data = DATA_XUEQIU_LOGIN(username, pwd), headers = HEADERS_XUEQIU )
+		res_json = res.json()
+		if "error_code" in res_json:
+			self.logger.warning( "{}".format(res_json) )
+
+		return res_json()
+
+
 	"""
 	stockTypeList 	: list
 		['sha','shb','sza','szb']分别代表沪A，沪B，深A，深B。如果为空则代表获取所有沪深AB股
@@ -195,7 +213,6 @@ class XueqiuVendor(Vendor):
 	将单股票历史k线存入mongodb
 	"""
 	def kline_to_mongodb(self, symbol, types=["normal","before","after"], end = None, dbName = 'stock', collectionName = 'kline_history', host='localhost', port=27017):
-		types = ["normal","before","after"]
 		if end is None:
 			end = datetime.now().date()
 		else:

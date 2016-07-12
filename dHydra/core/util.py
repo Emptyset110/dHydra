@@ -228,76 +228,93 @@ def quotation_to_dict( data ):
 	return
 	------
 	"""
-	print("{}, length = {}".format( data, len(data) ))
-	quotation = {
-		"data_type" : 'quotation'
-	,	"symbol": data[1] # "股票代码"
-	,   "name": data[2] # "中文名"
-	,   "time": datetime.strptime(data[3]+' '+data[4], "%H:%M:%S %Y-%m-%d") # "datetime格式的日期时间"
-	,   "last_close": float( data[5] ) # "昨收"
-	,   "open": float( data[5] ) # "今开"
-	,   "high": float( data[7] ) #"最高价"
-	,   "low": float( data[8] ) #"最低价"
-	,   "now": float( data[9] ) #"现价"
-	,   "status": data[10] #"状态, PH=盘后，PZ=盘中，TP=停牌, WX=午休, LT=临时停牌,KJ=开盘集合竞价,PZ=连续竞价"
-	,   "deal_count": float( data[11] ) #"成交笔数"
-	,   "total": int( data[12] ) #"成交总量"
-	,   "amount": float( data[13] ) #"总成交金额"
-	,   "current_ask": int( data[14] ) if data[14] else 0 # "当前委买总量"
-	,   "average_ask": float( data[15] ) if data[15] else 0.0 # "加权平均委买价格"
-	,   "current_bid": int( data[16] ) if data[16] else 0 # "当前委卖总量"
-	,   "average_bid": float( data[17] ) if data[17] else 0.0 # "加权平均委卖价格"
-	# ,   "cancel_ask_num" : int( data[18] ) # "买入撤单笔数" ?
-	# ,   "cancel_ask_volumn" : int( data[19] ) #"买入撤单量"?
-	# ,   "cancel_ask_amount" : float( data[20] ) #"买入撤单总金额"?
-	# ,   "cancel_bid" : int( data[21] ) # "卖出撤单笔数" ?
-	# ,   "cancel_bid_volumn" : int( data[22] ) # "卖出撤单量"?
-	# ,   "cancel_bid_amount" : float( data[23] ) #"卖出撤单总金额"?
-	,   "total_ask" : int( data[24] ) if data[24] else 0 # "委买总笔数"
-	,   "total_bid" : int( data[25] ) if data[25] else 0 # "委卖总笔数"
-	# ,   "ask" : data[26] #"买档位"
-	# ,   "bid" : data[27] #"卖档位"
-	,   "b1_price": float( data[28] ) if data[28] else 0.0 # 买1价
-	,   "b2_price": float( data[29] ) if data[29] else 0.0 # 买2价
-	,	"b3_price": float( data[30] ) if data[30] else 0.0 # 买3价
-	,	"b4_price": float( data[31] ) if data[31] else 0.0# 买4价
-	,	"b5_price": float( data[32] ) if data[32] else 0.0 # 买5价
-	,	"b6_price": float( data[33] ) if data[33] else 0.0 # 买6价
-	,	"b7_price": float( data[34] ) if data[34] else 0.0 # 买7价
-	,	"b8_price": float( data[35] ) if data[35] else 0.0# 买8价
-	,	"b9_price": float( data[36] ) if data[36] else 0.0 # 买9价
-	,   "b10_price": float( data[37] ) if data[37] else 0.0 # 买10价
-	,   "b1_volume": int( data[38] ) if data[38] else 0 # 买1量
-	,   "b2_volume": int( data[39] ) if data[39] else 0 # 买2量
-	,	"b3_volume": int( data[40] ) if data[40] else 0 # 买3量
-	,	"b4_volume": int( data[41] ) if data[41] else 0 # 买4量
-	,	"b5_volume": int( data[42] ) if data[42] else 0 # 买5量
-	,	"b6_volume": int( data[43] ) if data[43] else 0 # 买6量
-	,	"b7_volume": int( data[44] ) if data[44] else 0 # 买7量
-	,	"b8_volume": int( data[45] ) if data[45] else 0 # 买8量
-	,	"b9_volume": int( data[46] ) if data[46] else 0 # 买9量
-	,   "b10_volume": int( data[47] ) if data[47] else 0 # 买10量
-	,   "a1_price": float( data[48] ) if data[48] else 0.0 # 卖1价
-	,   "a2_price": float( data[49] ) if data[49] else 0.0 # 卖2价
-	,	"a3_price": float( data[50] ) if data[50] else 0.0 # 卖3价
-	,	"a4_price": float( data[51] ) if data[51] else 0.0 # 卖4价
-	,	"a5_price": float( data[52] ) if data[52] else 0.0 # 卖5价
-	,	"a6_price": float( data[53] ) if data[53] else 0.0 # 卖6价
-	,	"a7_price": float( data[54] ) if data[54] else 0.0 # 卖7价
-	,	"a8_price": float( data[55] ) if data[55] else 0.0 # 卖8价
-	,	"a9_price": float( data[56] ) if data[56] else 0.0 # 卖9价
-	,   "a10_price": float( data[57] ) if data[57] else 0.0 # 卖10价
-	,   "a1_volume": int( data[58] ) if data[58] else 0 #卖1量
-	,   "a2_volume": int( data[59] ) if data[59] else 0 # 卖2量
-	,	"a3_volume": int( data[60] ) if data[60] else 0 # 卖3量
-	,	"a4_volume": int( data[61] ) if data[61] else 0 # 卖4量
-	,	"a5_volume": int( data[62] ) if data[62] else 0 # 卖5量
-	,	"a6_volume": int( data[63] ) if data[63] else 0 # 卖6量
-	,	"a7_volume": int( data[64] ) if data[64] else 0 # 卖7量
-	,	"a8_volume": int( data[65] ) if data[65] else 0 # 卖8量
-	,	"a9_volume": int( data[66] ) if data[66] else 0 # 卖9量
-	,   "a10_volume": int( data[67] ) if data[67] else 0 #卖10量
-	}
+	# print("{}, length = {}".format( data, len(data) ))
+	if len(data) == 68:
+		quotation = {
+			"data_type" : 'quotation'
+		,	"symbol": data[1] # "股票代码"
+		,   "name": data[2] # "中文名"
+		,   "time": datetime.strptime(data[3]+' '+data[4], "%H:%M:%S %Y-%m-%d") # "datetime格式的日期时间"
+		,   "last_close": float( data[5] ) # "昨收"
+		,   "open": float( data[6] ) # "今开"
+		,   "high": float( data[7] ) #"最高价"
+		,   "low": float( data[8] ) #"最低价"
+		,   "now": float( data[9] ) #"现价"
+		,   "status": data[10] #"状态, PH=盘后，PZ=盘中，TP=停牌, WX=午休, LT=临时停牌,KJ=开盘集合竞价,PZ=连续竞价"
+		,   "deal_count": float( data[11] ) #"成交笔数"
+		,   "total": int( data[12] ) #"成交总量"
+		,   "amount": float( data[13] ) #"总成交金额"
+		,   "current_ask": int( data[14] ) if data[14] else 0 # "当前委买总量"
+		,   "average_ask": float( data[15] ) if data[15] else 0.0 # "加权平均委买价格"
+		,   "current_bid": int( data[16] ) if data[16] else 0 # "当前委卖总量"
+		,   "average_bid": float( data[17] ) if data[17] else 0.0 # "加权平均委卖价格"
+		,   "cancel_ask_num" : int( data[18] ) # "买入撤单笔数" ?
+		,   "cancel_ask_volumn" : int( data[19] ) #"买入撤单量"?
+		,   "cancel_ask_amount" : float( data[20] ) #"买入撤单总金额"?
+		,   "cancel_bid" : int( data[21] ) # "卖出撤单笔数" ?
+		,   "cancel_bid_volumn" : int( data[22] ) # "卖出撤单量"?
+		,   "cancel_bid_amount" : float( data[23] ) #"卖出撤单总金额"?
+		,   "total_ask" : int( data[24] ) if data[24] else 0 # "委买总笔数"
+		,   "total_bid" : int( data[25] ) if data[25] else 0 # "委卖总笔数"
+		,   "ask" : data[26] #"买档位"
+		,   "bid" : data[27] #"卖档位"
+		,   "b1_price": float( data[28] ) if data[28] else 0.0 # 买1价
+		,   "b2_price": float( data[29] ) if data[29] else 0.0 # 买2价
+		,	"b3_price": float( data[30] ) if data[30] else 0.0 # 买3价
+		,	"b4_price": float( data[31] ) if data[31] else 0.0# 买4价
+		,	"b5_price": float( data[32] ) if data[32] else 0.0 # 买5价
+		,	"b6_price": float( data[33] ) if data[33] else 0.0 # 买6价
+		,	"b7_price": float( data[34] ) if data[34] else 0.0 # 买7价
+		,	"b8_price": float( data[35] ) if data[35] else 0.0# 买8价
+		,	"b9_price": float( data[36] ) if data[36] else 0.0 # 买9价
+		,   "b10_price": float( data[37] ) if data[37] else 0.0 # 买10价
+		,   "b1_volume": int( data[38] ) if data[38] else 0 # 买1量
+		,   "b2_volume": int( data[39] ) if data[39] else 0 # 买2量
+		,	"b3_volume": int( data[40] ) if data[40] else 0 # 买3量
+		,	"b4_volume": int( data[41] ) if data[41] else 0 # 买4量
+		,	"b5_volume": int( data[42] ) if data[42] else 0 # 买5量
+		,	"b6_volume": int( data[43] ) if data[43] else 0 # 买6量
+		,	"b7_volume": int( data[44] ) if data[44] else 0 # 买7量
+		,	"b8_volume": int( data[45] ) if data[45] else 0 # 买8量
+		,	"b9_volume": int( data[46] ) if data[46] else 0 # 买9量
+		,   "b10_volume": int( data[47] ) if data[47] else 0 # 买10量
+		,   "a1_price": float( data[48] ) if data[48] else 0.0 # 卖1价
+		,   "a2_price": float( data[49] ) if data[49] else 0.0 # 卖2价
+		,	"a3_price": float( data[50] ) if data[50] else 0.0 # 卖3价
+		,	"a4_price": float( data[51] ) if data[51] else 0.0 # 卖4价
+		,	"a5_price": float( data[52] ) if data[52] else 0.0 # 卖5价
+		,	"a6_price": float( data[53] ) if data[53] else 0.0 # 卖6价
+		,	"a7_price": float( data[54] ) if data[54] else 0.0 # 卖7价
+		,	"a8_price": float( data[55] ) if data[55] else 0.0 # 卖8价
+		,	"a9_price": float( data[56] ) if data[56] else 0.0 # 卖9价
+		,   "a10_price": float( data[57] ) if data[57] else 0.0 # 卖10价
+		,   "a1_volume": int( data[58] ) if data[58] else 0 #卖1量
+		,   "a2_volume": int( data[59] ) if data[59] else 0 # 卖2量
+		,	"a3_volume": int( data[60] ) if data[60] else 0 # 卖3量
+		,	"a4_volume": int( data[61] ) if data[61] else 0 # 卖4量
+		,	"a5_volume": int( data[62] ) if data[62] else 0 # 卖5量
+		,	"a6_volume": int( data[63] ) if data[63] else 0 # 卖6量
+		,	"a7_volume": int( data[64] ) if data[64] else 0 # 卖7量
+		,	"a8_volume": int( data[65] ) if data[65] else 0 # 卖8量
+		,	"a9_volume": int( data[66] ) if data[66] else 0 # 卖9量
+		,   "a10_volume": int( data[67] ) if data[67] else 0 #卖10量
+		}
+	elif len(data) == 67:
+		quotation = {
+			"data_type" : 'quotation'
+		,	"symbol": data[1] # "股票代码"
+		,   "name": data[2] # "中文名"
+		,   "time": datetime.strptime(data[3]+' '+data[4], "%H:%M:%S %Y-%m-%d") # "datetime格式的日期时间"
+		,   "last_close": float( data[5] ) # "昨收"
+		,   "open": float( data[6] ) # "今开"
+		,   "high": float( data[7] ) #"最高价"
+		,   "low": float( data[8] ) #"最低价"
+		,   "now": float( data[9] ) #"现价"
+		,   "status": data[10] #"状态, PH=盘后，PZ=盘中，TP=停牌, WX=午休, LT=临时停牌,KJ=开盘集合竞价,PZ=连续竞价"
+		,   "deal_count": float( data[11] ) #"成交笔数"
+		,   "total": int( data[12] ) #"成交总量"
+		,   "amount": float( data[13] ) #"总成交金额"
+		}
 	return quotation
 
 def deal_to_dict( data ):

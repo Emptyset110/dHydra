@@ -141,3 +141,5 @@ URL_API_MARKET_CENTER_GETHQNODEDATA = lambda node: "http://vip.stock.finance.sin
 # 	,	turnoverratio:0
 # 	}
 # ]
+
+URL_HISTORY_DATA = lambda code, year, season: 'http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_FuQuanMarketHistory/stockid/%s.phtml?year=%s&jidu=%s' % (code, year, season)
