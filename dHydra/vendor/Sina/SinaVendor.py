@@ -52,7 +52,10 @@ class SinaVendor(Vendor):
 		self.quote = None
 		self.is_login = False
 		self.logger.info("正在从新浪获取全市场代码")
-		self.symbols = self.get_symbols()
+		try:
+			self.symbols = self.get_symbols()
+		except Exception as e:
+			self.logger.warning(e)
 
 	def get_history_data(self, code, year, season):
 		"""

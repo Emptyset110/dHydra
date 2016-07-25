@@ -58,6 +58,7 @@ def P(name, producer_name, **kwargs):
 
 	if producer_hash in PRODUCER_HASH:
 		# 这个Instance已经存在
+		print( "Producer已经存在" )
 		PRODUCER_NAME[producer_name] = PRODUCER_HASH[producer_hash]
 		return PRODUCER_HASH[producer_hash]
 	else:

@@ -18,9 +18,10 @@ def start_action(action_list, action_args = {}, web = False):
 			actionInstance = A(action)
 		action_dict[action] = actionInstance
 	for action in action_list:
-		if web is True:
+		if web == True:
 			action_dict[action].setDaemon(True)
 		action_dict[action].start()
-		if web is False:
-			for action in action_list:
-				action_dict[action].join()
+
+	if web == False:
+		for action in action_list:
+			action_dict[action].join()
