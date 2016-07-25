@@ -24,13 +24,13 @@ class Action(threading.Thread):
 				,	producer_list = list()
 				,	num_start = 1
 				,	num_min = 1
-				,	num_max = 5
+				,	num_max = 10
 				,	need_new_thread = None
 				,	cancel_thread = None
 				,	on_finished = None
 				,	set_daemon = True
 				,	lower_threshold = 0
-				,	upper_threshold = 1000	# 当消息队列数量超过upper_threshold时候，会动态添加
+				,	upper_threshold = 3000	# 当消息队列数量超过upper_threshold时候，会动态添加
 				,	log_level = "INFO" # "DEBUG","INFO","WARNING"
 				,	**kwargs
 				):
@@ -75,7 +75,7 @@ class Action(threading.Thread):
 
 	def log_queue(self):
 		while True:
-			self.logger.info( "消息队列中消息数量: {}".format( self._queue.qsize() ) )
+			self.logger.debug( "消息队列中消息数量: {}".format( self._queue.qsize() ) )
 			time.sleep(10)
 
 	def get_logger(self, level):

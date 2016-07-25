@@ -103,7 +103,7 @@ class Manager():
 
     def get_logger(self):
         logger = logging.getLogger(self.__class__.__name__)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         return logger
 
     # 开启一个独立的线程，来动态平衡线程数量
@@ -115,7 +115,7 @@ class Manager():
                     self.logger.warning( "需要增加线程，但是已达到用户设置的线程数量上限" )
                 else:
                     self.new_thread()
-                    self.logger.info( "增加了一个线程" )
+                    self.logger.debug( "增加了一个线程" )
             # else:
             #     self.logger.info("无需增加线程：{}".format(self.__threads))
             time.sleep(3)
@@ -123,14 +123,14 @@ class Manager():
     # 开启一个独立线程来定时检查当前用于执行handler的线程池
     def threads_monitor(self):
         while True:
-            self.logger.info("当前线程池（30秒显示一次）：{}".format( self.__threads ))
+            self.logger.debug("当前线程池（30秒显示一次）：{}".format( self.__threads ))
             time.sleep(30)
 
     def del_thread(self, name):
-        self.logger.info( "{}".format( self.__threads ) )
+        self.logger.debug( "{}".format( self.__threads ) )
         if name in self.__threads.keys():
             if self.threads_num > self.num_min:
-                self.logger.info( "删除线程: {}".format( name ) )
+                self.logger.debug( "删除线程: {}".format( name ) )
                 del self.__threads[ name ]
                 return True
         else:
