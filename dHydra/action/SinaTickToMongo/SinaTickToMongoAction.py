@@ -25,13 +25,12 @@ class SinaTickToMongoAction(Action):
 	def __init__(self, name, **kwargs):
 		# 用户自定义自动加载的_producer_list
 		self._producer_list = [
-			{	
+			{
 				"name"	:	"SinaFreeQuote"
 			,	"producer_name"	:	"SinaTickToMongo.SinaFreeQuote"		#这是在action内部给producer起的自定义名字，可随意。一般最好遵守<actionName.producerName>
 			}
 		]
-		# 设置进程检查消息队列的间隔
-		self._interval = 0.5
+
 		super().__init__(name, **kwargs)
 		print(self._name,"初始化")
 		self.db = False
@@ -40,13 +39,13 @@ class SinaTickToMongoAction(Action):
 			time.sleep(2)
 
 		# 这里需要初始化一下最近插入mongodb的时间戳
-		sh = self.db.realtime.find_one( 
+		sh = self.db.realtime.find_one(
 			{
 				"symbol" : { '$lt' : 'sz' }
 			}
 		,	sort = [("_id", pymongo.DESCENDING)]
 			)
-		sz = self.db.realtime.find_one( 
+		sz = self.db.realtime.find_one(
 			{
 				"symbol" : { '$gt' : 'sz' }
 			}
@@ -63,21 +62,19 @@ class SinaTickToMongoAction(Action):
 			self.shTime = datetime(1970,1,1)
 
 	# 需要重写的方法
-	def handler(self):
-		while not self._queue.empty():
-			event = self._queue.get(True)
-			# 将event.data存储到mongodb
-			l = len(event.data)
-			if event.exchange == 'SZ':
-				self.time = self.szTime
-			elif event.exchange == 'SH':
-				self.time = self.shTime
-			if event.time > self.time:
-				self.time = event.time
-				self.db.realtime.insert_many( event.data.iloc[0:l].to_dict(orient='records') )
-				print("Insert Realtime Quotes Successfully, {}, {}".format(self.time, event.exchange))
-			else:
-				print("消息队列中获取到一个已经存过了时间戳, {}, {}".format(self.time, event.exchange) )
+	def handler(self, event):
+		# 将event.data存储到mongodb
+		l = len(event.data)
+		if event.exchange == 'SZ':
+			self.time = self.szTime
+		elif event.exchange == 'SH':
+			self.time = self.shTime
+		if event.time > self.time:
+			self.time = event.time
+			self.db.realtime.insert_many( event.data.iloc[0:l].to_dict(orient='records') )
+			print("Insert Realtime Quotes Successfully, {}, {}".format(self.time, event.exchange))
+		else:
+			print("消息队列中获取到一个已经存过了时间戳, {}, {}".format(self.time, event.exchange) )
 
 
 	def get_mongodb(self):
