@@ -17,10 +17,10 @@ def init_loger():
 	if not os.path.exists('log'):
 		os.makedirs('log')
 	# 打开下面的输出到文件
-	file_handler = logging.FileHandler('log/error.log')
+	file_handler = logging.FileHandler('log/error.log',encoding='utf-8')
 	file_handler.setLevel(logging.ERROR)
 	file_handler.setFormatter(formatter)
-	file_handler2 = logging.FileHandler('log/debug.log')
+	file_handler2 = logging.FileHandler('log/debug.log',encoding='utf-8')
 	file_handler2.setLevel(logging.INFO)
 	file_handler2.setFormatter(formatter)
 
