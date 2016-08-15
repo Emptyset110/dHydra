@@ -2,7 +2,6 @@
 import logging
 from dHydra.app import *
 from dHydra.core.Globals import *
-from dHydra.core.Functions import *
 
 def init_loger():
 	formatter = logging.Formatter('%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s')
@@ -32,35 +31,11 @@ def main():
 	"""
 	初始化日志
 	"""
-	jsl = V("Jisilu")
-	# 准备一份母基金指数代码列表
-	fundarb = jsl.fundarb()
-
-	# 只取深圳的基金
-	# fundarb = fundarb[ fundarb.fundA_id < '5' ]
-	####################################################################
-	fund_a_list = list( fundarb["fundA_id"] )
-	fund_b_list = list( fundarb["fundB_id"] )
-	index_list = list( set(fundarb["index_id"]) )
-	base_list = list( fundarb["base_fund_id"] )
-	####################################################################
-
-	index_id_list = list( fundarb["index_id"] )
-	symbols_index = util.code_list_to_symbol( index_id_list, index = True )
-	symbols_fund_a = util.code_list_to_symbol( list( fundarb["fundA_id"] ) )
-	symbols_fund_b = util.code_list_to_symbol( list( fundarb["fundB_id"] ) )
-	# symbols = symbols_index
-	symbols = list()
-	symbols.extend( symbols_fund_a )
-	symbols.extend( symbols_fund_b )
-	symbols = list( set(symbols) )
-	symbols.remove( "sz150164" )
-	symbols.remove( "sz150165" )
+	init_loger()
 
 	sina = V("Sina")
-	symbols.extend( sina.get_symbols() )
+	symbols = sina.get_symbols()	# 这里只获取新浪财经A股列表
 
-	init_loger()
 	"""
 	读取数据处理模块(Action)列表
 	"""
