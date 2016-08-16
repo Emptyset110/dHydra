@@ -187,16 +187,16 @@ class XueqiuVendor(Vendor):
 				,	timeout = 3
 				)
 			kline = response.json()
-			time.sleep(0.5)
+			# time.sleep(0.5)
 		except Exception as e:
 			self.logger.warning("{}".format(e))
 			self.logger.info(response.text)
 			time.sleep(3)
-			return None
+			return False
 
 		if kline["success"]=='true':
 			if dataframe:
-				if kline["chartlist"] is not None:
+				if (kline["chartlist"] is not None) and ( kline["chartlist"] != [] ):
 					df = DataFrame.from_records( kline["chartlist"] )
 					df["time"] = pandas.to_datetime( df["time"] )
 					df["time"] += timedelta(hours=8)
@@ -240,17 +240,20 @@ class XueqiuVendor(Vendor):
 				self.logger.info("symbol = {}, {}\t无最近更新记录".format(symbol,fqType))
 
 			self.logger.info("开始更新symbol = {} \t {}".format(symbol, fqType))
-			kline = None
-			while kline is None:
+			kline = False
+			while kline is False:
 				try:
 					kline = self.get_kline(symbol, begin = begin)
 				except Exception as e:
-					kline = None
+					self.logger.warning(e)
 
 			if len(kline)>0:
 				kline["type"] = fqType
 				kline = kline.iloc[0:len(kline)].to_dict(orient="records")
-				self.mongodb[dbName][collectionName].insert_many( kline )
+				result = self.mongodb[dbName][collectionName].insert_many( kline )
+				self.logger.info("更新完毕symbol = {} \t {} \t 插入结果：{}".format(symbol, fqType, result))
+			else:
+				self.logger.info("没有新的记录")
 		return True
 
 	def kline_history(self, symbols = None,end = None, types = ["normal","before","after"], dbName = "stock", collectionName = "kline_history", host="localhost", port=27017):
@@ -288,6 +291,14 @@ class XueqiuVendor(Vendor):
 				return quotation["chartlist"]
 		else:
 			return False
+
+	def get_combination(self, symbol):
+		response = self.session.get(
+			"https://xueqiu.com/cubes/nav_daily/all.json?cube_symbol={}&since=0&until=1469611785000".format(symbol)
+		,	headers = HEADERS_XUEQIU
+		)
+		print(response)
+		print(response.text)
 
 	"""
 	雪球键盘助手

@@ -7,9 +7,14 @@ Created on 02/26/2016
 @contact: 		emptyset110@gmail.com
 """
 import time
+import random
 """
 雪球
 """
+
+def get_random():
+	return random.randint(1000000000000,9999999999999)
+
 HEADERS_XUEQIU = {
 	"Accept"			:	"application/json, text/javascript, */*; q=0.01"
 ,	"Accept-Encoding"	:	"gzip, deflate, sdch"
@@ -35,7 +40,7 @@ HEADERS_XUEQIU_INDEX = {
 
 
 URL_XUEQIU_HQ = "https://xueqiu.com/hq"
-URL_XUEQIU_QUOTE_ORDER = lambda page,columns,stockType : "https://xueqiu.com/stock/quote_order.json?page=%s&size=90&order=desc&exchange=CN&stockType=%s&column=%s&orderBy=symbol&_=%s"	% ( page,stockType, columns,int(time.time()*1000) )
+URL_XUEQIU_QUOTE_ORDER = lambda page,columns,stockType : "https://xueqiu.com/stock/quote_order.json?page=%s&size=90&order=desc&exchange=CN&stockType=%s&column=%s&orderBy=symbol&_=%s"	% ( page,stockType, columns, get_random() )
 CONST_XUEQIU_QUOTE_ORDER_COLUMN = "symbol,name,current,chg,percent,last_close,open,high,low,volume,amount,market_capital,pe_ttm,high52w,low52w,hasexist"
 
 URL_XUEQIU_LOGIN = "https://xueqiu.com/user/login"
@@ -50,12 +55,12 @@ DATA_XUEQIU_LOGIN = lambda username, password:{
 # fqType: before,normal,after,
 # start,end: 13位时间戳
 # period = 1day(1d),5day(5d),1week,1month
-URL_XUEQIU_KLINE = lambda symbol,period,fqType,begin,end: "https://xueqiu.com/stock/forchartk/stocklist.json?symbol=%s&period=%s&type=%s&begin=%s&end=%s&_=%s" % ( symbol,period,fqType,begin,end,int(time.time()*1000) )
-URL_XUEQIU_CHART = lambda symbol,period: "https://xueqiu.com/stock/forchart/stocklist.json?symbol=%s&period=%s&one_min=1&_%s" % ( symbol,period,int(time.time()*1000) )
+URL_XUEQIU_KLINE = lambda symbol,period,fqType,begin,end: "https://xueqiu.com/stock/forchartk/stocklist.json?symbol=%s&period=%s&type=%s&begin=%s&end=%s&_=%s" % ( symbol,period,fqType,begin,end,get_random() )
+URL_XUEQIU_CHART = lambda symbol,period: "https://xueqiu.com/stock/forchart/stocklist.json?symbol=%s&period=%s&one_min=1&_%s" % ( symbol,period, get_random() )
 
 # 用于获取基本面或者实时quote
 # code可以取多个，用逗号分割
-URL_XUEQIU_QUOTE = lambda symbols : "http://xueqiu.com/v4/stock/quote.json?code=%s&_=%s" % (symbols, int(time.time()*1000) )
+URL_XUEQIU_QUOTE = lambda symbols : "http://xueqiu.com/v4/stock/quote.json?code=%s&_=%s" % (symbols, get_random() )
 CONST_XUEQIU_QUOTE_COLUMN = "symbol,exchange,code,name,current,percentage,change,open,high,low,close,last_close,high52week,low52week,volume,volumeAverage,marketCapital,eps,pe_ttm,pe_lyr_beta,totalShares,time,afterHours,afterHoursPct,afterHoursChg,updateAt,dividednd,yield,turnover_rate,instOwn,rise_stop,fall_stop,currency_unit,amount,net_assets,hasexist,has_warrant,type,flag,rest_day,amplitude,lot_size,tick_size,kzz_stock_symbol,kzz_stock_name,kzz_stock_current,kzz_convert_price,kzz_convert_value"
 {	"SZ000001":
 		{
@@ -150,8 +155,8 @@ CONST_XUEQIU_QUOTE_COLUMN = "symbol,exchange,code,name,current,percentage,change
 
 
 # 实时盘口
-URL_XUEQIU_QUOTEC = lambda symbol : "http://xueqiu.com/v4/stock/quotec.json?code=%s&_=%s" % (symbol, int(time.time()*1000) )
-URL_XUEQIU_PANKOU = lambda symbol : "https://xueqiu.com/stock/pankou.json?symbol=%s&_=%s" % (symbol, int(time.time()*1000) )
+URL_XUEQIU_QUOTEC = lambda symbol : "http://xueqiu.com/v4/stock/quotec.json?code=%s&_=%s" % (symbol, get_random() )
+URL_XUEQIU_PANKOU = lambda symbol : "https://xueqiu.com/stock/pankou.json?symbol=%s&_=%s" % (symbol, get_random() )
 {
 	"symbol"	:	"SZ300061"
 ,	"time"		:	"Mar 18, 2016 10:38:12 AM"
