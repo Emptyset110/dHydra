@@ -14,9 +14,9 @@ from dHydra.config import connection as CON
 from dHydra.config import const as C
 from dHydra.core.Functions import *
 # --- 导入自定义配置
+# import datetime
 from datetime import datetime
 from pandas import DataFrame
-from datetime import datetime
 import time
 import threading
 # 以上是自动生成的 #
@@ -39,9 +39,7 @@ class SinaL2ToMongoAction(Action):
 
 	# 需要重写的方法
 	def handler(self, event):
-		dt = datetime.now()
 		event.data = util.ws_parse( message = event.data, to_dict = True )
-
 		for data in event.data:
 			try:
 				self.total += 1

@@ -46,7 +46,7 @@ def main():
 			{
 				"name"	  :	"SinaLevel2WS"
 			,   "producer_name"	 :   "L2.All"
-			,   "query"	 :  ['quotation','deal']	# 这里选择订阅的L2内容，quotation代表行情，deal代表逐笔，orders代表大单 这样['quotation','deal']
+			,   "query"	 :  ['quotation']	# 这里选择订阅的L2内容，quotation代表行情，deal代表逐笔，orders代表大单 这样['quotation','deal']
 			,	"symbols":  symbols
 			}
 			]

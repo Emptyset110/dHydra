@@ -13,7 +13,7 @@ import hashlib
 from dHydra.app import PRODUCER_NAME, PRODUCER_HASH
 import os
 import logging
-
+import traceback
 # print("加载：Functions.py")
 
 
@@ -26,18 +26,17 @@ def V(name, vendor_name = None, **kwargs):
 	if vendor_name is None:
 		vendor_name = "V-"+name
 	class_name = name + 'Vendor'
-	name = 'vendor.' + name + '.' + class_name
-	try:
-		instance = getattr( __import__(name, globals(),locals(),[class_name], 0), class_name )(**kwargs)
-	except ImportError:
+	module_name = 'vendor.' + name + '.' + class_name
+	if os.path.exists(os.getcwd()+"/vendor/"+name+"/"+class_name+".py"):
 		try:
-			instance = getattr( __import__("dHydra."+name, globals(),locals(),[class_name], 0), class_name )(**kwargs)
-		except Exception as e:
-			logger.critical(e)
-			pass
-	except Exception as e:
-		logger.critical(e)
-		pass
+			instance = getattr( __import__(module_name, globals(),locals(),[class_name], 0), class_name )(**kwargs)
+		except ImportError:
+			traceback.print_exc()
+	else:
+		try:
+			instance = getattr( __import__("dHydra."+module_name, globals(),locals(),[class_name], 0), class_name )(**kwargs)
+		except ImportError:
+			traceback.print_exc()
 
 	return instance
 
@@ -63,18 +62,17 @@ def P(name, producer_name, **kwargs):
 		return PRODUCER_HASH[producer_hash]
 	else:
 		class_name = name + 'Producer'
-		name = 'producer.' + name + '.' + class_name
-		try:
-			instance = getattr( __import__(name, globals(),locals(),[class_name], 0), class_name )(name=producer_name, **kwargs)
-		except ImportError:
+		module_name = 'producer.' + name + '.' + class_name
+		if os.path.exists(os.getcwd()+"/producer/"+name+"/"+class_name+".py"):
 			try:
-				instance = getattr( __import__("dHydra."+name, globals(),locals(),[class_name], 0), class_name )(name=producer_name, **kwargs)
-			except Exception as e:
-				logger.critical(e)
-				exit()
-		except Exception as e:
-			logger.critical(e)
-			exit()
+				instance = getattr( __import__(module_name, globals(),locals(),[class_name], 0), class_name )(name=producer_name, **kwargs)
+			except ImportError:
+				traceback.print_exc()
+		else:
+			try:
+				instance = getattr( __import__("dHydra."+module_name, globals(),locals(),[class_name], 0), class_name )(name=producer_name, **kwargs)
+			except ImportError:
+				traceback.print_exc()
 
 		# print(instance)
 		PRODUCER_NAME[producer_name] = instance
@@ -91,16 +89,17 @@ def A(name, action_name = None, **kwargs):
 	if action_name is None:
 		action_name = "A-" + name
 	class_name = name + 'Action'
-	name = 'action.' + name + '.' + class_name
-	try:
-		return getattr( __import__(name, globals(),locals(),[class_name], 0), class_name )(name=action_name, **kwargs)
-	except ImportError:
+	module_name = 'action.' + name + '.' + class_name
+	if os.path.exists(os.getcwd()+"/action/"+name+"/"+class_name+".py"):
 		try:
-			return getattr( __import__("dHydra." + name, globals(),locals(),[class_name], 0), class_name )(name=action_name, **kwargs)
-		except Exception as e:
-			logger.critical(e)
-			print(e)
-			pass
+			return getattr( __import__(module_name, globals(),locals(),[class_name], 0), class_name )(name=action_name, **kwargs)
+		except ImportError:
+			traceback.print_exc()
+	else:
+		try:
+			return getattr( __import__("dHydra." + module_name, globals(),locals(),[class_name], 0), class_name )(name=action_name, **kwargs)
+		except ImportError:
+			traceback.print_exc()
 
 """
 根据producer_name或者hash获取已经生成的Producer实例

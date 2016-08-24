@@ -163,6 +163,7 @@ class SinaVendor(Vendor):
 						,	params 	= 	PARAM_L2HIST(symbol=symbol, page=page, stime=stime, etime=etime)
 						,	headers = 	HEADERS_L2(symbol=symbol)
 			)
+			print(data.url)
 			data = data.text[90:-2]
 			data = dict( json.loads(data) )
 			count = int( data["result"]["data"]["count"] )

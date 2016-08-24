@@ -321,15 +321,15 @@ def deal_to_dict( data ):
 	deal = {
 			"data_type" : 'deal'
 		,   "symbol" : data[1]   # 股票代码
-		,   "index"  : deal[2]     #成交序号
-		,   "time" : deal[3]    # 时间，字符串格式，不带日期
-		,   "price" :  float( deal[4] )  # 成交价格
-		,   "volume" : int( deal[5] )  # 成交量
-		,   "amount" : float( deal[6] ) # 成交金额
-		,   "buynum": int( deal[7] ) # 买单委托序号
-		,   "sellnum": int( deal[8] ) # 卖单委托序号
-		,   "iotype": int( deal[9] ) #主动性买卖标识
-		,   "channel" : int( deal[10] ) #成交通道（这是交易所的一个标记，没有作用）
+		,   "index"  : data[2]     #成交序号
+		,   "time" : data[3]    # 时间，字符串格式，不带日期
+		,   "price" :  float( data[4] )  # 成交价格
+		,   "volume" : int( data[5] )  # 成交量
+		,   "amount" : float( data[6] ) # 成交金额
+		,   "buynum": int( data[7] ) # 买单委托序号
+		,   "sellnum": int( data[8] ) # 卖单委托序号
+		,   "iotype": int( data[9] ) #主动性买卖标识
+		,   "channel" : int( data[10] ) #成交通道（这是交易所的一个标记，没有作用）
 	}
 	return deal
 
