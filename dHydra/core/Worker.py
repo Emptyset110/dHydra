@@ -101,7 +101,7 @@ class Worker(multiprocessing.Process):
 		}
 		"""
 		print(msg_command)
-		msg_command = json.loads( msg_command.replace("\'","\"") )
+		msg_command = json.loads( msg_command.replace("None","\"None\"").replace("\'","\"") )
 		if msg_command["type"] == "sys":
 			str_kwargs = ""
 			for k in msg_command["kwargs"].keys():
@@ -145,7 +145,7 @@ class Worker(multiprocessing.Process):
 		while True:
 			msg_command = self.command_listener.get_message()
 			if msg_command:
-				if msg_command["type"] == "message":
+				if msg_command["type"] == "message" or msg_command["type"] == "pmessage":
 					self.__command_handler__(msg_command["data"])
 			else:
 				time.sleep(0.01)
@@ -252,16 +252,30 @@ class Worker(multiprocessing.Process):
 		"""
 		if (worker_name is not None) and (nickname is None):
 			# 订阅所有此类Worker
-		# Step 1 : 检查Worker是否存在
-		# if nickname is None:
-			# find the worker_name
-		# Step 2 : 检查Worker是否开启
+			self.__listener__.psubscribe("dHydra.Worker."+worker_name+".*.Pub")
+			self.logger.info( "About to subscribe the Worker of worker_name: {}, pattern:{}".format(worker_name,"dHydra.Worker.*."+nickname+".Pub") )
+		elif (nickname is not None):
+			# 订阅nickname
+			self.__listener__.psubscribe("dHydra.Worker.*."+nickname+".Pub")
+			self.logger.info( "About to subscribe the Worker of nickname: {}, pattern:{}".format(nickname,"dHydra.Worker.*."+nickname+".Pub") )
+		else:
+			self.logger.warning("nickname/worker_name的输入方式不合理")
 
-	def unsubscribe(self, worker_name):
+	def unsubscribe(self, worker_name = None, nickname = None):
 		"""
 		退订Worker
 		"""
-		pass
+		if (worker_name is not None) and (nickname is None):
+			# 订阅所有此类Worker
+			self.__listener__.punsubscribe("dHydra.Worker."+worker_name+".*.Pub")
+			self.logger.info( "About to unsubscribe the Worker of worker_name: {}, pattern:{}".format(nickname,"dHydra.Worker.*."+worker_name+".Pub") )
+			pass
+		elif (nickname is not None):
+			# 订阅nickname
+			self.__listener__.punsubscribe("dHydra.Worker.*."+nickname+".Pub")
+			self.logger.info( "About to subscribe the Worker of nickname: {}, pattern:{}".format(nickname,"dHydra.Worker.*."+nickname+".Pub") )
+		else:
+			self.logger.warning("nickname/worker_name的输入方式不合理")
 
 	# 需要在子类中重写的数据处理方法
 	def __data_handler__(self, msg):

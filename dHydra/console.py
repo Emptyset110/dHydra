@@ -35,8 +35,14 @@ def start_worker(worker_name = None, nickname = None, **kwargs):
         msg["kwargs"][k] = kwargs[k]
     __redis__.publish( "dHydra.Command", msg )
 
-"""
-初始化日志
-"""
+def send_command(channel_name = "dHydra.Command", command_type = "sys", operation_name = None, token = None, kwargs = {} ):
+	if operation_name is not None:
+		command = { 	"type":command_type
+					,	"operation_name": operation_name
+					,	"token" : token
+		 			,	"kwargs": kwargs
+				}
+		__redis__.publish( channel_name, json.dumps(command) )
+
 init_loger()
 __redis__ = get_vendor("DB").get_redis()
