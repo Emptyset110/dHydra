@@ -56,7 +56,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
 
 URL = "http://dHydra.org"
 
-VERSION = "0.11.3"
+VERSION = "0.13.2"
 
 LICENSE = "Apache Software License"
 
@@ -71,7 +71,15 @@ setup(
 	,	'Intended Audience :: Financial and Insurance Industry'
 	,	'Operating System :: OS Independent'
 	]
-,	install_requires = ["requests","numpy","pandas","pymongo","websockets","rsa","ntplib"]
+,	install_requires = ["requests","numpy","pandas","pymongo","websockets","rsa","ntplib","redis"]
+,	entry_points='''
+				[console_scripts]
+				hail=dHydra.main:hail
+				start=dHydra.main:start
+				stop=dHydra.main:terminate
+				terminate=dHydra.main:terminate
+				new=dHydra.auto:new_worker
+				'''
 ,	keywords = KEYWORDS
 ,	author = AUTHOR
 ,	author_email = AUTHOR_EMAIL
