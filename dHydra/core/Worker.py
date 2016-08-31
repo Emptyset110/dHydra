@@ -106,8 +106,10 @@ class Worker(multiprocessing.Process):
 			str_kwargs = ""
 			for k in msg_command["kwargs"].keys():
 				str_kwargs += (k + "=" + "\'"+msg_command["kwargs"][k] + "\'" + "," )
-			eval( "self."+msg_command["operation_name"]+"("+ str_kwargs +")" )
-
+			try:
+				eval( "self."+msg_command["operation_name"]+"("+ str_kwargs +")" )
+			except Exception as e:
+				self.logger.error(e)
 
 	def monitor_add_thread( self, thread, description = "No Description", restart_mode = "manual", restart_func = None ):
 		# 将该线程加入管理员监控范围
@@ -167,15 +169,31 @@ class Worker(multiprocessing.Process):
 		self.__redis__.hmset( self.redis_key + "Info", status )
 
 	def __producer__(self):
+		"""
+		在子类中被重写的用以作为生产者的线程
+		若不重写，线程启动后就结束了
+		"""
 		pass
 
 	def __consumer__(self):
+		"""
+		默认的消费者线程
+		随着Worker进程的start而启动
+		"""
 		while True:
 			data = self.__listener__.get_message()
 			if data is not None:
 				self.__data_handler__( data )
 			else:
 				time.sleep(0.001)
+
+	# 需要在子类中重写的数据处理方法
+	def __data_handler__(self, msg):
+		"""
+		需要在子类中被重写的用以处理数据的方法，
+		接受到的msg数据是原始的从Redis中监听到的数据
+		"""
+		pass
 
 	def __before_termination__(self, sig):
 		pass
@@ -276,7 +294,3 @@ class Worker(multiprocessing.Process):
 			self.logger.info( "About to subscribe the Worker of nickname: {}, pattern:{}".format(nickname,"dHydra.Worker.*."+nickname+".Pub") )
 		else:
 			self.logger.warning("nickname/worker_name的输入方式不合理")
-
-	# 需要在子类中重写的数据处理方法
-	def __data_handler__(self, msg):
-		pass

@@ -64,7 +64,10 @@ def __command_handler__(msg_command):
         str_kwargs = ""
         for k in msg_command["kwargs"].keys():
             str_kwargs += (k + "=" + "\'"+msg_command["kwargs"][k] + "\'" + "," )
-        eval( msg_command["operation_name"]+"("+ str_kwargs +")" )
+        try:
+            eval( msg_command["operation_name"]+"("+ str_kwargs +")" )
+        except Exception as e:
+            self.logger.error(e)
 
 @click.command()
 @click.argument('what', nargs = -1)
@@ -78,7 +81,29 @@ def hail(what = None):
                 print("Hail What??")
                 exit(0)
             else:
-                print("Welcome to dHydra!")
+                print("Welcome to dHydra! Following is the Architecture of dHydra")
+                doc = \
+"""
+    "hail dHydra"
+         |
+         |
+    ┌────┴─────┐         ┌────────────┐
+    |  dHydra  |         |   Tornado  |
+    |  Server  ├─────────┤ Web Server ├──http://127.0.0.1:5000────┐
+    └────┬─────┘         └──────┬─────┘                           |
+         |                      |               默认两种url映射规则，例如：
+    ┌────┴────┐                 |               /api/Worker/BackTest/method/
+    |  Redis  ├─────────────────┘               /Worker/BackTest/index
+    └──┬──────┘                                          详情参考文档
+       |                                                          |
+       ├─────Publish────┬─────Subscribe──────┬─────Publish───┐────┤
+       |                |                    |               |
+┌──────┴──┐        ┌────┴─────┐         ┌────┴─────┐    ┌────┴─────┐
+| (Worker)|        | (Worker) |         | (Worker) |    | (Worker) |
+| CTP     |        | Strategy |         | BackTest |    | Sina L2  |
+└─────────┘        └──────────┘         └──────────┘    └──────────┘
+"""
+                print(doc)
                 # open a thread for the Worker of Monitor
                 start_worker("Monitor")
                 print("Monitor has started")
@@ -103,20 +128,3 @@ def hail(what = None):
     except Exception as e:
         print("Hail What?")
         traceback.print_exc()
-
-@click.command()
-@click.argument('worker_name', nargs = 1)
-@click.argument('nickname', nargs = -1)
-def start(worker_name = None, nickname = None):
-    msg = { "type":"sys", "operation_name":"start_worker", "kwargs": { "worker_name": worker_name } }
-    if nickname is not None:
-        msg["kwargs"]["nickname"] = nickname[0]
-    __redis__.publish( "dHydra.Command", msg )
-
-@click.command()
-@click.argument('nickname', nargs = 1)
-def terminate(nickname = None):
-    msg = { "type":"sys", "operation_name":"terminate_worker", "kwargs": { "nickname": nickname } }
-    if nickname is not None:
-        msg["kwargs"]["nickname"] = nickname
-        __redis__.publish( "dHydra.Command", msg )

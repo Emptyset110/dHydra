@@ -7,7 +7,7 @@ import json
 
 class CTP(Worker):
     def __init__(self,broker_id = None, user_id = None, password = None, instrument_ids = None, register_front = None, **kwargs):
-        super().__init__(**kwargs)  # You ae not supposed to change THIS
+        super().__init__(**kwargs)  # You are not supposed to change THIS
 
         # The following is customized:
         # In this case, the worker is listening to itself.
