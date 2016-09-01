@@ -76,7 +76,10 @@ class Worker(multiprocessing.Process):
 		]
 		for s in self.shutdown_signals:
 			# 捕获退出信号后的要调用的,唯一的 shutdown 接口
-			signal.signal(s, self.__on_termination__)
+			try:
+				signal.signal(s, self.__on_termination__)
+			except Exception as e:
+				self.logger.info( "绑定退出信号：{}失败，可能与windows系统有关。".format(s) )
 
 	def __is_unique__( self ):
 		info = self.__redis__.hgetall( self.redis_key+"Info" )

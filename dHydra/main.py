@@ -3,10 +3,30 @@ from dHydra.console import *
 import signal
 import multiprocessing
 import time
+import os
+
 __redis__ = get_vendor("DB").get_redis()
 
 __current_process__ = multiprocessing.current_process()
 worker_dict = dict()
+
+def __on_termination__():
+    print( "The dHydra Server is about to terminate, pid:{}".format(os.getpid()) )
+    sys.exit(0)
+
+def bind_quit_signals():
+    shutdown_signals = [
+        signal.SIGQUIT,  # quit 信号
+        signal.SIGINT,  # 键盘信号
+        signal.SIGHUP,  # nohup 命令
+        signal.SIGTERM,  # kill 命令
+    ]
+    for s in shutdown_signals:
+        # 捕获退出信号后的要调用的,唯一的 shutdown 接口
+        try:
+            signal.signal(s, __on_termination__)
+        except Exception as e:
+            logger.warning( "绑定退出信号：{}失败，可能与windows系统有关。".format(s) )
 
 def start_worker(worker_name, **kwargs):
     worker = get_worker_class(worker_name = worker_name, **kwargs)
@@ -80,6 +100,19 @@ def hail(what = None):
     import time
     import dHydra.web
     try:
+        shutdown_signals = [
+            signal.SIGQUIT,  # quit 信号
+            signal.SIGINT,  # 键盘信号
+            signal.SIGHUP,  # nohup 命令
+            signal.SIGTERM,  # kill 命令
+            signal.SIGKILL
+        ]
+        for s in shutdown_signals:
+            # 捕获退出信号后的要调用的,唯一的 shutdown 接口
+            try:
+                signal.signal(s, __on_termination__)
+            except Exception as e:
+                print( "绑定退出信号：{}失败，可能与系统有关。".format(s) )
         if what:
             if what[0] != "dHydra":
                 print("Hail What??")
