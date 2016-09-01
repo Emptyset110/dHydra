@@ -22,19 +22,6 @@ NAME = "dHydra"
 
 PACKAGES = [    "dHydra"
 			,   "dHydra.core"
-			,   "dHydra.producer"
-			,   "dHydra.producer.SinaLevel2WS"
-			,   "dHydra.producer.SinaFreeQuote"
-			,   "dHydra.vendor"
-			,   "dHydra.vendor.Maoyan"
-			,   "dHydra.vendor.Xueqiu"
-			,   "dHydra.vendor.Sina"
-			,   "dHydra.vendor.DB"
-			,   "dHydra.action"
-			,   "dHydra.action.SinaTickToMongo"
-			,   "dHydra.action.PrintSinaL2"
-			,   "dHydra.action.Demo"
-			,   "dHydra.action.SinaL2TCP"
 			,   "dHydra.config"
 			]
 
@@ -56,7 +43,7 @@ AUTHOR_EMAIL = "emptyset110@gmail.com"
 
 URL = "http://dHydra.org"
 
-VERSION = "0.11.2"
+VERSION = "0.13.3"
 
 LICENSE = "Apache Software License"
 
@@ -71,7 +58,15 @@ setup(
 	,	'Intended Audience :: Financial and Insurance Industry'
 	,	'Operating System :: OS Independent'
 	]
-,	install_requires = ["requests","numpy","pandas","pymongo","websockets","rsa","ntplib"]
+,	install_requires = ["requests","numpy","pandas","pymongo","websockets","rsa","ntplib","redis","tornado"]
+,	entry_points='''
+				[console_scripts]
+				hail=dHydra.main:hail
+				start=dHydra.console:start
+				stop=dHydra.console:terminate
+				terminate=dHydra.console:terminate
+				new=dHydra.auto:new_worker
+				'''
 ,	keywords = KEYWORDS
 ,	author = AUTHOR
 ,	author_email = AUTHOR_EMAIL

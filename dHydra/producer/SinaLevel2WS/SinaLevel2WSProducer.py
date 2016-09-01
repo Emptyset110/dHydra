@@ -48,15 +48,12 @@ class SinaLevel2WSProducer(Producer):
 
 	@asyncio.coroutine
 	def get_ws_token(self,qlist):
-		loop = asyncio.get_event_loop()
-		async_req = loop.run_in_executor(None, functools.partial( self.sina.session.get,
+		req = self.sina.session.get(
 			URL_WSKT_TOKEN
 		,	params 	=	PARAM_WSKT_TOKEN(ip=self.ip,qlist=qlist, hq = self.hq)
 		,	headers =	HEADERS_WSKT_TOKEN()
 		,	timeout =	5
-		) )
-		req = yield from async_req
-		# self.logger.info(req.text)
+		)
 		response = re.findall(r'(\{.*\})',req.text)[0]
 		response = json.loads( response.replace(',',',"').replace('{','{"').replace(':','":') )
 		# gc.collect()

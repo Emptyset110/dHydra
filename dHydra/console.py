@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from dHydra.app import *
+from dHydra.core.Functions import *
+import click
 
 def init_loger():
 	formatter = logging.Formatter('%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s')
@@ -27,7 +28,43 @@ def init_loger():
 	logger.addHandler(file_handler)
 	logger.addHandler(file_handler2)
 
-"""
-初始化日志
-"""
+@click.command()
+@click.argument('worker_name', nargs = 1)
+@click.argument('nickname', nargs = -1)
+def start(worker_name = None, nickname = None):
+    msg = { "type":"sys", "operation_name":"start_worker", "kwargs": { "worker_name": worker_name } }
+    if nickname is not None:
+        msg["kwargs"]["nickname"] = nickname[0]
+    __redis__.publish( "dHydra.Command", msg )
+
+@click.command()
+@click.argument('nickname', nargs = 1)
+def terminate(nickname = None):
+    msg = { "type":"sys", "operation_name":"terminate_worker", "kwargs": { "nickname": nickname } }
+    if nickname is not None:
+        msg["kwargs"]["nickname"] = nickname
+        __redis__.publish( "dHydra.Command", msg )
+
+def start_worker(worker_name = None, nickname = None, **kwargs):
+    msg = { "type":"sys", "operation_name":"start_worker", "kwargs": { "worker_name": worker_name, "nickname" : nickname } }
+
+    for k in kwargs.keys():
+        msg["kwargs"][k] = kwargs[k]
+    __redis__.publish( "dHydra.Command", msg )
+
+def stop_worker(nickname = None):
+    msg = { "type":"sys", "operation_name":"terminate_worker", "kwargs": { "nickname" : nickname } }
+
+    __redis__.publish( "dHydra.Command", msg )
+
+def send_command(channel_name = "dHydra.Command", command_type = "sys", operation_name = None, token = None, kwargs = {} ):
+	if operation_name is not None:
+		command = { 	"type":command_type
+					,	"operation_name": operation_name
+					,	"token" : token
+		 			,	"kwargs": kwargs
+				}
+		__redis__.publish( channel_name, json.dumps(command) )
+
 init_loger()
+__redis__ = get_vendor("DB").get_redis()

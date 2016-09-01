@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+    <title>dHydra : Dashboard</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/Semantic-UI/semantic.min.css" rel="stylesheet">
+    <link href="/static/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+<style>
+.fa-padding{
+    padding-right: 5px
+}
+</style>
+<script src="/static/js/jquery-3.0.0.min.js"></script>
+
+<div class="ui container" style = "padding-top: 20px; padding-bottom: 10px">
+    <h1 class="ui header" style = "color: rgba(100,100,100,1); font-size: 50px">Workers Monitor</h1>
+    <button class="ui button">Show Active Workers</button>
+    <table class="ui collapsing celled table">
+      <thead>
+        <tr>
+          <th rowspan="1" class="center aligned">PID</th>
+          <th rowspan="1" class="center aligned">Worker Name</th>
+          <th rowspan="1" class="center aligned">Nickname</th>
+          <th rowspan="1" class="center aligned">Description</th>
+          <th rowspan="1" class="center aligned">Status</th>
+          <th colspan="2" class="center aligned">Operation</th>
+        </tr>
+      </thead>
+      <tbody class="center aligned">
+        <tr>
+          <td>4409</td>
+          <td>Demo</td>
+          <td>DemoDefault</td>
+          <td>This is the Demo, subscribes itself and generates one number per second</td>
+          <td>
+            <i class="large green checkmark icon"></i>
+          </td>
+          <td><button class="ui button">Stop</button></td>
+        </tr>
+        <tr>
+          <td>51309</td>
+          <td class="middle aligned" rowspan="3">Monitor</td>
+          <td>WorkerMonitor1</td>
+          <td></td>
+          <td class="center aligned">
+            <i class="large green checkmark icon"></i>
+          </td>
+          <td><button class="ui button">Stop</button></td>
+        </tr>
+        <tr>
+          <td>12483</td>
+          <td>WorkerMonitor2</td>
+          <td></td>
+          <td>
+            <i class="large green checkmark icon"></i>
+          </td>
+          <td><button class="ui button">Stop</button></td>
+        </tr>
+        <tr>
+          <td>3303</td>
+          <td>WorkerMonitor3</td>
+          <td></td>
+          <td>
+            <i class="large green checkmark icon"></i>
+          </td>
+          <td><button class="ui button">Stop</button></td>
+        </tr>
+      </tbody>
+    </table>
+</div>
+
+</body>
+</html>

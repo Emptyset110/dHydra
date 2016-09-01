@@ -7,7 +7,7 @@ Created on 03/01/2016
 """
 import dHydra.config.const as C
 import requests
-import threading
+
 import asyncio
 import math
 import time
@@ -20,6 +20,13 @@ from pymongo import MongoClient
 import re
 import random
 import json
+
+def generate_token():
+	import hashlib
+	token =  hashlib.sha1()
+	token.update(str(time.time()).encode())
+	token = token.hexdigest()
+	return token
 
 def _code_to_symbol(code, index = False):
 	"""
@@ -88,6 +95,7 @@ def slice_list(step = None, num = None, data_list=None):
 
 # n个任务交给m个Thread完成
 def threads_for_tasks(taskList):
+	import threading
 	threads = []
 	for task in taskList:
 		t = threading.Thread(target = task.target, args = task.args)

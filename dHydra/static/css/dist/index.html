@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="pragma" content="no-cache">
+        <title>My Introduction! </title>
+        <link rel="stylesheet" href="../css/index.css" type="text/css" />
+        <script src="../js/jquery-3.0.0.min.js"></script>
+    </head>
+    <body>
+        <div id="message">
+            Here's some sort of json obtained by ajax
+        </div>
+        <script>
+        $(function(){
+            $.ajax({
+                type    :   "GET",
+                url     :    "http://127.0.0.1:8888/api/index",
+                data    :   null,
+                success :   function(result){
+                    console.log(result)
+                    $('#message').text(JSON.stringify(result));
+                }
+            });
+        });
+        </script>
+    </body>
+</html>

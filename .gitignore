@@ -1,3 +1,5 @@
 /dHydra.egg-info/*
 /dist/*
 __pycache__/
+/log/*
+/ctp/*
