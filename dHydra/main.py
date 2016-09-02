@@ -1,18 +1,26 @@
+from dHydra.console import logger, get_worker_class
+from dHydra.core.Functions import get_vendor
 import click
-from dHydra.console import *
 import signal
 import multiprocessing
 import time
 import os
+import json
+import traceback
+import sys
 
 __redis__ = get_vendor("DB").get_redis()
 
 __current_process__ = multiprocessing.current_process()
 worker_dict = dict()
 
-def __on_termination__():
-    print( "The dHydra Server is about to terminate, pid:{}".format(os.getpid()) )
+
+def __on_termination__(sig, frame):
+    print("The dHydra Server is about to terminate, pid:{}"
+          .format(os.getpid())
+          )
     sys.exit(0)
+
 
 def bind_quit_signals():
     shutdown_signals = [
@@ -26,47 +34,60 @@ def bind_quit_signals():
         try:
             signal.signal(s, __on_termination__)
         except Exception as e:
-            logger.warning( "绑定退出信号：{}失败，可能与windows系统有关。".format(s) )
+            logger.warning(
+                "绑定退出信号：{}失败，可能与windows系统有关。"
+                .format(s)
+            )
+
 
 def start_worker(worker_name, **kwargs):
-    worker = get_worker_class(worker_name = worker_name, **kwargs)
+    worker = get_worker_class(worker_name=worker_name, **kwargs)
     worker_dict[worker.nickname] = worker
     worker.start()
 
-def terminate_worker( nickname = None, pid = None):
+
+def terminate_worker(nickname=None, pid=None):
     print(worker_dict)
     if pid is None:
-        pid = get_pid_by_nickname(redis_cli = __redis__, nickname = nickname )
+        pid = get_pid_by_nickname(redis_cli=__redis__, nickname=nickname)
         os.kill(pid, signal.SIGTERM)
         i = 0
         while worker_dict[nickname]._popen is None and i < 30:
             time.sleep(0.1)
             i += 1
-        worker_dict[nickname]._popen.wait(0.1)
+        worker_dict[nickname]._popen.wait(1)
         worker_dict.pop(nickname)
 
-def get_workers_info( redis_cli = None, by = "nickname", nickname = None, worker_name = None ):
+
+def get_workers_info(
+    redis_cli=None,
+    by="nickname",
+    nickname=None,
+    worker_name=None,
+):
     if redis_cli is None:
         redis_cli = self.__redis__
     result = list()
     keys = list()
     if by == "nickname" and nickname is not None:
-        keys = redis_cli.keys("dHydra.Worker.*."+nickname+".Info")
-    elif by =="worker_name" and worker_name is not None:
-        keys = redis_cli.keys("dHydra.Worker."+worker_name+".*.Info")
+        keys = redis_cli.keys("dHydra.Worker.*." + nickname + ".Info")
+    elif by == "worker_name" and worker_name is not None:
+        keys = redis_cli.keys("dHydra.Worker." + worker_name + ".*.Info")
     for k in keys:
-        result.append( redis_cli.hgetall( k ) )
+        result.append(redis_cli.hgetall(k))
     return result
 
-def get_pid_by_nickname( redis_cli = None, nickname = None ):
+
+def get_pid_by_nickname(redis_cli=None, nickname=None):
     if redis_cli is None:
         redis_cli = __redis__
-    workers_info = get_workers_info( redis_cli = __redis__, nickname = nickname )
+    workers_info = get_workers_info(redis_cli=__redis__, nickname=nickname)
     if len(workers_info) == 1:
-        return int( workers_info[0]["pid"] )
+        return int(workers_info[0]["pid"])
     else:
         print("Worker is not Unique.")
         return 0
+
 
 def __command_handler__(msg_command):
     # msg_command is a dict with the following structure:
@@ -74,53 +95,56 @@ def __command_handler__(msg_command):
     msg_command = {
         "type"	:		"sys/customized",
         "operation"	:	"operation_name",
-        "kwargs"	:	"suppose that the operation is a function, we need to pass some arguments",
-        "token"		:	"the token is used to verify the authentication of the operation"
+        "kwargs"	:	"suppose that the operation is a function, we need to
+                         pass some arguments",
+        "token"		:	"the token is used to verify the authentication of the
+                         operation"
         }
     """
     print(msg_command)
-    msg_command = json.loads( msg_command.replace("None", "\"None\"").replace("\'","\"") )
+    msg_command = json.loads(msg_command.replace(
+        "None", "\"None\"").replace("\'", "\""))
     if msg_command["type"] == "sys":
         str_kwargs = ""
         for k in msg_command["kwargs"].keys():
             if isinstance(msg_command["kwargs"][k], str):
-                str_kwargs += (k + "=" + "\'"+ msg_command["kwargs"][k] + "\'" + "," )
+                str_kwargs += (
+                    k + "=" +
+                    "\'" + msg_command["kwargs"][k] + "\'" +
+                    ","
+                )
             else:
-                str_kwargs += (k + "=" + "{}".format(msg_command["kwargs"][k]) + "," )
+                str_kwargs += (
+                    k + "=" +
+                    "{}".format(msg_command["kwargs"][k]) +
+                    ","
+                )
         try:
-            print( msg_command["operation_name"]+"("+ str_kwargs +")" )
-            eval( msg_command["operation_name"]+"("+ str_kwargs +")" )
+            print(msg_command["operation_name"] + "(" + str_kwargs + ")")
+            eval(msg_command["operation_name"] + "(" + str_kwargs + ")")
         except Exception as e:
             print(e)
 
+
 @click.command()
-@click.argument('what', nargs = -1)
-def hail(what = None):
+@click.argument('what', nargs=-1)
+def hail(what=None):
     import threading
     import time
     import dHydra.web
+
     try:
-        shutdown_signals = [
-            signal.SIGQUIT,  # quit 信号
-            signal.SIGINT,  # 键盘信号
-            signal.SIGHUP,  # nohup 命令
-            signal.SIGTERM,  # kill 命令
-            signal.SIGKILL
-        ]
-        for s in shutdown_signals:
-            # 捕获退出信号后的要调用的,唯一的 shutdown 接口
-            try:
-                signal.signal(s, __on_termination__)
-            except Exception as e:
-                print( "绑定退出信号：{}失败，可能与系统有关。".format(s) )
         if what:
             if what[0] != "dHydra":
                 print("Hail What??")
                 exit(0)
             else:
-                print("Welcome to dHydra! Following is the Architecture of dHydra")
+                print(
+                    "Welcome to dHydra! Following is the "
+                    "Architecture of dHydra"
+                )
                 doc = \
-"""
+                    """
     "hail dHydra"
          |
          |
@@ -144,15 +168,22 @@ def hail(what = None):
                 # open a thread for the Worker of Monitor
                 start_worker("Monitor")
                 print("Monitor has started")
+
                 # open a thread for webserver
-                thread_tornado = threading.Thread(target = dHydra.web.start_server)
+                thread_tornado = threading.Thread(
+                    target=dHydra.web.start_server
+                )
                 thread_tornado.setDaemon(True)
                 thread_tornado.start()
                 print("Tornado webserver has started")
+
+            # 绑定退出信号
+            bind_quit_signals()
+
             redis_conn = get_vendor("DB").get_redis()
             command_listener = redis_conn.pubsub()
             channel_name = "dHydra.Command"
-            command_listener.subscribe( [channel_name] )
+            command_listener.subscribe([channel_name])
             while True:
                 msg_command = command_listener.get_message()
                 if msg_command:

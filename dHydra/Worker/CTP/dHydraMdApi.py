@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
-import hashlib, os, sys, tempfile, time
+import hashlib
+import os
+import sys
+import tempfile
+import time
 from ctp.futures import ApiStruct, MdApi
 
+
 class dHydraMdApi(MdApi):
+
     def __init__(self, brokerID, userID, password, instrumentIDs):
         self.requestID = 0
         self.brokerID = brokerID
@@ -15,8 +21,10 @@ class dHydraMdApi(MdApi):
         dir = b''.join((b'ctp.futures', self.brokerID, self.userID))
         dir = hashlib.md5(dir).hexdigest()
         dir = os.path.join(tempfile.gettempdir(), dir, 'Md') + os.sep
-        if not os.path.isdir(dir): os.makedirs(dir)
-        MdApi.Create(self, os.fsencode(dir) if sys.version_info[0] >= 3 else dir)
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+        MdApi.Create(self, os.fsencode(
+            dir) if sys.version_info[0] >= 3 else dir)
 
     def RegisterFront(self, front):
         if isinstance(front, bytes):
@@ -39,14 +47,26 @@ class dHydraMdApi(MdApi):
 
     def OnRspUserLogin(self, pRspUserLogin, pRspInfo, nRequestID, bIsLast):
         print('OnRspUserLogin:', pRspInfo)
-        if pRspInfo.ErrorID == 0: # Success
+        if pRspInfo.ErrorID == 0:  # Success
             print('GetTradingDay:', self.GetTradingDay())
             self.SubscribeMarketData(self.instrumentIDs)
 
-    def OnRspSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
+    def OnRspSubMarketData(
+        self,
+        pSpecificInstrument,
+        pRspInfo,
+        nRequestID,
+        bIsLast
+    ):
         print('OnRspSubMarketData:', pRspInfo)
 
-    def OnRspUnSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
+    def OnRspUnSubMarketData(
+        self,
+        pSpecificInstrument,
+        pRspInfo,
+        nRequestID,
+        bIsLast
+    ):
         print('OnRspUnSubMarketData:', pRspInfo)
 
     def OnRspError(self, pRspInfo, nRequestID, bIsLast):
