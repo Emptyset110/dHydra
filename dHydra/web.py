@@ -87,57 +87,59 @@ def make_app():
     ------
             e.g.:
     """
-    return tornado.web.Application([
-        (r"/", IndexHandler),
-        (
-            r"/public/js/(.*)",
-            tornado.web.StaticFileHandler,
-            {
-                "path": os.getcwd() + "/public/js/"
-            }
-        ),
-        (
-            r"/public/css/(.*)",
-            tornado.web.StaticFileHandler,
-            {
-                "path": os.getcwd() + "/public/css/"
-            }
-        ),
-        (
-            r"/public/fonts/(.*)",
-            tornado.web.StaticFileHandler,
-            {
-                "path": os.path.split(os.path.realpath(__file__))[0] +
-                "/public/fonts/"
-            }
-        ),
-        (
-            r"/static/js/(.*)",
-            tornado.web.StaticFileHandler,
-            {
-                "path": os.path.split(os.path.realpath(__file__))[0] +
-                "/static/js/"
-            }
-        ),
-        (
-            r"/static/css/(.*)",
-            tornado.web.StaticFileHandler,
-            {
-                "path": os.path.split(os.path.realpath(__file__))[0] +
-                "/static/css/"
-            }
-        ),
-        (
-            r"/static/fonts/(.*)",
-            tornado.web.StaticFileHandler,
-            {
-                "path": os.path.split(os.path.realpath(__file__))[0] +
-                "/static/fonts/"
-            }
-        ),
-        (r"/api/Worker/(.*)/(.*)/", ApiHandler),  # ClassName, MethodName
-        (r"/Worker/(.*)/(.*)", WorkerHandler)		# ClassName, TemplateName
-    ], debug=True
+    return tornado.web.Application(
+        [
+            (r"/", IndexHandler),
+            (
+                r"/public/js/(.*)",
+                tornado.web.StaticFileHandler,
+                {
+                    "path": os.getcwd() + "/public/js/"
+                }
+            ),
+            (
+                r"/public/css/(.*)",
+                tornado.web.StaticFileHandler,
+                {
+                    "path": os.getcwd() + "/public/css/"
+                }
+            ),
+            (
+                r"/public/fonts/(.*)",
+                tornado.web.StaticFileHandler,
+                {
+                    "path": os.path.split(os.path.realpath(__file__))[0] +
+                    "/public/fonts/"
+                }
+            ),
+            (
+                r"/static/js/(.*)",
+                tornado.web.StaticFileHandler,
+                {
+                    "path": os.path.split(os.path.realpath(__file__))[0] +
+                    "/static/js/"
+                }
+            ),
+            (
+                r"/static/css/(.*)",
+                tornado.web.StaticFileHandler,
+                {
+                    "path": os.path.split(os.path.realpath(__file__))[0] +
+                    "/static/css/"
+                }
+            ),
+            (
+                r"/static/fonts/(.*)",
+                tornado.web.StaticFileHandler,
+                {
+                    "path": os.path.split(os.path.realpath(__file__))[0] +
+                    "/static/fonts/"
+                }
+            ),
+            (r"/api/Worker/(.*)/(.*)/", ApiHandler),  # ClassName, MethodName
+            (r"/Worker/(.*)/(.*)", WorkerHandler)		# ClassName, TemplateName
+        ],
+        debug=False
     )
 
 

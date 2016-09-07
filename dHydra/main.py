@@ -16,9 +16,9 @@ worker_dict = dict()
 
 
 def __on_termination__(sig, frame):
-    print("The dHydra Server is about to terminate, pid:{}"
-          .format(os.getpid())
-          )
+    logger.info("The dHydra Server is about to terminate, pid:{}"
+                .format(os.getpid())
+                )
     sys.exit(0)
 
 
@@ -47,7 +47,7 @@ def start_worker(worker_name, **kwargs):
 
 
 def terminate_worker(nickname=None, pid=None):
-    print(worker_dict)
+    logger.info("{}".format(worker_dict))
     if pid is None:
         pid = get_pid_by_nickname(redis_cli=__redis__, nickname=nickname)
         os.kill(pid, signal.SIGTERM)
@@ -85,7 +85,7 @@ def get_pid_by_nickname(redis_cli=None, nickname=None):
     if len(workers_info) == 1:
         return int(workers_info[0]["pid"])
     else:
-        print("Worker is not Unique.")
+        logger.warning("Worker is not Unique.")
         return 0
 
 
@@ -101,7 +101,7 @@ def __command_handler__(msg_command):
                          operation"
         }
     """
-    print(msg_command)
+    logger.info("{}".format(msg_command))
     msg_command = json.loads(msg_command.replace(
         "None", "\"None\"").replace("\'", "\""))
     if msg_command["type"] == "sys":
@@ -120,10 +120,10 @@ def __command_handler__(msg_command):
                     ","
                 )
         try:
-            print(msg_command["operation_name"] + "(" + str_kwargs + ")")
+            logger.info(msg_command["operation_name"] + "(" + str_kwargs + ")")
             eval(msg_command["operation_name"] + "(" + str_kwargs + ")")
         except Exception as e:
-            print(e)
+            logger.error("{}".format(e))
 
 
 @click.command()
@@ -167,7 +167,7 @@ def hail(what=None):
                 print(doc)
                 # open a thread for the Worker of Monitor
                 start_worker("Monitor")
-                print("Monitor has started")
+                logger.info("Monitor has started")
 
                 # open a thread for webserver
                 thread_tornado = threading.Thread(
@@ -175,7 +175,7 @@ def hail(what=None):
                 )
                 thread_tornado.setDaemon(True)
                 thread_tornado.start()
-                print("Tornado webserver has started")
+                logger.info("Tornado webserver has started")
 
             # 绑定退出信号
             bind_quit_signals()

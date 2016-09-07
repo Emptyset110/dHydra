@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 import time
+import random
 # 高速行情接口
+
+def get_random():
+	return random.randint(1000000000000,9999999999999)
+
 URL_QUOTATION = lambda symbols: "http://hq.sinajs.cn/?rn=%s&list=%s" % ( int( time.time() )*1000, symbols )
 
 SINA_QUOTE_COLUMNS = [	'name', 'open'
@@ -60,14 +65,14 @@ PARAM_PRELOGIN = lambda su : {
 }
 PARAM_L2HIST = lambda symbol,page,stime,etime: {
 	"symbol"			:	symbol
-,	"callback"			:	"jQuery17209838373235483986_" + str( int(time.time()*1000) )
-,	"pageNum"			:	10000
+,	"callback"			:	"jQuery17209838373235483986_" + str(get_random())
+,	"pageNum"			:	52
 ,	"page"				:	page
 ,	"stime"				:	stime
 ,	"etime"				:	etime
 ,	"sign"				:	''
-,	"num"				:	'20'
-,	"_"					:	int(time.time()*1000)
+,	"number"			:	1000
+,	"_"					:	get_random()
 }
 HEADERS_GET_TODAY_ALL = {
 	"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"

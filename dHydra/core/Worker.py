@@ -68,7 +68,7 @@ class Worker(multiprocessing.Process):
         },
         }
         """
-        self.logger = self.get_logger(level=log_level)
+        self.logger = util.get_logger(logger_name=self.__class__.__name__)
         if self.check_prerequisites() is True:
             super().__init__()
             self.daemon = True
@@ -299,22 +299,6 @@ class Worker(multiprocessing.Process):
             self.__heart_beat__()
             time.sleep(self.__heart_beat_interval__)
 
-    def get_logger(self, level):
-        logger = logging.getLogger(self.__class__.__name__)
-        if level is "DEBUG":
-            logger.setLevel(10)
-        elif level is "INFO":
-            logger.setLevel(20)
-        elif level is "WARNING":
-            logger.setLevel(30)
-        elif level is "ERROR":
-            logger.setLevel(40)
-        elif level is "CRITICAL":
-            logger.setLevel(50)
-        else:
-            logger.setLevel(20)
-        return logger
-
     def subscribe(self, worker_name=None, nickname=None):
         """
         订阅Worker
@@ -328,7 +312,7 @@ class Worker(multiprocessing.Process):
                 "About to subscribe the Worker of worker_name: {}, pattern:{}"
                 .format(
                     worker_name,
-                    "dHydra.Worker.*." + nickname + ".Pub"
+                    "dHydra.Worker." + worker_name + ".*.Pub"
                 )
             )
         elif (nickname is not None):

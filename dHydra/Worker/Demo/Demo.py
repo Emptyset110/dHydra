@@ -10,7 +10,8 @@ class Demo(Worker):
         # The following is customized:
         # In this case, the worker is listening to itself.
         # self.__listener__.subscribe( [ self.redis_key + "Pub" ] )
-        self.subscribe(nickname=self.__nickname__)
+        # self.subscribe(nickname=self.__nickname__)
+        self.subscribe(worker_name="CTP")
 
     def __data_handler__(self, msg):
         """

@@ -42,10 +42,14 @@ class CTP(Worker):
             register_front = cfg["register_front"]
         if instrument_ids is None:
             self.logger.warning("没有初始化订阅的合约品种，将采用默认品种作为演示：")
-            instrument_ids = [
-                'IF1609', 'IF1612', 'IF1703', 'IC1609',
-                'IF1610', 'IC1610', 'IC1612', 'IC1703'
-            ]
+            import pandas
+            instrument_ids = list(pandas.DataFrame.from_csv(
+                os.getcwd()+"/data/instruments.csv"
+            ).index)
+            # instrument_ids = [
+            #     'IF1609', 'IF1612', 'IF1703', 'IC1609',
+            #     'IF1610', 'IC1610', 'IC1612', 'IC1703'
+            # ]
             self.logger.warning("{}".format(instrument_ids))
         if (broker_id is None) or (user_id is None) or (password is None) \
                 or (register_front is None):

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
+import dHydra.core.util as util
 
 
 class Vendor:
 
     def __init__(self, logLevel=logging.INFO):
-        self.logger = self.get_logger()
-
-    def get_logger(self):
-        logger = logging.getLogger(self.__class__.__name__)
-        return logger
+        self.logger = util.get_logger(logger_name=self.__class__.__name__)
