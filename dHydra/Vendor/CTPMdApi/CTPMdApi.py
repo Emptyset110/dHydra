@@ -4,18 +4,94 @@ import os
 import sys
 import tempfile
 import time
+from dHydra.core.Vendor import Vendor
+import dHydra.core.util as util
+import threading
 from ctp.futures import ApiStruct, MdApi
 
 
-class dHydraMdApi(MdApi):
+class CTPMdApi(MdApi, Vendor):
 
-    def __init__(self, brokerID, userID, password, instrumentIDs):
-        self.requestID = 0
-        self.brokerID = brokerID
-        self.userID = userID
-        self.password = password
-        self.instrumentIDs = instrumentIDs
+    def __init__(
+        self,
+        instrument_ids=None,
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.request_id = 0
+
+        # Note (IMPORTANT):
+        # broker_id, user_id, password, instrument_ids, market_front should
+        # be bytes
+        cfg = util.read_config(os.getcwd() + "/ctp_debug.json")
+        if "broker_id" in cfg:
+            broker_id = cfg["broker_id"]
+        if "password" in cfg:
+            password = cfg["password"]
+        if "user_id" in cfg:
+            user_id = cfg["user_id"]
+        if "market_front" in cfg:
+            market_front = cfg["market_front"]
+        if instrument_ids is None:
+            self.logger.warning("没有初始化订阅的合约品种，将采用默认品种作为演示：")
+            import pandas
+            instrument_ids = list(pandas.DataFrame.from_csv(
+                os.getcwd() + "/data/instruments.csv"
+            ).index)
+            self.logger.info("订阅品种：{}".format(instrument_ids))
+        if (broker_id is None) or (user_id is None) or (password is None) \
+                or (market_front is None):
+            import sys
+            self.logger.error("CTP连接信息不完整")
+            sys.exit(0)
+        self.broker_id = broker_id.encode()
+        self.user_id = user_id.encode()
+        self.password = password.encode()
+        self.instrument_ids = list()
+        self.market_front = market_front.encode()
+        for i in instrument_ids:
+            self.instrument_ids.append(i.encode())
+
         self.Create()
+        self.RegisterFront(self.market_front)
+
+        t = threading.Thread(target=self.start_listening)
+        t.setDaemon(True)
+        t.start()
+
+    def start_listening(self):
+        self.Init()
+        try:
+            while 1:
+                time.sleep(10)
+        except Exception as e:
+            self.logger.warning(e)
+
+    def OnRtnDepthMarketData(self, pDepthMarketData):
+        data = dict()
+        fields = [
+            'ActionDay', 'AskPrice1', 'AskVolume1', 'AveragePrice',
+            'BidPrice1', 'BidVolume1', 'ClosePrice',  'CurrDelta',
+            'ExchangeID', 'ExchangeInstID', 'HighestPrice',
+            'InstrumentID', 'LastPrice', 'LowerLimitPrice',
+            'LowestPrice', 'OpenInterest', 'OpenPrice', 'PreClosePrice',
+            'PreDelta', 'PreOpenInterest', 'PreSettlementPrice',
+            'SettlementPrice', 'TradingDay', 'Turnover',
+            'UpdateMillisec', 'UpdateTime', 'UpperLimitPrice', 'Volume'
+        ]
+        for k in fields:
+            data[k] = eval("pDepthMarketData." + k)
+        self.logger.info(data)
+        self.logger.info(
+            "Time:{}\nInstrument:{}\nPrice:{}\nVolume:{}"
+            .format(
+                data["UpdateTime"] + b"." +
+                str(data["UpdateMillisec"]).encode(),
+                data["InstrumentID"],
+                data["LastPrice"],
+                data["Volume"]
+            )
+        )
 
     def Create(self):
         """创建MdApi
@@ -23,7 +99,7 @@ class dHydraMdApi(MdApi):
         @return 创建出的UserApi
         modify for udp marketdata
         """
-        dir = b''.join((b'ctp.futures', self.brokerID, self.userID))
+        dir = b''.join((b'ctp.futures', self.broker_id, self.user_id))
         dir = hashlib.md5(dir).hexdigest()
         dir = os.path.join(tempfile.gettempdir(), dir, 'Md') + os.sep
         if not os.path.isdir(dir):
@@ -61,9 +137,9 @@ class dHydraMdApi(MdApi):
         """
         print('OnFrontConnected: Login...')
         req = ApiStruct.ReqUserLogin(
-            BrokerID=self.brokerID, UserID=self.userID, Password=self.password)
-        self.requestID += 1
-        self.ReqUserLogin(req, self.requestID)
+            BrokerID=self.broker_id, UserID=self.user_id, Password=self.password)
+        self.request_id += 1
+        self.ReqUserLogin(req, self.request_id)
 
     def OnFrontDisconnected(self, nReason):
         """当客户端与交易后台通信连接断开时，该方法被调用。当发生这个情况后，API会自动重新连接，客户端可不做处理。
@@ -86,8 +162,8 @@ class dHydraMdApi(MdApi):
         """登录请求响应"""
         print('OnRspUserLogin:', pRspInfo)
         if pRspInfo.ErrorID == 0:  # Success
+            self.SubscribeMarketData(self.instrument_ids)
             print('GetTradingDay:', self.GetTradingDay())
-            self.SubscribeMarketData(self.instrumentIDs)
 
     def OnRspSubMarketData(
         self,
@@ -116,9 +192,6 @@ class dHydraMdApi(MdApi):
     def OnRspUserLogout(self, pUserLogout, pRspInfo, nRequestID, bIsLast):
         print('OnRspUserLogout:', pRspInfo)
 
-    def OnRtnDepthMarketData(self, pDepthMarketData):
-        print(pDepthMarketData)
-
     def OnRspSubMarketData(
         self,
         pSpecificInstrument,
@@ -127,11 +200,11 @@ class dHydraMdApi(MdApi):
         bIsLast
     ):
         """订阅行情应答"""
-        self.logger.info(
-            "订阅行情应答 -- pSpecificInstrument:{},pRspInfo:{},nRequestID:{},"
-            "bIsLast:{}"
-            .format(pSpecificInstrument, pRspInfo, nRequestID, bIsLast)
-        )
+        # self.logger.info(
+        #     "订阅行情应答 -- pSpecificInstrument:{},pRspInfo:{},nRequestID:{},"
+        #     "bIsLast:{}"
+        #     .format(pSpecificInstrument, pRspInfo, nRequestID, bIsLast)
+        # )
 
     def OnRspUnSubMarketData(
         self,

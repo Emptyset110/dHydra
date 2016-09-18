@@ -27,9 +27,3 @@ class CTPTrader(Worker):
             "Ahhhh! I'm going to be killed. My pid:{}, signal received:{}"
             .format(self.pid, sig)
         )
-
-    def Create(self, pszFlowPath=''):
-        """创建TraderApi
-        @param pszFlowPath 存贮订阅信息文件的目录，默认为当前目录
-        @return 创建出的UserApi
-        """

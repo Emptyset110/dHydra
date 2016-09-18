@@ -328,7 +328,7 @@ class Sina(Vendor):
             try:
                 response = self.session.get(
                     URL_API_MARKET_CENTER_GETHQNODEDATA(node),
-                    GET_TODAY_ALL,
+                    headers=HEADERS_GET_TODAY_ALL,
                     timeout=3
                 ).text
                 retry = False
