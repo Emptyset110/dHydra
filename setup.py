@@ -65,7 +65,7 @@ setup(
         "rsa",
         "ntplib",
         "redis",
-        "tornado"
+        "tornado",
         "click",
     ],
     entry_points='''
