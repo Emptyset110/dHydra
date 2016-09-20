@@ -1,7 +1,6 @@
 from dHydra.console import logger, get_worker_class
 from dHydra.core.Functions import get_vendor
 import click
-import signal
 import multiprocessing
 import time
 import os
@@ -23,20 +22,18 @@ def __on_termination__(sig, frame):
 
 
 def bind_quit_signals():
+    import signal
     shutdown_signals = [
-        signal.SIGQUIT,  # quit 信号
-        signal.SIGINT,  # 键盘信号
-        signal.SIGHUP,  # nohup 命令
-        signal.SIGTERM,  # kill 命令
+        "SIGQUIT",  # quit 信号
+        "SIGINT",  # 键盘信号
+        "SIGHUP",  # nohup 命令
+        "SIGTERM",  # kill 命令
     ]
     for s in shutdown_signals:
-        # 捕获退出信号后的要调用的,唯一的 shutdown 接口
-        try:
-            signal.signal(s, __on_termination__)
-        except Exception as e:
-            logger.warning(
-                "绑定退出信号：{}失败，可能与windows系统有关。"
-                .format(s)
+        if hasattr(signal, s):
+            signal.signal(
+                getattr(signal, s, None),
+                __on_termination__
             )
 
 
