@@ -23,7 +23,7 @@ class CTPMdApi(MdApi, Vendor):
         # Note (IMPORTANT):
         # broker_id, user_id, password, instrument_ids, market_front should
         # be bytes
-        cfg = util.read_config(os.getcwd() + "/ctp_debug.json")
+        cfg = util.read_config(os.getcwd() + "/ctp.json")
         if "broker_id" in cfg:
             broker_id = cfg["broker_id"]
         if "password" in cfg:

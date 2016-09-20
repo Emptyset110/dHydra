@@ -3,6 +3,7 @@ from dHydra.core.Vendor import Vendor
 import dHydra.core.util as util
 import os
 import json
+import inspect
 
 
 class CTPTraderApi(Vendor, TraderApi):
@@ -19,6 +20,30 @@ class CTPTraderApi(Vendor, TraderApi):
     ):
         super().__init__(**kwargs)
 
+        # 将语义化的"buy","sell"映射到ApiStruct.D_Buy, ApiStruct.D_Sell
+        self.direction_map = {
+            "buy": ApiStruct.D_Buy,
+            "sell": ApiStruct.D_Sell,
+        }
+        self.direction_inverse_map = {
+            ApiStruct.D_Buy: "buy",
+            ApiStruct.D_Sell: "sell",
+        }
+        # 将语义化的"open","close"映射到ApiStruct.OF_Open, ApiStruct.OF_Close
+        self.offset_flag_map = {
+            "open": ApiStruct.OF_Open,
+            "close": ApiStruct.OF_Close,
+        }
+        self.offset_flag_inverse_map = {
+            ApiStruct.OF_Open: "open",
+            ApiStruct.OF_Close: "close",
+        }
+
+        # 重写传入的方法
+        for item in kwargs.keys():
+            if not getattr(self, item, None):
+                setattr(self, item, kwargs[item])
+
         # Get Api Version
         self.api_version = self.GetApiVersion().decode("utf-8")
         self.logger.info("API Version:{}".format(self.api_version))
@@ -28,12 +53,15 @@ class CTPTraderApi(Vendor, TraderApi):
         self.order_ref = 0
 
         self.is_connected = False       # 连接状态
-        self.is_login = False            # 登录状态
+        self.is_logined = False            # 登录状态
 
-        if account[0] != '/':
-            account = '/' + account
-        account_path = os.getcwd() + "{}".format(account)
-        cfg = util.read_config(account_path)
+        if isinstance(account, dict):
+            cfg = account
+        else:
+            if account[0] != '/':
+                account = '/' + account
+            account_path = os.getcwd() + "{}".format(account)
+            cfg = util.read_config(account_path)
         try:
             if investor_id is None:
                 self.investor_id = cfg["investor_id"].encode()
@@ -144,10 +172,10 @@ class CTPTraderApi(Vendor, TraderApi):
             self.RegisterFront(self.trade_front)
 
             # 订阅公共流
-            self.SubscribePrivateTopic(ApiStruct.TERT_RESUME)
+            self.SubscribePublicTopic(ApiStruct.TERT_RESTART)
 
             # 订阅私有流
-            self.SubscribePrivateTopic(ApiStruct.TERT_RESUME)
+            self.SubscribePrivateTopic(ApiStruct.TERT_RESTART)
 
             # 初始化连接，成功会调用OnFrontConnected
             self.Init()
@@ -158,8 +186,11 @@ class CTPTraderApi(Vendor, TraderApi):
 
         # 若已经连接但尚未登录，则进行登录
         else:
-            if not self.is_login:
+            if not self.is_logined:
                 self.req_user_login()
+
+    def on_front_connected(self):
+        pass
 
     def OnFrontConnected(self):
         """
@@ -170,6 +201,10 @@ class CTPTraderApi(Vendor, TraderApi):
             "Successfully connected to the Trader Front, "
             "about to login."
         )
+
+        # 对外暴露接口
+        self.on_front_connected()
+
         self.req_user_login()
 
     def req_user_login(self):
@@ -187,16 +222,29 @@ class CTPTraderApi(Vendor, TraderApi):
                 nRequestID=self.request_id
             )
 
+    def on_rsp_user_login(self, rsp_user_login, rsp_info, request_id, is_last):
+        pass
+
     def OnRspUserLogin(self, pRspUserLogin, pRspInfo, nRequestID, bIsLast):
         """登录请求响应"""
         rsp_user_login = self.to_dict(pRspUserLogin)
+        rsp_info = self.to_dict(pRspInfo)
+
         if pRspInfo.ErrorID == 0:
             self.front_id = pRspUserLogin.FrontID
             self.session_id = pRspUserLogin.SessionID
-            self.is_login = True
+            self.is_logined = True
 
             self.logger.info(
                 "交易服务器登录完成:{}".format(pRspInfo.ErrorMsg.decode("gbk"))
+            )
+
+            # 对外接口
+            self.on_rsp_user_login(
+                rsp_user_login=rsp_user_login,
+                rsp_info=rsp_info,
+                request_id=nRequestID,
+                is_last=bIsLast
             )
 
             # 确认结算信息
@@ -219,6 +267,14 @@ class CTPTraderApi(Vendor, TraderApi):
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
+            # 在某些情况下，会出现无法自动连接
+            # 这里我们手动进行一下重连
+            self.connect(
+                self.user_id,
+                self.trader.password,
+                self.broker_id,
+                self.trade_front
+            )
 
     def req_qry_trading_account(self, currency_id=b"CNY"):
         """
@@ -239,6 +295,9 @@ class CTPTraderApi(Vendor, TraderApi):
             "Finish sending request for trading account"
         )
 
+    def on_rsp_qry_trading_account(self, trading_account, request_id, is_last):
+        pass
+
     def OnRspQryTradingAccount(
         self,
         pTradingAccount,
@@ -251,12 +310,22 @@ class CTPTraderApi(Vendor, TraderApi):
         trading_account = self.to_dict(pTradingAccount)
         for k in trading_account.keys():
             if isinstance(trading_account[k], bytes):
-                trading_account[k] = trading_account[k].decode("utf-8")
+                trading_account[k] = trading_account[k].decode("gbk")
         self.logger.info(
             "OnRspQryTradingAccount: Received"
             ", no operation is followed"
-            "pTradingAccount:{}".format(json.dumps(trading_account, indent=2))
+            "pTradingAccount:{}\n"
+            "nRequestID:{}\n, bIsLast:{}"
+            .format(json.dumps(trading_account, indent=2), nRequestID, bIsLast)
         )
+        self.on_rsp_qry_trading_account(
+            trading_account=trading_account,
+            request_id=nRequestID,
+            is_last=bIsLast
+        )
+
+    def on_front_disconnected(self, reason):
+        pass
 
     def OnFrontDisconnected(self, nReason):
         """当客户端与交易后台通信连接断开时，该方法被调用。当发生这个情况后，
@@ -269,7 +338,7 @@ class CTPTraderApi(Vendor, TraderApi):
                 0x2003 收到错误报文
         """
         self.is_connected = False
-        self.is_login = False
+        self.is_logined = False
         reason_map = {
             0x1001: "网络读失败",
             0x1002: "网络写失败",
@@ -283,6 +352,11 @@ class CTPTraderApi(Vendor, TraderApi):
                 reason_map[nReason]
             )
         )
+        # 对外接口
+        self.on_front_disconnected(reason_map[nReason])
+
+    def on_heart_beat_warning(self, time_lapse):
+        pass
 
     def OnHeartBeatWarning(self, nTimeLapse):
         """心跳超时警告。当长时间未收到报文时，该方法被调用。
@@ -292,6 +366,8 @@ class CTPTraderApi(Vendor, TraderApi):
             "心跳超时警告, 距离上次接收报文的时间:{}"
             .format(nTimeLapse)
         )
+        # 对外接口
+        self.on_heart_beat_warning(time_lapse=nTimeLapse)
 
     def req_authenticate(self):
         pass
@@ -342,7 +418,7 @@ class CTPTraderApi(Vendor, TraderApi):
         """登出回报"""
         # 如果登出成功，推送日志信息
         if pRspInfo.ErrorID == 0:
-            self.is_login = False
+            self.is_logined = False
             self.logger.info('OnRspUserLogout: Success')
             user_logout = self.to_dict(pUserLogout)
             self.logger.info(
@@ -468,7 +544,6 @@ class CTPTraderApi(Vendor, TraderApi):
 
     def req_qry_investor_position_detail(self):
         """请求查询投资者持仓明细"""
-        print("请求查询投资者持仓明细")
         pQryInvestorPositionDetail = ApiStruct.QryInvestorPositionDetail(
             BrokerID=self.broker_id,
             InvestorID=self.investor_id
@@ -590,6 +665,32 @@ class CTPTraderApi(Vendor, TraderApi):
                 )
             )
 
+    def req_query_max_order_volume(
+        self,
+        instrument_id,
+        direction="buy",
+        offset_flag="open",
+    ):
+        """查询最大报单数量请求"""
+        if isinstance(instrument_id, str):
+            instrument_id = instrument_id.encode()
+
+        direction = self.direction_map[direction]
+        offset_flag = self.offset_flag_map[offset_flag]
+
+        pQueryMaxOrderVolume = ApiStruct.QueryMaxOrderVolume(
+            BrokerID=self.broker_id,
+            InvestorID=self.investor_id,
+            InstrumentID=instrument_id,
+            Direction=direction,
+            OffsetFlag=offset_flag,
+        )
+        self.request_id += 1
+        self.ReqQueryMaxOrderVolume(
+            pQueryMaxOrderVolume=pQueryMaxOrderVolume,
+            nRequestID=self.request_id
+        )
+
     def OnRspQueryMaxOrderVolume(
         self,
         pQueryMaxOrderVolume,
@@ -598,10 +699,13 @@ class CTPTraderApi(Vendor, TraderApi):
         bIsLast
     ):
         """查询最大报单数量响应"""
+        query_max_order_volume = self.to_dict(pQueryMaxOrderVolume)
         if pRspInfo.ErrorID == 0:
             self.logger.info(
                 "OnRspQueryMaxOrderVolume: Received"
                 ", no operation is followed"
+                "QueryMaxOrderVolume:{}"
+                .format(query_max_order_volume)
             )
         # 否则，推送错误信息
         else:
@@ -839,7 +943,8 @@ class CTPTraderApi(Vendor, TraderApi):
     ):
         """请求查询报单响应"""
         order = self.to_dict(pOrder)
-        order["StatusMsg"] = order["StatusMsg"].decode()
+        if order:
+            order["StatusMsg"] = order["StatusMsg"].decode("gbk")
         self.logger.info(
             "OnRspQryOrder: Received"
             "order: {}\n"
@@ -871,6 +976,9 @@ class CTPTraderApi(Vendor, TraderApi):
             )
 
     def req_qry_investor_position(self):
+        """
+        查询持仓
+        """
         pQryInvestorPosition = ApiStruct.QryInvestorPosition(
             BrokerID=self.broker_id,
             InvestorID=self.investor_id

@@ -6,17 +6,60 @@ import threading
 from ctp.futures import ApiStruct
 import os
 import pandas
+import copy
+from datetime import datetime
 
 
 class EasyUncle(Vendor):
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        accounts="easyuncle.json",
+        **kwargs
+    ):
         super().__init__(**kwargs)
-        self.ctp = None
-        self.stock = None
 
-        self.ctp_position = list()
-        self.ctp_position_detail = list()
+        deligent_uncle = threading.Thread(
+            target=self.main,
+            args=(accounts,)
+        )
+        deligent_uncle.setDaemon(True)
+        deligent_uncle.start()
+
+    def main(self, accounts):
+        # read accounts
+        self.accounts = self.init_accounts(accounts=accounts)
+        self.logger.info("EasyUncle帐号初始化完成")
+
+    def init_accounts(self, accounts="easyuncle.json"):
+        """
+        初始化acctouns中配置的所有帐号
+        @return dict
+        {
+            "account_name": {
+                "type": "ctp/easytrader/other",
+                "trader": "生成的实例对象",
+                "timestamp": "对象生成时间",
+            }
+        }
+        """
+        result = {}
+        if accounts[0] != '/':
+            accounts = os.getcwd() + '/' + accounts
+        accounts_dict = util.read_config(accounts)
+        for account in accounts_dict.keys():
+            result[account] = dict()
+            result[account]["type"] = accounts_dict[account]["type"]
+            if result[account]["type"] == "ctp":
+                result[account]["trader"] = get_vendor(
+                    "CTPTraderApi",
+                    account=copy.deepcopy(accounts_dict[account])
+                    console_log=True,  # 关闭它的log
+                    info_log=False,
+                    error_log=False,
+                )
+                result[account]["timestamp"] = datetime.now()
+        return result
 
     def init_ctp(self, account="ctp.json"):
         self.ctp = get_vendor("CTPTraderApi", account=account)
