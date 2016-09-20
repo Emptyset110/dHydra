@@ -26,13 +26,22 @@ import ast
 class Worker(multiprocessing.Process):
     __metaclass__ = ABCMeta
 
-    def __init__(self,
-                 singleton=True,  # 单例模式
-                 nickname=None,  # Worker的自定义名字
-                 description="No Description",  # 备注说明
-                 log_level="INFO",  # "DEBUG","INFO","WARNING"
-                 heart_beat_interval=3,  # 默认3秒心跳
-                 **kwargs):
+    def __init__(
+        self,
+        singleton=True,  # 单例模式
+        nickname=None,  # Worker的自定义名字
+        description="No Description",  # 备注说明
+        heart_beat_interval=3,  # 默认3秒心跳
+        log_path="log",                     #
+        console_log=True,                   # 屏幕打印日志开关，默认True
+        console_log_level=logging.INFO,     # 屏幕打印日志的级别，默认为INFO
+        critical_log=False,                 # critica单独l写文件日志，默认关闭
+        error_log=True,                     # error级别单独写文件日志，默认开启
+        warning_log=False,                  # warning级别单独写日志，默认关闭
+        info_log=True,                      # info级别单独写日志，默认开启
+        debug_log=False,                    # debug级别日志，默认关闭
+        **kwargs
+    ):
         self.__token__ = util.generate_token()
         if nickname is None:
             self.__nickname__ = self.__class__.__name__ + "Default"
@@ -68,22 +77,37 @@ class Worker(multiprocessing.Process):
         },
         }
         """
-        self.logger = util.get_logger(logger_name=self.__class__.__name__)
+        self.logger = util.get_logger(
+            logger_name=self.__class__.__name__,
+            log_path=log_path,                     #
+            console_log=console_log,              # 屏幕打印日志开关，默认True
+            console_log_level=console_log_level,  # 屏幕打印日志的级别，默认为INFO
+            critical_log=critical_log,      # critica单独l写文件日志，默认关闭
+            error_log=error_log,            # error级别单独写文件日志，默认开启
+            warning_log=warning_log,        # warning级别单独写日志，默认关闭
+            info_log=info_log,              # info级别单独写日志，默认开启
+            debug_log=debug_log,            # debug级别日志，默认关闭
+        )
         if self.check_prerequisites() is True:
             super().__init__()
             self.daemon = True
         else:
             sys.exit(0)
+
         self.shutdown_signals = [
-            signal.SIGQUIT,  # quit 信号
-            signal.SIGINT,  # 键盘信号
-            signal.SIGHUP,  # nohup 命令
-            signal.SIGTERM,  # kill 命令
+            "SIGQUIT",  # quit 信号
+            "SIGINT",  # 键盘信号
+            "SIGHUP",  # nohup 命令
+            "SIGTERM",  # kill 命令
         ]
         for s in self.shutdown_signals:
             # 捕获退出信号后的要调用的,唯一的 shutdown 接口
             try:
-                signal.signal(s, self.__on_termination__)
+                if hasattr(signal, s):
+                    signal.signal(
+                        getattr(signal, s, None),
+                        self.__on_termination__
+                    )
             except Exception as e:
                 self.logger.info("绑定退出信号：{}失败，可能与windows系统有关。".format(s))
 
