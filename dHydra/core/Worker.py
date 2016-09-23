@@ -23,7 +23,7 @@ import os
 import ast
 
 
-class Worker(multiprocessing.Process):
+class Worker(threading.Thread):
     __metaclass__ = ABCMeta
 
     def __init__(
@@ -42,6 +42,12 @@ class Worker(multiprocessing.Process):
         debug_log=False,                    # debug级别日志，默认关闭
         **kwargs
     ):
+        if self.check_prerequisites() is True:
+            super().__init__()
+            self.daemon = True
+            self.setDaemon(True)
+        else:
+            sys.exit(0)
         self.__token__ = util.generate_token()
         if nickname is None:
             self.__nickname__ = self.__class__.__name__ + "Default"
@@ -59,6 +65,7 @@ class Worker(multiprocessing.Process):
         self.__stop_info__ = None		#
         self.__stop_time__ = None		#
         self.__status__ = "init"
+        self.pid = 0
         # "init", "error_exit", "suspended", "user_stopped", "normal"
         self.redis_key = "dHydra.Worker." + \
             self.__class__.__name__ + "." + self.__nickname__ + "."
@@ -88,11 +95,6 @@ class Worker(multiprocessing.Process):
             info_log=info_log,              # info级别单独写日志，默认开启
             debug_log=debug_log,            # debug级别日志，默认关闭
         )
-        if self.check_prerequisites() is True:
-            super().__init__()
-            self.daemon = True
-        else:
-            sys.exit(0)
 
         self.shutdown_signals = [
             "SIGQUIT",  # quit 信号
