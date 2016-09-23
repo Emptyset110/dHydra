@@ -50,7 +50,7 @@ class SinaL2(Worker):
 
     def on_recv_data(self, message):
         parsed_msg = util.ws_parse(message, to_dict=True)
-        print(parsed_msg)
+        self.publish(parsed_msg)
         if self.to_mongo:
             for data in parsed_msg:
                 try:
