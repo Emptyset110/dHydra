@@ -1,0 +1,18 @@
+body {
+  color: #C1FFC1;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+#submit{
+    margin:12px 12px 12px 12px;
+    width: 100px;
+    background-color: #8DEEEE;
+}
+.input{
+    margin:5px 5px 5px 5px;
+    height: 28px;
+    width: 190px;
+    border:2px solid;
+    font-weight:bold;
+    color:#8DB6CD
+}

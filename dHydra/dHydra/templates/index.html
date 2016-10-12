@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+    <title>Hail dHydra</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/Semantic-UI/semantic.min.css" rel="stylesheet">
+    <link href="/static/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+<style>
+.typed-cursor{
+    opacity: 1;
+    -webkit-animation: blink 0.7s infinite;
+    -moz-animation: blink 0.7s infinite;
+    animation: blink 0.7s infinite;
+}
+@keyframes blink{
+    0% { opacity:1; }
+    50% { opacity:0; }
+    100% { opacity:1; }
+}
+@-webkit-keyframes blink{
+    0% { opacity:1; }
+    50% { opacity:0; }
+    100% { opacity:1; }
+}
+@-moz-keyframes blink{
+    0% { opacity:1; }
+    50% { opacity:0; }
+    100% { opacity:1; }
+}
+.fa-padding{
+    padding-right: 5px
+}
+</style>
+
+<script src = "/static/js/canvas-nest.min.js"></script>
+
+<script src="/static/js/jquery-3.0.0.min.js"></script>
+<script src="/static/js/typed.js"></script>
+<script>
+  $(function(){
+      $(".type-wrap").typed({
+          strings: ["$ pip install --editable .^1000</br>$ hail^1000</br>Hail What?^1000</br>$ hail dHydra^1000</br> Welcome to dHydra!</br>Listening on port http://127.0.0.1:5000"],
+          typeSpeed: 3
+      });
+  });
+</script>
+<div class="ui text container" style = "padding:100px 10px 50px 5px">
+    <h1 class="ui deviding header" style = "color: rgba(100,100,100,1); font-size: 50px">Hail dHydra</h1>
+</div>
+<div class="ui text container" style="padding:10px;color: #333333; border-radius: 5px; background-color: rgba(150,150,180,0.7)">
+    <span class="type-wrap" ></span>
+</div>
+<div style = "padding:20px">
+</div>
+<div class="ui text container" style="padding:0">
+    <button class="ui button"><i class="fa fa-tachometer fa-padding"></i>Monitor Dashboard</button>
+    <button class="ui button"><i class="fa fa-book fa-padding"></i>Read the Docs</button>
+    <button class="ui button"><i class="fa fa-github fa-padding"></i>Star me on Github</button>
+</div>
+</body>
+</html>
