@@ -27,21 +27,31 @@ class Worker(multiprocessing.Process):
     __metaclass__ = ABCMeta
 
     def __init__(
-        self,
-        singleton=True,  # 单例模式
-        nickname=None,  # Worker的自定义名字
-        description="No Description",  # 备注说明
-        heart_beat_interval=1,  # 默认1秒心跳
-        log_path="log",                     #
-        console_log=True,                   # 屏幕打印日志开关，默认True
-        console_log_level=logging.INFO,     # 屏幕打印日志的级别，默认为INFO
-        critical_log=False,                 # critical单独写文件日志，默认关闭
-        error_log=True,                     # error级别单独写文件日志，默认开启
-        warning_log=False,                  # warning级别单独写日志，默认关闭
-        info_log=True,                      # info级别单独写日志，默认开启
-        debug_log=False,                    # debug级别日志，默认关闭
-        **kwargs
+            self,
+            singleton=True,  # 单例模式
+            nickname=None,  # Worker的自定义名字
+            description="No Description",  # 备注说明
+            heart_beat_interval=1,  # 默认1秒心跳
+            log_path="log",  #
+            console_log=True,  # 屏幕打印日志开关，默认True
+            console_log_level=logging.INFO,  # 屏幕打印日志的级别，默认为INFO
+            critical_log=False,  # critical单独写文件日志，默认关闭
+            error_log=True,  # error级别单独写文件日志，默认开启
+            warning_log=False,  # warning级别单独写日志，默认关闭
+            info_log=True,  # info级别单独写日志，默认开启
+            debug_log=False,  # debug级别日志，默认关闭
+            **kwargs
     ):
+        # 记录日志配置
+        self.__log_path__ = log_path
+        self.__console_log__ = console_log
+        self.__console_log_level__ = console_log_level
+        self.__critical_log__ = critical_log
+        self.__error_log__ = error_log
+        self.__warning_log__ = warning_log
+        self.__info_log__ = info_log
+        self.__debug_log__ = debug_log
+
         self.__token__ = util.generate_token()
         if nickname is None:
             self.__nickname__ = self.__class__.__name__ + "Default"
@@ -52,17 +62,17 @@ class Worker(multiprocessing.Process):
         self.__singleton__ = singleton
         self.__description__ = description
         self.__heart_beat_interval__ = heart_beat_interval
-        self.__threads__ = dict()		# 被监控的线程
+        self.__threads__ = dict()  # 被监控的线程
         self.__data_feeder__ = set()  # 本Worker订阅的内容
-        self.__follower__ = set()		# Follower
-        self.__error_msg__ = None		#
-        self.__stop_info__ = None		#
-        self.__stop_time__ = None		#
+        self.__follower__ = set()  # Follower
+        self.__error_msg__ = None  #
+        self.__stop_info__ = None  #
+        self.__stop_time__ = None  #
         self.__status__ = "init"
         self.mongo = False
         # "init", "error_exit", "suspended", "user_stopped", "normal"
         self.redis_key = "dHydra.Worker." + \
-            self.__class__.__name__ + "." + self.__nickname__ + "."
+                         self.__class__.__name__ + "." + self.__nickname__ + "."
         self.channel_pub = self.redis_key + "Pub"
         """
         self.__threads__ = {
@@ -78,22 +88,8 @@ class Worker(multiprocessing.Process):
         },
         }
         """
-        self.logger = util.get_logger(
-            logger_name=self.__class__.__name__,
-            log_path=log_path,                     #
-            console_log=console_log,              # 屏幕打印日志开关，默认True
-            console_log_level=console_log_level,  # 屏幕打印日志的级别，默认为INFO
-            critical_log=critical_log,      # critica单独l写文件日志，默认关闭
-            error_log=error_log,            # error级别单独写文件日志，默认开启
-            warning_log=warning_log,        # warning级别单独写日志，默认关闭
-            info_log=info_log,              # info级别单独写日志，默认开启
-            debug_log=debug_log,            # debug级别日志，默认关闭
-        )
-        if self.check_prerequisites() is True:
-            super().__init__()
-            self.daemon = True
-        else:
-            sys.exit(0)
+
+        super().__init__()
 
         self.shutdown_signals = [
             "SIGQUIT",  # quit 信号
@@ -118,11 +114,11 @@ class Worker(multiprocessing.Process):
             if info["token"] != self.__token__:
                 if "heart_beat" in info:
                     if (
-                        datetime.now() -
-                        datetime.strptime(
-                            info["heart_beat"],
-                            '%Y-%m-%d %H:%M:%S.%f'
-                        )
+                                datetime.now() -
+                                datetime.strptime(
+                                    info["heart_beat"],
+                                    '%Y-%m-%d %H:%M:%S.%f'
+                                )
                     ) < timedelta(seconds=self.__heart_beat_interval__):
                         return False
         return True
@@ -201,8 +197,8 @@ class Worker(multiprocessing.Process):
         while True:
             msg_command = self.command_listener.get_message()
             if msg_command:
-                if (msg_command["type"] == "message") or\
-                   (msg_command["type"] == "pmessage"):
+                if (msg_command["type"] == "message") or \
+                        (msg_command["type"] == "pmessage"):
                     self.__command_handler__(msg_command["data"])
             else:
                 time.sleep(0.01)
@@ -253,17 +249,17 @@ class Worker(multiprocessing.Process):
 
     def __before_termination__(self, sig):
         self.logger.info("收到了退出信号。进程类：{}，进程名：{},进程pid:{}"
-                         .format(
-                             self.__class__.__name__,
-                             self.__nickname__,
-                             self.pid
-                         )
-                         )
+            .format(
+            self.__class__.__name__,
+            self.__nickname__,
+            self.pid
+        )
+        )
 
     def __on_termination__(self, sig, frame):
         self.__before_termination__(sig)
         self.__status__ = "terminated"
-        self.__heart_beat__()		# The last heart_beat, sad...
+        self.__heart_beat__()  # The last heart_beat, sad...
         sys.exit(0)
 
     def publish(self, data):
@@ -278,6 +274,22 @@ class Worker(multiprocessing.Process):
         初始化Worker
         """
         # 首先检查是否已经有相同的进程被开启
+        self.logger = util.get_logger(
+            logger_name=self.__class__.__name__,
+            log_path=self.__log_path__,  #
+            console_log=self.__console_log__,  # 屏幕打印日志开关，默认True
+            console_log_level=self.__console_log_level__,  # 屏幕打印日志的级别，默认为INFO
+            critical_log=self.__critical_log__,  # critica单独l写文件日志，默认关闭
+            error_log=self.__error_log__,  # error级别单独写文件日志，默认开启
+            warning_log=self.__warning_log__,  # warning级别单独写日志，默认关闭
+            info_log=self.__info_log__,  # info级别单独写日志，默认开启
+            debug_log=self.__debug_log__,  # debug级别日志，默认关闭
+        )
+
+        if self.check_prerequisites() is True:
+            pass
+        else:
+            sys.exit(0)
         if self.__is_unique__():
             self.__status__ = "started"
         else:
@@ -338,7 +350,7 @@ class Worker(multiprocessing.Process):
             )
             self.logger.info(
                 "About to subscribe the Worker of worker_name: {}, pattern:{}"
-                .format(
+                    .format(
                     worker_name,
                     "dHydra.Worker." + worker_name + ".*.Pub"
                 )
@@ -351,7 +363,7 @@ class Worker(multiprocessing.Process):
             )
             self.logger.info(
                 "About to subscribe the Worker of nickname: {}, pattern:{}"
-                .format(
+                    .format(
                     nickname,
                     "dHydra.Worker.*." +
                     nickname +
@@ -372,7 +384,7 @@ class Worker(multiprocessing.Process):
             self.logger.info(
                 "About to unsubscribe the Worker of worker_name: {}, \
                 pattern:{}"
-                .format(
+                    .format(
                     nickname,
                     "dHydra.Worker.*." + worker_name + ".Pub"
                 )
@@ -385,7 +397,7 @@ class Worker(multiprocessing.Process):
             )
             self.logger.info(
                 "About to subscribe the Worker of nickname: {}, pattern:{}"
-                .format(
+                    .format(
                     nickname,
                     "dHydra.Worker.*." + nickname + ".Pub"
                 )
