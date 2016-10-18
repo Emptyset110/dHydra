@@ -14,6 +14,7 @@ class CTPMdApi(MdApi, Vendor):
 
     def __init__(
         self,
+        account="ctp.json",
         instrument_ids=None,
         **kwargs
     ):
@@ -23,7 +24,7 @@ class CTPMdApi(MdApi, Vendor):
         # Note (IMPORTANT):
         # broker_id, user_id, password, instrument_ids, market_front should
         # be bytes
-        cfg = util.read_config(os.getcwd() + "/ctp.json")
+        cfg = util.read_config(os.getcwd() + "/" + account)
         if "broker_id" in cfg:
             broker_id = cfg["broker_id"]
         if "password" in cfg:

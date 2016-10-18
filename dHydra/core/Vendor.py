@@ -15,6 +15,7 @@ class Vendor:
         warning_log=False,                  # warning级别单独写日志，默认关闭
         info_log=True,                      # info级别单独写日志，默认开启
         debug_log=False,                    # debug级别日志，默认关闭
+        **kwargs
     ):
         self.logger = util.get_logger(
             log_path=log_path,                     #

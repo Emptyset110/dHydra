@@ -25,7 +25,6 @@ class IndexHandler(tornado.web.RequestHandler):
 
     def get(self, *args):
         self.render("index.html")
-        print(args)
 
     def get_template_path(self):
         """
@@ -146,7 +145,7 @@ def make_app():
 def start_server(port=5000):
     app = make_app()
     app.listen(port)
-    print("Listening on port: 127.0.0.1:5000")
+    print("Listening on port: 127.0.0.1:{}".format(port))
     tornado.ioloop.IOLoop.current().start()
 
 if __name__ == "__main__":

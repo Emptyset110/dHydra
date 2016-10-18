@@ -31,11 +31,11 @@ class Worker(multiprocessing.Process):
         singleton=True,  # 单例模式
         nickname=None,  # Worker的自定义名字
         description="No Description",  # 备注说明
-        heart_beat_interval=3,  # 默认3秒心跳
+        heart_beat_interval=1,  # 默认1秒心跳
         log_path="log",                     #
         console_log=True,                   # 屏幕打印日志开关，默认True
         console_log_level=logging.INFO,     # 屏幕打印日志的级别，默认为INFO
-        critical_log=False,                 # critica单独l写文件日志，默认关闭
+        critical_log=False,                 # critical单独写文件日志，默认关闭
         error_log=True,                     # error级别单独写文件日志，默认开启
         warning_log=False,                  # warning级别单独写日志，默认关闭
         info_log=True,                      # info级别单独写日志，默认开启
@@ -59,6 +59,7 @@ class Worker(multiprocessing.Process):
         self.__stop_info__ = None		#
         self.__stop_time__ = None		#
         self.__status__ = "init"
+        self.mongo = False
         # "init", "error_exit", "suspended", "user_stopped", "normal"
         self.redis_key = "dHydra.Worker." + \
             self.__class__.__name__ + "." + self.__nickname__ + "."
@@ -132,6 +133,7 @@ class Worker(multiprocessing.Process):
 
     def __command_handler__(self, msg_command):
         # cli is a dict with the following structure:
+        # TODO: 这里的eval有注入漏洞
         """
         msg_command = {
                 "type"	:		"sys/customized",
@@ -148,10 +150,11 @@ class Worker(multiprocessing.Process):
         if msg_command["type"] == "sys":
             str_kwargs = ""
             for k in msg_command["kwargs"].keys():
-                str_kwargs += (k + "=" + "\'" +
-                               msg_command["kwargs"][k] + "\'" + ",")
+                str_kwargs += (k + "=" +
+                               str(msg_command["kwargs"][k]) + ","
+                               )
             try:
-                ast.literal_eval(
+                eval(
                     "self." + msg_command["operation_name"] + "(" +
                     str_kwargs + ")"
                 )
@@ -218,6 +221,7 @@ class Worker(multiprocessing.Process):
         status["pid"] = self.pid
         status["follower"] = self.__follower__
         status["token"] = self.__token__
+        status["heart_beat_interval"] = self.__heart_beat_interval__
         self.__redis__.hmset(self.redis_key + "Info", status)
 
     def __producer__(self):

@@ -21,8 +21,31 @@ import json
 import logging
 
 
+def get_worker_names(logger=None):
+    """
+    根据文件夹名字返回所有可能的worker_name
+    :return:
+    """
+    worker_names = []
+    path = os.path.split(os.path.realpath(__file__))[0][:-5]+"/Worker"
+    worker_names.extend(os.listdir(path))
+    try:
+        worker_names.extend(os.listdir(os.getcwd()+"/Worker"))
+    except FileNotFoundError as e:
+        if logger is None:
+            print("dHydra运行目录下没有Worker文件夹")
+        else:
+            logger.warning("dHydra运行目录下没有Worker文件夹")
+
+    return worker_names
+
 def camel_to_underscore(name):
-    pass
+    if len(name) > 0:
+        name = name[0].lower()+name[1:len(name)]
+    name = re.sub(
+        r'(?P<value>[A-Z])', lambda x: '_'+x.group('value').lower(), name
+    )
+    return name
 
 
 def get_logger(
@@ -30,7 +53,7 @@ def get_logger(
     log_path="log",                     #
     console_log=True,                   # 屏幕打印日志开关，默认True
     console_log_level=logging.INFO,     # 屏幕打印日志的级别，默认为INFO
-    critical_log=False,                 # critica单独l写文件日志，默认关闭
+    critical_log=False,                 # critical单独写文件日志，默认关闭
     error_log=True,                     # error级别单独写文件日志，默认开启
     warning_log=False,                  # warning级别单独写日志，默认关闭
     info_log=True,                      # info级别单独写日志，默认开启
@@ -112,8 +135,20 @@ def _code_to_symbol(code, index=False):
             @contact: jimmysoa@sina.cn
             @modified: Wen Gu
     """
-    if code in C.INDEX_LIST.keys():
-        return C.INDEX_LIST[code]
+    #	股票指数与代码的转换表（无需修改）
+    INDEX_LABELS = ['sh', 'sz', 'hs300', 'sz50', 'cyb', 'zxb', 'zx300', 'zh500']
+    INDEX_LIST = {'sh': 'sh000001', 'sz': 'sz399001',
+                  'hs300': 'sz399300',
+                  'sz50': 'sh000016',
+                  'zxb': 'sz399005',
+                  'cyb': 'sz399006',
+                  'zx300': 'sz399008',
+                  'zh500': 'sh000905',
+                  'HSCEI': 'sz110010',
+                  'HSI': 'sz110000'
+                  }
+    if code in INDEX_LIST.keys():
+        return INDEX_LIST[code]
     else:
         if len(code) != 6:
             return ''
@@ -347,6 +382,13 @@ def ws_parse_to_list(wstype, symbol, data, result, to_dict):
             result.append(x)
     return result
 
+def info_to_dict(info):
+    """
+    TODO: 还没实现
+    :param info:
+    :return:
+    """
+    pass
 
 def orders_to_dict(orders):
     """

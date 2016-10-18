@@ -44,6 +44,7 @@ def start_worker(worker_name, **kwargs):
 
 
 def terminate_worker(nickname=None, pid=None):
+    import signal
     logger.info("{}".format(worker_dict))
     if pid is None:
         pid = get_pid_by_nickname(redis_cli=__redis__, nickname=nickname)
@@ -57,10 +58,10 @@ def terminate_worker(nickname=None, pid=None):
 
 
 def get_workers_info(
-    redis_cli=None,
-    by="nickname",
-    nickname=None,
-    worker_name=None,
+        redis_cli=None,
+        by="nickname",
+        nickname=None,
+        worker_name=None,
 ):
     if redis_cli is None:
         redis_cli = self.__redis__

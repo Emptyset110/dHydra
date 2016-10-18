@@ -4,19 +4,19 @@ import dHydra.core.util as util
 import os
 import json
 import inspect
-
+from pandas import DataFrame
 
 class CTPTraderApi(Vendor, TraderApi):
 
     def __init__(
-        self,
-        account="ctp.json",
-        user_id=None,
-        password=None,
-        broker_id=None,
-        investor_id=None,
-        trade_front=None,
-        **kwargs
+            self,
+            account="ctp.json",
+            user_id=None,
+            password=None,
+            broker_id=None,
+            investor_id=None,
+            trade_front=None,
+            **kwargs
     ):
         super().__init__(**kwargs)
 
@@ -49,11 +49,13 @@ class CTPTraderApi(Vendor, TraderApi):
         self.logger.info("API Version:{}".format(self.api_version))
         self.trading_day = None
 
+        self.req_status = {}             # 用来存储每个request_id的返回状态
+
         self.request_id = 0              # 操作请求编号
         self.order_ref = 0
 
         self.is_connected = False       # 连接状态
-        self.is_logined = False            # 登录状态
+        self.is_login = False            # 登录状态
 
         if isinstance(account, dict):
             cfg = account
@@ -76,7 +78,7 @@ class CTPTraderApi(Vendor, TraderApi):
         except Exception as e:
             self.logger.error(
                 "没有从{}读取到正确格式的配置"
-                .format(account_path)
+                    .format(account_path)
             )
             return None
 
@@ -95,6 +97,10 @@ class CTPTraderApi(Vendor, TraderApi):
             return dict((k, getattr(o, k)) for k, t in o._fields_)
         else:
             return dict()
+
+
+    # def on_rsp(self, func):
+    #     def _on_rsp(self, **kwargs):
 
     def buy(self, instrument_id, volume, price):
         """
@@ -172,10 +178,10 @@ class CTPTraderApi(Vendor, TraderApi):
             self.RegisterFront(self.trade_front)
 
             # 订阅公共流
-            self.SubscribePublicTopic(ApiStruct.TERT_RESTART)
+            self.SubscribePublicTopic(ApiStruct.TERT_RESUME)
 
             # 订阅私有流
-            self.SubscribePrivateTopic(ApiStruct.TERT_RESTART)
+            self.SubscribePrivateTopic(ApiStruct.TERT_RESUME)
 
             # 初始化连接，成功会调用OnFrontConnected
             self.Init()
@@ -186,7 +192,7 @@ class CTPTraderApi(Vendor, TraderApi):
 
         # 若已经连接但尚未登录，则进行登录
         else:
-            if not self.is_logined:
+            if not self.is_login:
                 self.req_user_login()
 
     def on_front_connected(self):
@@ -233,7 +239,7 @@ class CTPTraderApi(Vendor, TraderApi):
         if pRspInfo.ErrorID == 0:
             self.front_id = pRspUserLogin.FrontID
             self.session_id = pRspUserLogin.SessionID
-            self.is_logined = True
+            self.is_login = True
 
             self.logger.info(
                 "交易服务器登录完成:{}".format(pRspInfo.ErrorMsg.decode("gbk"))
@@ -262,7 +268,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "error_id: {}, error_msg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -271,7 +277,7 @@ class CTPTraderApi(Vendor, TraderApi):
             # 这里我们手动进行一下重连
             self.connect(
                 self.user_id,
-                self.trader.password,
+                self.password,
                 self.broker_id,
                 self.trade_front
             )
@@ -299,11 +305,11 @@ class CTPTraderApi(Vendor, TraderApi):
         pass
 
     def OnRspQryTradingAccount(
-        self,
-        pTradingAccount,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pTradingAccount,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询资金账户响应"""
         # pRspInfo is None
@@ -316,7 +322,7 @@ class CTPTraderApi(Vendor, TraderApi):
             ", no operation is followed"
             "pTradingAccount:{}\n"
             "nRequestID:{}\n, bIsLast:{}"
-            .format(json.dumps(trading_account, indent=2), nRequestID, bIsLast)
+                .format(json.dumps(trading_account, indent=2), nRequestID, bIsLast)
         )
         self.on_rsp_qry_trading_account(
             trading_account=trading_account,
@@ -325,7 +331,15 @@ class CTPTraderApi(Vendor, TraderApi):
         )
 
     def on_front_disconnected(self, reason):
-        pass
+        import time
+        time.sleep(1)
+        self.connect(
+            self.user_id,
+            self.password,
+            self.broker_id,
+            self.trade_front
+        )
+
 
     def OnFrontDisconnected(self, nReason):
         """当客户端与交易后台通信连接断开时，该方法被调用。当发生这个情况后，
@@ -338,7 +352,7 @@ class CTPTraderApi(Vendor, TraderApi):
                 0x2003 收到错误报文
         """
         self.is_connected = False
-        self.is_logined = False
+        self.is_login = False
         reason_map = {
             0x1001: "网络读失败",
             0x1002: "网络写失败",
@@ -348,7 +362,7 @@ class CTPTraderApi(Vendor, TraderApi):
         }
         self.logger.warning(
             "交易服务器断开, {}"
-            .format(
+                .format(
                 reason_map[nReason]
             )
         )
@@ -364,7 +378,7 @@ class CTPTraderApi(Vendor, TraderApi):
         """
         self.logger.warning(
             "心跳超时警告, 距离上次接收报文的时间:{}"
-            .format(nTimeLapse)
+                .format(nTimeLapse)
         )
         # 对外接口
         self.on_heart_beat_warning(time_lapse=nTimeLapse)
@@ -373,11 +387,11 @@ class CTPTraderApi(Vendor, TraderApi):
         pass
 
     def OnRspAuthenticate(
-        self,
-        pRspAuthenticate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pRspAuthenticate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """客户端认证响应"""
         if pRspInfo.ErrorID == 0:
@@ -396,7 +410,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspAuthenticate: ErrorID:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -418,7 +432,7 @@ class CTPTraderApi(Vendor, TraderApi):
         """登出回报"""
         # 如果登出成功，推送日志信息
         if pRspInfo.ErrorID == 0:
-            self.is_logined = False
+            self.is_login = False
             self.logger.info('OnRspUserLogout: Success')
             user_logout = self.to_dict(pUserLogout)
             self.logger.info(
@@ -428,18 +442,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspUserLogout: ErrorID:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspUserPasswordUpdate(
-        self,
-        pUserPasswordUpdate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pUserPasswordUpdate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """用户口令更新请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -450,18 +464,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspUserPasswordUpdate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspTradingAccountPasswordUpdate(
-        self,
-        pTradingAccountPasswordUpdate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pTradingAccountPasswordUpdate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """资金账户口令更新请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -473,19 +487,19 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspTradingAccountPasswordUpdate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def req_order_insert(
-        self,
-        instrument_id=b'',
-        price=0.0,
-        volume=0,
-        direction=ApiStruct.D_Buy,
-        offset_flag=ApiStruct.OFEN_Close,
+            self,
+            instrument_id=b'',
+            price=0.0,
+            volume=0,
+            direction=ApiStruct.D_Buy,
+            offset_flag=ApiStruct.OFEN_Close,
     ):
         """
         CTP的下单种类
@@ -555,11 +569,11 @@ class CTPTraderApi(Vendor, TraderApi):
         )
 
     def OnRspQryInvestorPositionDetail(
-        self,
-        pInvestorPositionDetail,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInvestorPositionDetail,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询投资者持仓明细响应"""
         investor_position_detail = self.to_dict(pInvestorPositionDetail)
@@ -568,7 +582,7 @@ class CTPTraderApi(Vendor, TraderApi):
         )
 
     def req_qry_investor_position_combine_detail(self):
-        pQryInvestorPositionCombineDetail =\
+        pQryInvestorPositionCombineDetail = \
             ApiStruct.QryInvestorPositionCombineDetail(
                 BrokerID=self.broker_id,
                 InvestorID=self.investor_id
@@ -580,11 +594,11 @@ class CTPTraderApi(Vendor, TraderApi):
         )
 
     def OnRspQryInvestorPositionCombineDetail(
-        self,
-        pInvestorPositionCombineDetail,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInvestorPositionCombineDetail,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         print(pInvestorPositionCombineDetail)
         """请求查询投资者持仓明细响应"""
@@ -597,18 +611,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryInvestorPositionCombineDetail:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspParkedOrderInsert(
-        self,
-        pParkedOrder,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pParkedOrder,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """预埋单录入请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -620,11 +634,11 @@ class CTPTraderApi(Vendor, TraderApi):
             )
 
     def OnRspParkedOrderAction(
-        self,
-        pParkedOrderAction,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pParkedOrderAction,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """预埋撤单录入请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -636,18 +650,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspParkedOrderAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspOrderAction(
-        self,
-        pInputOrderAction,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInputOrderAction,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """报单操作请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -659,17 +673,17 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspOrderAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def req_query_max_order_volume(
-        self,
-        instrument_id,
-        direction="buy",
-        offset_flag="open",
+            self,
+            instrument_id,
+            direction="buy",
+            offset_flag="open",
     ):
         """查询最大报单数量请求"""
         if isinstance(instrument_id, str):
@@ -692,11 +706,11 @@ class CTPTraderApi(Vendor, TraderApi):
         )
 
     def OnRspQueryMaxOrderVolume(
-        self,
-        pQueryMaxOrderVolume,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pQueryMaxOrderVolume,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """查询最大报单数量响应"""
         query_max_order_volume = self.to_dict(pQueryMaxOrderVolume)
@@ -705,24 +719,24 @@ class CTPTraderApi(Vendor, TraderApi):
                 "OnRspQueryMaxOrderVolume: Received"
                 ", no operation is followed"
                 "QueryMaxOrderVolume:{}"
-                .format(query_max_order_volume)
+                    .format(query_max_order_volume)
             )
         # 否则，推送错误信息
         else:
             self.logger.error(
                 "OnRspQueryMaxOrderVolume:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspSettlementInfoConfirm(
-        self,
-        pSettlementInfoConfirm,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pSettlementInfoConfirm,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """投资者结算结果确认响应"""
         if pRspInfo.ErrorID == 0:
@@ -736,18 +750,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspSettlementInfoConfirm:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspRemoveParkedOrder(
-        self,
-        pRemoveParkedOrder,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pRemoveParkedOrder,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """删除预埋单响应"""
         if pRspInfo.ErrorID == 0:
@@ -759,18 +773,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspRemoveParkedOrder:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspRemoveParkedOrderAction(
-        self,
-        pRemoveParkedOrderAction,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pRemoveParkedOrderAction,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """删除预埋撤单响应"""
         if pRspInfo.ErrorID == 0:
@@ -782,18 +796,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspRemoveParkedOrderAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspExecOrderInsert(
-        self,
-        pInputExecOrder,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInputExecOrder,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """执行宣告录入请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -805,18 +819,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspExecOrderInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspExecOrderAction(
-        self,
-        pInputExecOrderAction,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInputExecOrderAction,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """执行宣告操作请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -828,18 +842,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspExecOrderAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspForQuoteInsert(
-        self,
-        pInputForQuote,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInputForQuote,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """询价录入请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -851,18 +865,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspForQuoteInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQuoteInsert(
-        self,
-        pInputQuote,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInputQuote,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """报价录入请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -874,18 +888,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQuoteInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQuoteAction(
-        self,
-        pInputQuoteAction,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInputQuoteAction,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """报价操作请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -897,18 +911,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQuoteAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspCombActionInsert(
-        self,
-        pInputCombAction,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInputCombAction,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """申请组合录入请求响应"""
         if pRspInfo.ErrorID == 0:
@@ -920,7 +934,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspCombActionInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -935,11 +949,11 @@ class CTPTraderApi(Vendor, TraderApi):
         self.ReqQryOrder(pQryOrder=pQryOrder, nRequestID=self.request_id)
 
     def OnRspQryOrder(
-        self,
-        pOrder,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pOrder,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询报单响应"""
         order = self.to_dict(pOrder)
@@ -949,15 +963,15 @@ class CTPTraderApi(Vendor, TraderApi):
             "OnRspQryOrder: Received"
             "order: {}\n"
             "is_last: {}"
-            .format(order, bIsLast)
+                .format(order, bIsLast)
         )
 
     def OnRspQryTrade(
-        self,
-        pTrade,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pTrade,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询成交响应"""
         if pRspInfo.ErrorID == 0:
@@ -969,7 +983,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryTrade:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -989,29 +1003,62 @@ class CTPTraderApi(Vendor, TraderApi):
             nRequestID=self.request_id
         )
 
-    def OnRspQryInvestorPosition(
-        self,
-        pInvestorPosition,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+    def on_rsp_qry_investor_position(
+            self,
+            investor_position,
+            request_id,
+            is_last
     ):
-        """请求查询投资者持仓响应"""
-        investor_position = self.to_dict(pInvestorPosition)
+        if request_id not in self.req_status:
+            self.req_status[request_id] = {
+                "status": "unknown",
+                "result" : []
+            }
 
         self.logger.info(
             "OnRspQryInvestorPosition: Received"
             ", no operation is followed"
             "InvestorPosition:{}\n"
-            "IsLast:{}".format(investor_position, bIsLast)
+            "RequestId:{}\n"
+            "IsLast:{}".format(
+                investor_position,
+                request_id,
+                is_last
+            )
+        )
+
+        self.req_status[request_id]["result"].append(investor_position)
+        if is_last:
+            self.req_status[request_id]["status"] = "completed"
+            self.on_rsp_qry_investor_position_completed(request_id)
+        else:
+            self.req_status[request_id]["status"] = "pending"
+
+    def on_rsp_qry_investor_position_completed(self, request_id):
+        self.position = DataFrame( self.req_status[request_id]["result"] )
+
+    def OnRspQryInvestorPosition(
+            self,
+            pInvestorPosition,
+            pRspInfo,
+            nRequestID,
+            bIsLast
+    ):
+        """请求查询投资者持仓响应"""
+        investor_position = self.to_dict(pInvestorPosition)
+
+        self.on_rsp_qry_investor_position(
+            investor_position=investor_position,
+            request_id=nRequestID,
+            is_last=bIsLast
         )
 
     def OnRspQryInvestor(
-        self,
-        pInvestor,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInvestor,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询投资者响应"""
         self.logger.info(
@@ -1020,11 +1067,11 @@ class CTPTraderApi(Vendor, TraderApi):
         )
 
     def OnRspQryTradingCode(
-        self,
-        pTradingCode,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pTradingCode,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询交易编码响应"""
         if pRspInfo.ErrorID == 0:
@@ -1036,18 +1083,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryTradingCode:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryInstrumentMarginRate(
-        self,
-        pInstrumentMarginRate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInstrumentMarginRate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询合约保证金率响应"""
         if pRspInfo.ErrorID == 0:
@@ -1059,18 +1106,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryInstrumentMarginRate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryInstrumentCommissionRate(
-        self,
-        pInstrumentCommissionRate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInstrumentCommissionRate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询合约手续费率响应"""
         if pRspInfo.ErrorID == 0:
@@ -1082,18 +1129,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryInstrumentCommissionRate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryExchange(
-        self,
-        pExchange,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pExchange,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询交易所响应"""
         if pRspInfo.ErrorID == 0:
@@ -1105,7 +1152,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryExchange:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1122,7 +1169,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryProduct:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1139,18 +1186,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryInstrument:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryDepthMarketData(
-        self,
-        pDepthMarketData,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pDepthMarketData,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询行情响应"""
         if pRspInfo.ErrorID == 0:
@@ -1162,18 +1209,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryDepthMarketData:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQrySettlementInfo(
-        self,
-        pSettlementInfo,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pSettlementInfo,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询投资者结算结果响应"""
         if pRspInfo.ErrorID == 0:
@@ -1185,18 +1232,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQrySettlementInfo:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryTransferBank(
-        self,
-        pTransferBank,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pTransferBank,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询转帐银行响应"""
         if pRspInfo.ErrorID == 0:
@@ -1208,7 +1255,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryTransferBank:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1225,18 +1272,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryNotice:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQrySettlementInfoConfirm(
-        self,
-        pSettlementInfoConfirm,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pSettlementInfoConfirm,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询结算信息确认响应"""
         if pRspInfo.ErrorID == 0:
@@ -1248,18 +1295,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQrySettlementInfoConfirm:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryCFMMCTradingAccountKey(
-        self,
-        pCFMMCTradingAccountKey,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pCFMMCTradingAccountKey,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """查询保证金监管系统经纪公司资金账户密钥响应"""
         if pRspInfo.ErrorID == 0:
@@ -1271,18 +1318,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryCFMMCTradingAccountKey:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryEWarrantOffset(
-        self,
-        pEWarrantOffset,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pEWarrantOffset,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询仓单折抵信息响应"""
         if pRspInfo.ErrorID == 0:
@@ -1294,18 +1341,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryEWarrantOffset:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryInvestorProductGroupMargin(
-        self,
-        pInvestorProductGroupMargin,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pInvestorProductGroupMargin,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询投资者品种/跨品种保证金响应"""
         if pRspInfo.ErrorID == 0:
@@ -1317,18 +1364,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryInvestorProductGroupMargin:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryExchangeMarginRate(
-        self,
-        pExchangeMarginRate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pExchangeMarginRate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询交易所保证金率响应"""
         if pRspInfo.ErrorID == 0:
@@ -1340,18 +1387,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryExchangeMarginRate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryExchangeMarginRateAdjust(
-        self,
-        pExchangeMarginRateAdjust,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pExchangeMarginRateAdjust,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询交易所调整保证金率响应"""
         if pRspInfo.ErrorID == 0:
@@ -1363,18 +1410,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryExchangeMarginRateAdjust:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryExchangeRate(
-        self,
-        pExchangeRate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pExchangeRate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询汇率响应"""
         if pRspInfo.ErrorID == 0:
@@ -1386,18 +1433,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryExchangeRate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQrySecAgentACIDMap(
-        self,
-        pSecAgentACIDMap,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pSecAgentACIDMap,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询二级代理操作员银期权限响应"""
         if pRspInfo.ErrorID == 0:
@@ -1409,18 +1456,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQrySecAgentACIDMap:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryProductExchRate(
-        self,
-        pProductExchRate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pProductExchRate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询产品报价汇率"""
         if pRspInfo.ErrorID == 0:
@@ -1432,18 +1479,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryProductExchRate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryOptionInstrTradeCost(
-        self,
-        pOptionInstrTradeCost,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pOptionInstrTradeCost,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询期权交易成本响应"""
         if pRspInfo.ErrorID == 0:
@@ -1455,18 +1502,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryOptionInstrTradeCost:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryOptionInstrCommRate(
-        self,
-        pOptionInstrCommRate,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pOptionInstrCommRate,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询期权合约手续费响应"""
         if pRspInfo.ErrorID == 0:
@@ -1478,7 +1525,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryOptionInstrCommRate:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1495,7 +1542,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryExecOrder:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1512,7 +1559,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryForQuote:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1529,18 +1576,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryQuote:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryCombInstrumentGuard(
-        self,
-        pCombInstrumentGuard,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pCombInstrumentGuard,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询组合合约安全系数响应"""
         if pRspInfo.ErrorID == 0:
@@ -1552,7 +1599,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryCombInstrumentGuard:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1569,18 +1616,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryCombAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryTransferSerial(
-        self,
-        pTransferSerial,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pTransferSerial,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询转帐流水响应"""
         if pRspInfo.ErrorID == 0:
@@ -1592,18 +1639,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryTransferSerial:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryAccountregister(
-        self,
-        pAccountregister,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pAccountregister,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询银期签约关系响应"""
         if pRspInfo.ErrorID == 0:
@@ -1615,7 +1662,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryAccountregister:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1632,7 +1679,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspError:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1646,13 +1693,13 @@ class CTPTraderApi(Vendor, TraderApi):
             "OnRtnOrder: Received"
             ", no operation is followed\n"
             "order:{}"
-            .format(order)
+                .format(order)
         )
 
     def OnRtnTrade(self, pTrade):
         """成交通知"""
         trade = self.to_dict(pTrade)
-#         trade["StatusMsg"]=trade["StatusMsg"].decode("gbk")
+        #         trade["StatusMsg"]=trade["StatusMsg"].decode("gbk")
         self.logger.info(
             "OnRtnTrade: Received"
             ", no operation is followed"
@@ -1670,7 +1717,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnOrderInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1687,7 +1734,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnOrderAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1724,7 +1771,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnExecOrderInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1741,7 +1788,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnExecOrderAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1758,7 +1805,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnForQuoteInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1779,7 +1826,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnQuoteInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1796,7 +1843,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnQuoteAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1825,18 +1872,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnErrRtnCombActionInsert:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryContractBank(
-        self,
-        pContractBank,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pContractBank,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询签约银行响应"""
         if pRspInfo.ErrorID == 0:
@@ -1848,7 +1895,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryContractBank:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -1865,18 +1912,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryParkedOrder:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryParkedOrderAction(
-        self,
-        pParkedOrderAction,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pParkedOrderAction,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询预埋撤单响应"""
         if pRspInfo.ErrorID == 0:
@@ -1888,18 +1935,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryParkedOrderAction:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryTradingNotice(
-        self,
-        pTradingNotice,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pTradingNotice,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询交易通知响应"""
         if pRspInfo.ErrorID == 0:
@@ -1911,18 +1958,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryTradingNotice:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryBrokerTradingParams(
-        self,
-        pBrokerTradingParams,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pBrokerTradingParams,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询经纪公司交易参数响应"""
         if pRspInfo.ErrorID == 0:
@@ -1934,18 +1981,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryBrokerTradingParams:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQryBrokerTradingAlgos(
-        self,
-        pBrokerTradingAlgos,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pBrokerTradingAlgos,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询经纪公司交易算法响应"""
         if pRspInfo.ErrorID == 0:
@@ -1957,18 +2004,18 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQryBrokerTradingAlgos:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
             )
 
     def OnRspQueryCFMMCTradingAccountToken(
-        self,
-        pQueryCFMMCTradingAccountToken,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pQueryCFMMCTradingAccountToken,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """请求查询监控中心用户令牌"""
         if pRspInfo.ErrorID == 0:
@@ -1980,7 +2027,7 @@ class CTPTraderApi(Vendor, TraderApi):
         else:
             self.logger.error(
                 "OnRspQueryCFMMCTradingAccountToken:{}, ErrorMsg:{}"
-                .format(
+                    .format(
                     pRspInfo.ErrorID,
                     pRspInfo.ErrorMsg.decode('gbk')
                 )
@@ -2038,29 +2085,29 @@ class CTPTraderApi(Vendor, TraderApi):
         """期货发起冲正期货转银行请求，银行处理完毕后报盘发回的通知"""
 
     def OnRspFromBankToFutureByFuture(
-        self,
-        pReqTransfer,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pReqTransfer,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """期货发起银行资金转期货应答"""
 
     def OnRspFromFutureToBankByFuture(
-        self,
-        pReqTransfer,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pReqTransfer,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """期货发起期货资金转银行应答"""
 
     def OnRspQueryBankAccountMoneyByFuture(
-        self,
-        pReqQueryAccount,
-        pRspInfo,
-        nRequestID,
-        bIsLast
+            self,
+            pReqQueryAccount,
+            pRspInfo,
+            nRequestID,
+            bIsLast
     ):
         """期货发起查询银行余额应答"""
 

@@ -62,17 +62,20 @@ def stop_worker(nickname=None):
     __redis__.publish("dHydra.Command", msg)
 
 
-def send_command(channel_name="dHydra.Command",
-                 command_type="sys",
-                 operation_name=None,
-                 token=None,
-                 kwargs={}):
+def send_command(
+        channel_name="dHydra.Command",
+        command_type="sys",
+        operation_name=None,
+        token=None,
+        kwargs={}
+):
     if operation_name is not None:
-        command = {"type": command_type,
-                   "operation_name": operation_name,
-                   "token": token,
-                   "kwargs": kwargs
-                   }
+        command = {
+            "type": command_type,
+            "operation_name": operation_name,
+            "token": token,
+            "kwargs": kwargs
+        }
         __redis__.publish(channel_name, json.dumps(command))
 
 logger = init_logger()

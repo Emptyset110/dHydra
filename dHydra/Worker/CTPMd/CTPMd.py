@@ -8,20 +8,25 @@ import time
 from ctp.futures import ApiStruct, MdApi
 import json
 import dHydra.core.util as util
-from dHydra.core.Functions import *
+from dHydra.core.Functions import get_vendor
 
 
 class CTPMd(Worker):
 
     def __init__(
         self,
+        account="ctp_real.json",
         instrument_ids=["rb1701", "j1701", "i1701"],
         **kwargs
     ):
         super().__init__(**kwargs)  # You are not supposed to change THIS
         self.instrument_ids = instrument_ids
 
-        self.mdapi = get_vendor("CTPMdApi", instrument_ids=self.instrument_ids)
+        self.mdapi = get_vendor(
+            "CTPMdApi",
+            account=account,
+            instrument_ids=self.instrument_ids
+        )
         self.mdapi.OnRtnDepthMarketData = self.OnRtnDepthMarketData
 
         # self.subscribe(worker_name="CTPMd")
@@ -41,7 +46,7 @@ class CTPMd(Worker):
             print(message)
 
     def __before_termination__(self, sig):
-        """
+        """4
         It will be called when a TERM signal is received
         , right before sys.exit(0)
         """

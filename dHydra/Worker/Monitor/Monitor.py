@@ -1,7 +1,8 @@
 from dHydra.core.Worker import Worker
-from dHydra.console import *
+from dHydra.core.Functions import get_vendor, get_worker_class
 import os
 import signal
+import dHydra.core.util as util
 
 
 class Monitor(Worker):
@@ -17,6 +18,21 @@ class Monitor(Worker):
         if pid is None:
             pid = self.get_pid_by_nickname(redis_cli=self.__redis__, )
             os.kill(pid, signal.SIGTERM)
+
+    def __producer__(self):
+        """
+        定时更新redis中各个worker的状态
+        :return:
+        """
+        import time
+        # wm: short for "worker_manager"
+        self.wm = get_vendor(
+            "WorkerManager",
+            auto_remove_terminated=3600*24
+        )
+        while True:
+            time.sleep(1)
+            self.wm.update_workers()
 
     def get_workers_info(
         self,
