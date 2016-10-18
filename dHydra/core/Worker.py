@@ -52,6 +52,18 @@ class Worker(multiprocessing.Process):
         self.__info_log__ = info_log
         self.__debug_log__ = debug_log
 
+        self.logger = util.get_logger(
+            logger_name=self.__class__.__name__,
+            log_path=self.__log_path__,  #
+            console_log=self.__console_log__,  # 屏幕打印日志开关，默认True
+            console_log_level=self.__console_log_level__,  # 屏幕打印日志的级别，默认为INFO
+            critical_log=self.__critical_log__,  # critica单独l写文件日志，默认关闭
+            error_log=self.__error_log__,  # error级别单独写文件日志，默认开启
+            warning_log=self.__warning_log__,  # warning级别单独写日志，默认关闭
+            info_log=self.__info_log__,  # info级别单独写日志，默认开启
+            debug_log=self.__debug_log__,  # debug级别日志，默认关闭
+        )
+
         self.__token__ = util.generate_token()
         if nickname is None:
             self.__nickname__ = self.__class__.__name__ + "Default"
@@ -89,7 +101,10 @@ class Worker(multiprocessing.Process):
         }
         """
 
-        super().__init__()
+        if self.check_prerequisites() is True:
+            super().__init__()
+        else:
+            sys.exit(0)
 
         self.shutdown_signals = [
             "SIGQUIT",  # quit 信号
@@ -107,6 +122,10 @@ class Worker(multiprocessing.Process):
                     )
             except Exception as e:
                 self.logger.info("绑定退出信号：{}失败，可能与windows系统有关。".format(s))
+
+        # 清空它，在run以后重新实例化
+        # 否则windows下会无法pickle
+        self.logger = None
 
     def __is_unique__(self):
         info = self.__redis__.hgetall(self.redis_key + "Info")
@@ -286,10 +305,6 @@ class Worker(multiprocessing.Process):
             debug_log=self.__debug_log__,  # debug级别日志，默认关闭
         )
 
-        if self.check_prerequisites() is True:
-            pass
-        else:
-            sys.exit(0)
         if self.__is_unique__():
             self.__status__ = "started"
         else:

@@ -3,6 +3,7 @@ import logging
 from dHydra.core.Functions import *
 import dHydra.core.util as util
 import click
+import traceback
 
 
 def init_logger():

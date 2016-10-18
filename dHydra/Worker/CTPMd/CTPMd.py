@@ -21,17 +21,16 @@ class CTPMd(Worker):
     ):
         super().__init__(**kwargs)  # You are not supposed to change THIS
         self.instrument_ids = instrument_ids
+        self.__account__ = account
 
+
+    def __producer__(self):
         self.mdapi = get_vendor(
             "CTPMdApi",
-            account=account,
+            account=self.__account__,
             instrument_ids=self.instrument_ids
         )
         self.mdapi.OnRtnDepthMarketData = self.OnRtnDepthMarketData
-
-        # self.subscribe(worker_name="CTPMd")
-
-    def __producer__(self):
         self.logger.info("开启CTPMd")
         self.mdapi.Init()
         try:
