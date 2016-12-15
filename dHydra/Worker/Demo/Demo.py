@@ -7,11 +7,6 @@ class Demo(Worker):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)  # You ae not supposed to change THIS
 
-        # The following is customized:
-        # In this case, the worker is listening to itself.
-        # self.__listener__.subscribe( [ self.redis_key + "Pub" ] )
-        self.subscribe(nickname=self.__nickname__)
-
     def test_call(self, integer):
         print(integer)
 
@@ -38,6 +33,11 @@ class Demo(Worker):
 
         "self.publish" is the method for publishing data to the channel.
         """
+        # The following is customized:
+        # In this case, the worker is listening to itself.
+        # self.__listener__.subscribe( [ self.redis_key + "Pub" ] )
+        self.subscribe(nickname=self.__nickname__)
+
         import time
         i = 0
         while True:
