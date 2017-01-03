@@ -88,7 +88,6 @@ Welcome to dHydra!
 Monitor has started
 Tornado webserver has started
 2016-08-30 14:24:34,709 - DB - 39 - INFO - Trying to connect to redis
-Listening on port: 127.0.0.1:5000
 ```
 
 这样dHydra Server就启动了，它默认会开启一个叫Monitor的Worker用来监视其他Worker进程。目前Monitor还没有全部完成。
@@ -231,6 +230,22 @@ class Demo(Worker):
         print("Ahhhh! I'm going to be killed. My pid:{}, signal received:{}".format(self.pid, sig ) )
 
 ```
+
+### 应用：开启新浪Level2行情源+MongoDB存储
+> 行情源这部分代码在`./dHydra/Worker/SinaL2/`中
+> 这个名为`SinaL2`的Worker实际上调用了`./dHydra/Vendor/SinaL2/`这个Api，每天能定时开启和关闭，并且将行情通过pickle序列化以后发送出去。
+> 
+> 负责存储的代码在`./dHydra/Worker/SinaL2ToMongo/`中，它所做的只是订阅了"dHydra.Worker.SinaL2.SinaL2.Pub"这个redis频道，然后将获取到的内容存储进MongoDB
+#### 开启方式
+```
+start SinaL2ToMongo SinaL2ToMongo
+start SinaL2 SinaL2
+```
+这里由于行情源只开一个，就不较真如何给进程起名了，`SinaL2`, `SinaL2ToMongo`分别对应两个进程的nickname(唯一)，
+开启的时候它们分别都会去`./config/`文件夹下找`SinaL2.json`, `SinaL2ToMongo.json`作为配置文件
+github已经给出了config文件，要订阅更多内容只需要更改`SinaL2.json`中的`symbols`，默认获取（逐笔+快照+买1卖1排队）三种数据，同样可以在SinaL2.json中修改
+由于订阅的时候三种数据可能会一起发过来，如果三种数据要分collection存储则需要逐条判断后插入，无法批量插入了。因此默认的存储方案将所有数据存储在同一个collection中，
+默认唯一引擎可以自己查看mongodb，可以保证数据唯一。
 
 ---
 # Question & Answer
