@@ -120,7 +120,6 @@ class Worker(multiprocessing.Process):
             except Exception as e:
                 self.logger.info("绑定退出信号：{}失败，可能与windows系统有关。".format(s))
 
-        self.init_redis()
         # 清空它，在run以后重新实例化
         # 否则windows下会无法pickle
         del(self.logger)
