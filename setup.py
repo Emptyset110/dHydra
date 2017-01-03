@@ -67,12 +67,15 @@ setup(
         "redis",
         "tornado",
         "click",
+        "hiredis"
     ],
     entry_points='''
     [console_scripts]
     hail=dHydra.main:hail
     start=dHydra.console:start
+    start_worker=dHydra.console:start
     stop=dHydra.console:terminate
+    stop_worker=dHydra.console:terminate
     terminate=dHydra.console:terminate
     new=dHydra.auto:new_worker
     ''',
