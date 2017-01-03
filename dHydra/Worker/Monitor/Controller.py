@@ -2,12 +2,17 @@
 import redis
 import copy
 from dHydra.core.Functions import *
-import json
+from dHydra.core.Controller import controller
+from dHydra.core.Controller import controller_get
+from dHydra.core.Controller import controller_post
 
 conn = redis.StrictRedis(decode_responses=True, host="127.0.0.1")
 
-
-def get_worker_names(arguments=None):
+@controller_get
+def get_worker_names(
+    query_arguments,
+    get_query_argument
+):
     """
     从文件夹名中获取Worker names
     :param arguments:
@@ -23,7 +28,11 @@ def get_worker_names(arguments=None):
     return result
 
 
-def get_workers_from_redis(arguments=None):
+@controller_get
+def get_workers_from_redis(
+    query_arguments,
+    get_query_argument
+):
     keys = conn.keys("dHydra.Worker.*.*.Info")
     workers = dict()
     for i in range(0, len(keys)):
@@ -44,7 +53,13 @@ def get_workers_from_redis(arguments=None):
     return result
 
 
-def get_alive_workers(arguments=None):
+@controller
+def get_alive_workers(
+        query_arguments,
+        body_arguments,
+        get_query_argument,
+        get_body_argument
+):
     alive_workers = dict()
     keys = get_workers_from_redis()["res"]
     for item in keys:
@@ -62,10 +77,55 @@ def get_alive_workers(arguments=None):
     return result
 
 
-def workers(arguments=None):
+@controller
+def start_worker(
+        query_arguments,
+        body_arguments,
+        get_query_argument,
+        get_body_argument
+):
+    import tornado.escape as escape
+    worker_name = get_body_argument("worker_name")
+    nickname = get_body_argument("nickname")
+    kwargs = escape.json_decode(get_body_argument("kwargs"))
+    msg = {
+        "type": "sys",
+        "operation_name": "start_worker",
+        "kwargs": {
+            "worker_name": worker_name,
+            "nickname": nickname
+        },
+    }
+
+    for k in kwargs.keys():
+        msg["kwargs"][k] = kwargs[k]
+    conn.publish("dHydra.Command", msg)
     result = {
         "error_code": 0,
         "error_msg": "",
-        "res": get_workers(),
+        "res": {"worker_name": worker_name, "nickname": nickname, "kwargs": kwargs }
+    }
+    return result
+
+@controller_get
+def stop_worker(
+        query_arguments,
+        get_query_argument,
+):
+    nickname = get_query_argument("nickname")
+
+    msg = {
+        "type": "sys",
+        "operation_name": "terminate_worker",
+        "kwargs": {
+            "nickname": nickname
+        }
+    }
+
+    conn.publish("dHydra.Command", msg)
+    result = {
+        "error_code": 0,
+        "error_msg": "",
+        "res": { "nickname": nickname }
     }
     return result

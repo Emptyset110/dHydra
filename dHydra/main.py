@@ -7,6 +7,7 @@ import os
 import json
 import traceback
 import sys
+import pickle
 
 __redis__ = get_vendor("DB").get_redis()
 
@@ -64,7 +65,7 @@ def get_workers_info(
         worker_name=None,
 ):
     if redis_cli is None:
-        redis_cli = self.__redis__
+        redis_cli = __redis__
     result = list()
     keys = list()
     if by == "nickname" and nickname is not None:
@@ -99,29 +100,29 @@ def __command_handler__(msg_command):
                          operation"
         }
     """
-    logger.info("{}".format(msg_command))
-    msg_command = json.loads(msg_command.replace(
-        "None", "\"None\"").replace("\'", "\""))
+    import sys
+    try:
+        msg_command = pickle.loads(msg_command)
+        if not isinstance(msg_command, dict):
+            return
+    except Exception as e:
+        traceback.print_exc()
+        print(e)
     if msg_command["type"] == "sys":
-        str_kwargs = ""
-        for k in msg_command["kwargs"].keys():
-            if isinstance(msg_command["kwargs"][k], str):
-                str_kwargs += (
-                    k + "=" +
-                    "\'" + msg_command["kwargs"][k] + "\'" +
-                    ","
-                )
-            else:
-                str_kwargs += (
-                    k + "=" +
-                    "{}".format(msg_command["kwargs"][k]) +
-                    ","
-                )
-        try:
-            logger.info(msg_command["operation_name"] + "(" + str_kwargs + ")")
-            eval(msg_command["operation_name"] + "(" + str_kwargs + ")")
-        except Exception as e:
-            logger.error("{}".format(e))
+        if hasattr(
+                sys.modules["dHydra.main"],
+                msg_command["operation_name"]
+        ):
+            func = getattr(
+                sys.modules["dHydra.main"],
+                msg_command["operation_name"]
+            )
+            try:
+                print(msg_command["kwargs"])
+                result = func(**msg_command["kwargs"])
+            except Exception as e:
+                traceback.print_exc()
+                logger.error(e)
 
 
 @click.command()
@@ -164,16 +165,16 @@ def hail(what=None):
 """
                 print(doc)
                 # open a thread for the Worker of Monitor
-                start_worker("Monitor")
+                start_worker(worker_name="Monitor",nickname="Monitor")
                 logger.info("Monitor has started")
 
-                # open a thread for webserver
-                thread_tornado = threading.Thread(
-                    target=dHydra.web.start_server
-                )
-                thread_tornado.setDaemon(True)
-                thread_tornado.start()
-                logger.info("Tornado webserver has started")
+                # 开启Tornado
+                if len(what) == 1:
+                    # 没指定http端口，不开启Tornado
+                    pass
+                else:
+                    port = int(what[1])
+                    start_worker(worker_name="Web", nickname="Tornado")
 
             # 绑定退出信号
             bind_quit_signals()
@@ -192,5 +193,6 @@ def hail(what=None):
         else:
             print("Hail What?")
     except Exception as e:
-        print("Hail What?")
         traceback.print_exc()
+        logger.error("{}".format(e))
+        print("Hail What?")

@@ -75,9 +75,24 @@ class WorkerHandler(tornado.web.RequestHandler):
 class ApiHandler(tornado.web.RequestHandler):
 
     def get(self, class_name, method):
-        controller = {"class_name": class_name, "method": method}
         func = get_controller_method(class_name, method)
-        result = func(self.get_query_arguments)
+        # print("Function:", func)
+        result = func(
+            self.request.query_arguments,
+            self.get_query_argument,
+        )
+        # print("Result:", result)
+        self.write(result)
+
+
+    def post(self, class_name, method):
+        func = get_controller_method(class_name, method)
+        result = func(
+            self.request.query_arguments,
+            self.request.body_arguments,
+            self.get_query_argument,
+            self.get_body_argument
+        )
         self.write(result)
 
 
@@ -135,10 +150,11 @@ def make_app():
                     "/static/fonts/"
                 }
             ),
-            (r"/api/Worker/(.*)/(.*)/", ApiHandler),  # ClassName, MethodName
+            (r"/api/Worker/(.*)/(.*)/", ApiHandler),    # ClassName, MethodName
             (r"/Worker/(.*)/(.*)", WorkerHandler)		# ClassName, TemplateName
         ],
-        debug=False
+        debug=False,
+        login_url='/login'
     )
 
 

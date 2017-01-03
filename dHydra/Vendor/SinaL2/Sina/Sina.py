@@ -6,8 +6,8 @@
 """
 # 以下是自动生成的 #
 # --- 导入系统配置
-import dHydra.core.util as util
-from dHydra.core.Vendor import Vendor
+from . import util
+from .Vendor import Vendor
 # --- 导入自定义配置
 from .connection import *
 # 以上是自动生成的 #

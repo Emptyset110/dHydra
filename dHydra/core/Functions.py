@@ -102,6 +102,8 @@ def get_worker_class(worker_name, **kwargs):
         worker_name + "/" + worker_name + ".py"
     ):
         try:
+            if module_name in sys.modules:
+                del sys.modules[module_name]
             return getattr(
                 __import__(module_name, globals(), locals(), [worker_name], 0),
                 worker_name
@@ -110,6 +112,8 @@ def get_worker_class(worker_name, **kwargs):
             traceback.print_exc()
     else:
         try:
+            if "dHydra."+module_name in sys.modules:
+                del sys.modules["dHydra."+module_name]
             return getattr(
                 __import__(
                     "dHydra." +

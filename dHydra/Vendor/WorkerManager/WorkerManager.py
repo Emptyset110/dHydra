@@ -71,11 +71,18 @@ class WorkerManager(Vendor):
                 heart_beat_interval = 1
                 if "heart_beat_interval" in worker_info:
                     heart_beat_interval = int(worker_info["heart_beat_interval"])
-                difference = datetime.now() -\
-                    datetime.strptime(
-                        worker_info["heart_beat"],
-                        '%Y-%m-%d %H:%M:%S.%f'
-                    )
+                try:
+                    difference = datetime.now() -\
+                        datetime.strptime(
+                            worker_info["heart_beat"],
+                            '%Y-%m-%d %H:%M:%S.%f'
+                        )
+                except ValueError:
+                    difference = datetime.now() -\
+                        datetime.strptime(
+                            worker_info["heart_beat"],
+                            '%Y-%m-%d %H:%M:%S'
+                        )
                 if difference > timedelta(seconds=heart_beat_interval+1):
                     # 已经停止
                     if worker_info["status"] == "started":

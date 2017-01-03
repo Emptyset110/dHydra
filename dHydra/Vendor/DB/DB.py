@@ -27,7 +27,9 @@ class DB(Vendor):
         try:
             self.logger.info("尝试连接到Mongodb")
             client = MongoClient(host=host, port=port,
-                                 serverSelectionTimeoutMS=timeout)
+                                 serverSelectionTimeoutMS=timeout,
+                                 connect=False
+                                 )
             client.server_info()
             self.logger.info("已经成功连接到mongodb")
             return client
@@ -40,7 +42,8 @@ class DB(Vendor):
         try:
             self.logger.info("Trying to connect to redis")
             self.redis = redis.StrictRedis(
-                decode_responses=True, host=host, port=port)
+                decode_responses=True, host=host, port=port
+            )
             self.redis.client_list()
             return self.redis
         except:

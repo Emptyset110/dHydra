@@ -2,78 +2,132 @@
 from dHydra.core.Worker import Worker
 from dHydra.core.Functions import *
 import dHydra.core.util as util
-from datetime import datetime
-from .connection import *
 import time
-import requests
-import websockets
-import getpass
-import base64
-import rsa
-import binascii
-import json
-import asyncio
+import pickle
 import threading
-import functools
-import re
-import gc
-import os
 
 
 class SinaL2(Worker):
 
     def __init__(
         self,
-        username=None,
-        pwd=None,
         symbols=["sz000001"],
         hq='hq_pjb',
-        query=['quotation', 'transaction'],
+        query=['quotation', 'transaction', "orders"],
         # ['quotation', 'orders', 'transaction', 'info']
-        to_mongo=False,
+        # to_mongo=False,
         **kwargs
     ):
         super().__init__(**kwargs)  # You are not supposed to change THIS
+        self.symbols = symbols
+        self.hq = hq
+        self.query = query
 
+        self.count_transaction = 0
+        self.count_quotation = 0
+        self.count_orders = 0
+        self.trading_date = util.get_trading_date()
+
+    def init_sina_l2(self):
         self.sina_l2 = get_vendor(
             name="SinaL2",
-            symbols=symbols,
-            hq=hq,
-            query=query,
-            username=username,
-            pwd=pwd,
+            symbols=self.symbols,
+            hq=self.hq,
+            query=self.query,
             on_recv_data=self.on_recv_data
         )
-        self.to_mongo = to_mongo
-        self.total = 0
-        self.count = 0
+
+    def start_sina_l2(self):
+        self.init_sina_l2()
+        self.sina_l2.start()
+
+    def on_start(self):
+        self.logger.info("Trading Date: {}".format(self.trading_date))
+        # 启动一个线程，来更新trading_date
+        self.thread_update_trading_date = threading.Thread(
+            target=self.update_trading_date,
+            daemon=True
+        )
+        self.thread_update_trading_date.start()
+
+    def update_trading_date(self):
+        while True:
+            try:
+                time.sleep(600)
+                trading_date = util.get_trading_date()
+                if len(trading_date) == 10 and trading_date != self.trading_date:
+                    self.logger.info("更新交易日：{}".format(trading_date))
+                    self.trading_date = trading_date
+            except Exception:
+                pass
 
     def on_recv_data(self, message):
-        parsed_msg = util.ws_parse(message, to_dict=True)
-        self.publish(parsed_msg)
-        if self.to_mongo:
-            for data in parsed_msg:
-                try:
-                    self.total += 1
-                    if data["data_type"] == "transaction":
-                        self.count += 1
-                        # 自己建立unique索引
-                        result = self.mongo.stock.l2_deal.insert_one(data)
-                    elif data["data_type"] == "quotation":
-                        self.count += 1
-                        result = self.mongo.stock.l2_quotation.insert_one(
-                            data
-                        )  # 自己建立unique索引
-                except Exception as e:
-                    self.logger.warning("Insert error:{}".format(e))
-                    self.total += 1
+        parsed_msg = util.ws_parse(
+            message,
+            trading_date = self.trading_date,
+            to_dict=True
+        )
+
+        # 更新redis中行情内容
+        for data in parsed_msg:
+            try:
+                if data["data_type"] == "orders":
+                    self.publish(
+                        data = pickle.dumps(data),
+                        channel_name = "dHydra.SinaL2." +
+                                       data["symbol"] + ".orders"
+                    )
+                elif data["data_type"] == "quotation":
+                    self.publish(
+                        data = pickle.dumps(data),
+                        channel_name = "dHydra.SinaL2." +
+                                       data["symbol"] + ".quotation"
+                    )
+                elif data["data_type"] == "transaction":
+                    self.publish(
+                        data = pickle.dumps(data),
+                        channel_name = "dHydra.SinaL2." +
+                                       data["symbol"] + ".transaction"
+                    )
+            except Exception as e:
+                self.logger.error(e)
+
+        self.publish(pickle.dumps(parsed_msg))
 
     def __producer__(self):
         """
         """
-        self.sina_l2.start()
+        import datetime
+        import threading
+        thread_sina_l2 = threading.Thread(
+            target=self.start_sina_l2,
+            daemon=True
+        )
+        thread_sina_l2.start()
+
         while True:
-            time.sleep(30)
+            time.sleep(60)
+            current = datetime.datetime.now()
+            if current.time() > datetime.time(15, 0, 0)\
+                    or current.time() < datetime.time(9, 0, 0):
+                if self.sina_l2 is not None:
+                    if not self.sina_l2.stopped:
+                        self.logger.info("非盘中，暂停收行情")
+                        self.sina_l2.stop()
+            elif current.time() > datetime.time(9,0,0) \
+                    and current.date() == datetime.date(
+                        int(self.trading_date[0:4]),
+                        int(self.trading_date[5:7]),
+                        int(self.trading_date[8:10])
+                    ):
+                # 除非指数的日期与今天的日期相同，才会开启
+                if (self.sina_l2 is None) or (self.sina_l2.terminated == True):
+                    self.logger.info("开启SinaL2: {}".format(self.trading_date))
+                    thread_sina_l2 = threading.Thread(
+                        target=self.start_sina_l2,
+                        daemon=True
+                    )
+                    thread_sina_l2.start()
 
     def __before_termination__(self, sig):
         """
@@ -81,7 +135,7 @@ class SinaL2(Worker):
         right before sys.exit(0)
         """
         print(
-            "Ahhhh! I'm going to be killed. My pid:{}, signal received:{}"
+            "I'm going to be killed. My pid:{}, signal received:{}"
             .format(
                 self.pid, sig
             )

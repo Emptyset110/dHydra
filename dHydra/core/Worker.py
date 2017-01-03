@@ -21,6 +21,7 @@ import signal
 import sys
 import os
 import ast
+import pickle
 
 
 class Worker(multiprocessing.Process):
@@ -42,6 +43,7 @@ class Worker(multiprocessing.Process):
             debug_log=False,  # debug级别日志，默认关闭
             **kwargs
     ):
+        super().__init__()
         # 记录日志配置
         self.__log_path__ = log_path
         self.__console_log__ = console_log
@@ -81,7 +83,7 @@ class Worker(multiprocessing.Process):
         self.__stop_info__ = None  #
         self.__stop_time__ = None  #
         self.__status__ = "init"
-        self.mongo = False
+        # self.mongo = False
         # "init", "error_exit", "suspended", "user_stopped", "normal"
         self.redis_key = "dHydra.Worker." + \
                          self.__class__.__name__ + "." + self.__nickname__ + "."
@@ -101,11 +103,6 @@ class Worker(multiprocessing.Process):
         }
         """
 
-        if self.check_prerequisites() is True:
-            super().__init__()
-        else:
-            sys.exit(0)
-
         self.shutdown_signals = [
             "SIGQUIT",  # quit 信号
             "SIGINT",  # 键盘信号
@@ -123,9 +120,10 @@ class Worker(multiprocessing.Process):
             except Exception as e:
                 self.logger.info("绑定退出信号：{}失败，可能与windows系统有关。".format(s))
 
+        self.init_redis()
         # 清空它，在run以后重新实例化
         # 否则windows下会无法pickle
-        self.logger = None
+        del(self.logger)
 
     def __is_unique__(self):
         info = self.__redis__.hgetall(self.redis_key + "Info")
@@ -148,7 +146,6 @@ class Worker(multiprocessing.Process):
 
     def __command_handler__(self, msg_command):
         # cli is a dict with the following structure:
-        # TODO: 这里的eval有注入漏洞
         """
         msg_command = {
                 "type"	:		"sys/customized",
@@ -160,21 +157,22 @@ class Worker(multiprocessing.Process):
         }
         """
         print(msg_command)
-        msg_command = json.loads(msg_command.replace(
-            "None", "\"None\"").replace("\'", "\""))
+        try:
+            msg_command = pickle.loads(msg_command)
+            if not isinstance(msg_command, dict):
+                return
+        except Exception as e:
+            traceback.print_exc()
+            print(e)
         if msg_command["type"] == "sys":
-            str_kwargs = ""
-            for k in msg_command["kwargs"].keys():
-                str_kwargs += (k + "=" +
-                               str(msg_command["kwargs"][k]) + ","
-                               )
-            try:
-                eval(
-                    "self." + msg_command["operation_name"] + "(" +
-                    str_kwargs + ")"
-                )
-            except Exception as e:
-                self.logger.error(e)
+            if hasattr(self, msg_command["operation_name"]):
+                func = getattr(self, msg_command["operation_name"])
+                try:
+                    print(msg_command["kwargs"])
+                    result = func(**msg_command["kwargs"])
+                except Exception as e:
+                    traceback.print_exc()
+                    self.logger.error(e)
 
     def monitor_add_thread(self,
                            thread,
@@ -188,10 +186,7 @@ class Worker(multiprocessing.Process):
         # 取消管理员对线程thread的监控
         pass
 
-    def check_prerequisites(self):
-        """
-        检查是否满足开启进程的条件
-        """
+    def init_redis(self):
         # 检测redis, mongodb连接
         try:
             self.__redis__ = get_vendor("DB").get_redis()
@@ -201,10 +196,17 @@ class Worker(multiprocessing.Process):
         except redis.ConnectionError:
             self.logger.error("Cannot connect to redis")
             return False
+
+    def init_mongodb(self):
         self.mongo = get_vendor("DB").get_mongodb()
         if self.mongo is False:
             self.logger.error("Cannot connect to mongodb")
             return False
+
+    def check_prerequisites(self):
+        """
+        检查是否满足开启进程的条件
+        """
         # 如果是单例，检测是否重复开启
         return True
 
@@ -281,18 +283,27 @@ class Worker(multiprocessing.Process):
         self.__heart_beat__()  # The last heart_beat, sad...
         sys.exit(0)
 
-    def publish(self, data):
+    def publish(self,data,channel_name=None):
+        if channel_name is None:
+            channel_name = self.channel_pub
         # publish data to redis
         try:
-            self.__redis__.publish(self.channel_pub, data)
+            self.__redis__.publish(channel_name, data)
         except Exception as e:
             self.logger.warning(e)
 
-    def run(self):
+    def __on_start__(self):
         """
-        初始化Worker
+        进程开始运行时调用
+        :return:
         """
-        # 首先检查是否已经有相同的进程被开启
+        if self.check_prerequisites() is not True:
+            sys.exit(0)
+
+        self.init_redis()
+        self.init_mongodb()
+
+        # 实例化self.logger
         self.logger = util.get_logger(
             logger_name=self.__class__.__name__,
             log_path=self.__log_path__,  #
@@ -305,6 +316,18 @@ class Worker(multiprocessing.Process):
             debug_log=self.__debug_log__,  # debug级别日志，默认关闭
         )
 
+    def on_start(self):
+        pass
+
+    def run(self):
+        """
+        初始化Worker
+        """
+        self.__on_start__()
+        # 用户自定义的on_start
+        self.on_start()
+
+        # 首先检查是否已经有相同的进程被开启
         if self.__is_unique__():
             self.__status__ = "started"
         else:
@@ -354,10 +377,15 @@ class Worker(multiprocessing.Process):
             self.__heart_beat__()
             time.sleep(self.__heart_beat_interval__)
 
-    def subscribe(self, worker_name=None, nickname=None):
+    def subscribe(self,channel_name=None, worker_name=None, nickname=None):
         """
         订阅Worker
+        可以直接填入channel_name
+        也可以通过填入worker_name/nickname/worker_name+nickname来自动订阅对应的内容
         """
+        if channel_name is not None:
+            self.__listener__.subscribe(channel_name)
+            return None
         if (worker_name is not None) and (nickname is None):
             # 订阅所有此类Worker
             self.__listener__.psubscribe(
@@ -369,6 +397,13 @@ class Worker(multiprocessing.Process):
                     worker_name,
                     "dHydra.Worker." + worker_name + ".*.Pub"
                 )
+            )
+        elif (worker_name is not None) and (nickname is not None):
+            channel_name = "dHydra.Worker." \
+                           + worker_name + "." + nickname + ".Pub"
+            self.__listener__.subscribe(channel_name)
+            self.logger.info(
+                "Subscribed: {}".format(channel_name)
             )
         elif (nickname is not None):
             # 订阅nickname

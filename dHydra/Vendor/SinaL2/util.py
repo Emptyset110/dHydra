@@ -12,14 +12,9 @@ import time
 from datetime import datetime
 import pandas
 import os
-import ntplib
-from pandas import DataFrame
-from pymongo import MongoClient
 import re
-import random
 import json
 import logging
-
 
 def get_logger(
     logger_name="main",
@@ -92,50 +87,6 @@ def get_logger(
     return logger
 
 
-def generate_token():
-    import hashlib
-    token = hashlib.sha1()
-    token.update(str(time.time()).encode())
-    token = token.hexdigest()
-    return token
-
-
-def _code_to_symbol(code, index=False):
-    """
-            生成symbol代码标志
-            @author: Jimmy Liu
-            @group : waditu
-            @contact: jimmysoa@sina.cn
-            @modified: Wen Gu
-    """
-    if code in C.INDEX_LIST.keys():
-        return C.INDEX_LIST[code]
-    else:
-        if len(code) != 6:
-            return ''
-        else:
-            if index is True:
-                return 'sh%s' % code if code[:1] in ['5', '6', '9', '0']\
-                    else 'sz%s' % code
-            else:
-                return 'sh%s' % code if code[:1] in ['5', '6', '9']\
-                    else 'sz%s' % code
-
-
-def symbol_list_to_code(symbolList):
-    codeList = []
-    for symbol in symbolList:
-        codeList.append(symbol[2:8])
-    return codeList
-
-
-def code_list_to_symbol(codeList, index=False):
-    symbolList = []
-    for code in codeList:
-        symbolList.append(_code_to_symbol(code, index=index))
-    return symbolList
-
-
 def _get_public_ip():
     return requests.get('http://ipinfo.io/ip').text.strip()
 
@@ -156,43 +107,6 @@ def get_client_ip():
                 pass
     return ip[0]
 
-# 用于将一个loop交给一个线程来完成一些任务
-
-
-def thread_loop(loop, tasks):
-    # loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(asyncio.wait(tasks))
-    loop.close()
-
-# 用于将一个list按一定步长切片，返回这个list切分后的list
-
-
-def slice_list(step=None, num=None, data_list=None):
-    if not ((step is None) & (num is None)):
-        if num is not None:
-            step = math.ceil(len(data_list) / num)
-        return [data_list[i: i + step] for i in range(0, len(data_list), step)]
-    else:
-        print("step和num不能同时为空")
-        return False
-
-# n个任务交给m个Thread完成
-
-
-def threads_for_tasks(taskList):
-    import threading
-    threads = []
-    for task in taskList:
-        t = threading.Thread(target=task.target, args=task.args)
-        threads.append(t)
-    for t in threads:
-        t.start()
-        print("开启线程：", t.name)
-    for t in threads:
-        t.join()
-
-
 def symbols_to_string(symbols):
     if (
         isinstance(symbols, list) or
@@ -205,89 +119,27 @@ def symbols_to_string(symbols):
         return symbols
 
 """
-与时间相关的转化函数
-"""
-
-
-def datetime_to_timestamp(dt, timeFormat='ms'):
-    if timeFormat == 'ms':
-        return int(time.mktime(dt.timetuple()) * 1000)
-    elif timeFormat == 's':
-        return int(time.mktime(dt.timetuple()))
-
-
-def date_to_timestamp(date, dateFormat='%Y-%m-%d', timeFormat='ms'):
-    return datetime_to_timestamp(
-        dt=datetime.strptime(date, dateFormat),
-        timeFormat=timeFormat,
-    )
-
-
-def string_to_date(date):
-    return datetime.strptime(date, "%Y-%m-%d").date()
-
-
-def timestamp_to_datetime(timestamp, timeFormat='ms'):
-    if timeFormat == 'ms':
-        timestamp = timestamp / 1000
-    return datetime.strftime(timestamp)
-
-
-def time_now():
-    return int(time.time() * 1000)
-
-# 从国家授时中心获取时间戳
-
-
-def get_network_time():
-    start = time.time()
-    c = ntplib.NTPClient()
-    response = c.request('pool.ntp.org')
-    ts = response.tx_time
-    return ts
-
-
-def check_time(precision=0.1):
-    duration = 2.0
-    while duration > precision:
-        try:
-            print("{}, 开始获取网络时间戳".format(time.time()))
-            start = time.time()
-            networkTime = get_network_time()
-            end = time.time()
-            duration = end - start
-        except Exception as e:
-            print("获取网络时间出了点小状况，正重试", duration)
-    # print("网络耗时：{}".format( duration ) )
-    # print("{}, 网络时间戳".format( networkTime ) )
-    # print("{}, 现在时间戳".format( time.time()) )
-    difference = networkTime - (start + duration)
-    print("difference = {}, (本地时间戳+difference)=网络时间戳".format(difference))
-    return difference
-
-"""
-symbols相关函数
-"""
-
-
-def split_symbols(symbols):
-    df = DataFrame(symbols, columns=['s'])
-    sz = list(df[df.s > 'sz']["s"])
-    sh = list(df[df.s < 'sz']["s"])
-    return [sz, sh]
-
-
-def upper(data_list):
-    for i in range(0, len(data_list)):
-        data_list[i] = data_list[i].upper()
-    return data_list
-
-"""
 用于解析Sina l2的函数
 """
 
 
-def ws_parse(message, to_dict=False):
+def get_trading_date():
+    from dHydra.core.Functions import get_vendor
+    sina = get_vendor("Sina")
+    sh000300 = sina.get_quote(symbols=["sh000300"])
+    sh000300_date = sh000300.iloc[0].date
+
+    return sh000300_date
+
+
+def ws_parse(message, trading_date, to_dict=False):
+    """
+    trading_date 最好外部传入
+    :param message:
+    :param trading_date: e.g."2016-12-30"
+    :param to_dict:
+    :return:
+    """
     data_list = re.findall(
         r'(?:((?:2cn_)?((?:sh|sz)[\d]{6})'
         r'(?:_0|_1|_orders|_i)?)(?:=)(.*)(?:\n))',
@@ -295,13 +147,13 @@ def ws_parse(message, to_dict=False):
     )
     result = list()
     for data in data_list:
-        if (len(data[0]) == 12):  # quotation
+        if len(data[0]) == 12:  # quotation
             wstype = 'quotation'
-        elif ((data[0][-2:] == '_0') | (data[0][-2:] == '_1')):
+        elif (data[0][-2:] == '_0') | (data[0][-2:] == '_1'):
             wstype = 'transaction'
-        elif (data[0][-6:] == 'orders'):
+        elif data[0][-6:] == 'orders':
             wstype = 'orders'
-        elif ((data[0][-2:] == '_i')):
+        elif data[0][-2:] == '_i':
             wstype = 'info'
         else:
             wstype = 'other'
@@ -309,13 +161,14 @@ def ws_parse(message, to_dict=False):
             wstype=wstype,
             symbol=data[1],
             data=data[2],
+            trading_date=trading_date,
             result=result,
             to_dict=to_dict
         )
     return result
 
 
-def ws_parse_to_list(wstype, symbol, data, result, to_dict):
+def ws_parse_to_list(wstype, symbol, data, trading_date, result, to_dict):
     data = data.split(',')
     if wstype is 'transaction':
         for d in data:
@@ -324,7 +177,9 @@ def ws_parse_to_list(wstype, symbol, data, result, to_dict):
             x.append(symbol)
             x.extend(d.split('|'))
             if to_dict is True:
-                result.append(transaction_to_dict(x))
+                t = transaction_to_dict(x, trading_date)
+                if t is not None:
+                    result.append(t)
             else:
                 result.append(x)
     else:
@@ -335,39 +190,68 @@ def ws_parse_to_list(wstype, symbol, data, result, to_dict):
         if to_dict is True:
             if wstype is 'quotation':
                 result.append(quotation_to_dict(x))
-            elif wstype is 'info':
-                result.append(info_to_dict(x))
+            # elif wstype is 'info':
+            #     result.append(info_to_dict(x))
             elif wstype is 'orders':
-                result.append(orders_to_dict(x))
+                result.append(orders_to_dict(x, trading_date))
         else:
             result.append(x)
     return result
 
 
-def orders_to_dict(orders):
+def orders_to_dict(data, trading_date):
     """
     return
     ------
     """
+    try:
+        orders = {
+            "data_type": "orders",
+            "symbol": data[1],
+            "time": datetime(
+                int(trading_date[0:4]),
+                int(trading_date[5:7]),
+                int(trading_date[8:10]),
+                int(data[3][0:2]),
+                int(data[3][3:5]),
+                int(data[3][6:8])
+            ),  # 时间 datetime格式
+            "bid_price": float(data[4]),
+            "bid_volume": int(data[5]),
+            "bid_num": int(data[6]),
+            "ask_price": float(data[7]),
+            "ask_volume": int(data[8]),
+            "ask_num": int(data[9]),
+            "bid_orders": data[10].split("|"),
+            "ask_orders": data[12].split("|")
+        }
+    except ValueError:
+        return {}
     return orders
 
 
 def quotation_to_dict(data):
     """
     整个转换大约耗时1*10^(-4)s, 其中datetime.strptime()占用较多耗时
+        根据Issue #5，"time"不再用strptime来转化
     return
     ------
     """
     # print("{}, length = {}".format( data, len(data) ))
+    quotation = {}
     if len(data) == 68:
         quotation = {
             "data_type": 'quotation',
             "symbol": data[1],  # "股票代码"
             "name": data[2],  # "中文名"
             # "datetime格式的日期时间"
-            "time": datetime.strptime(
-                data[3] + ' ' + data[4],
-                "%H:%M:%S %Y-%m-%d"
+            "time": datetime(
+                int(data[4][0:4]),
+                int(data[4][5:7]),
+                int(data[4][8:10]),
+                int(data[3][0:2]),
+                int(data[3][3:5]),
+                int(data[3][6:8])
             ),
             # "昨收"
             "last_close": float(data[5]),
@@ -451,9 +335,13 @@ def quotation_to_dict(data):
             "symbol": data[1],  # "股票代码"
             "name": data[2],  # "中文名"
             # "datetime格式的日期时间"
-            "time": datetime.strptime(
-                data[3] + ' ' + data[4],
-                "%H:%M:%S %Y-%m-%d"
+            "time": datetime(
+                int(data[4][0:4]),
+                int(data[4][5:7]),
+                int(data[4][8:10]),
+                int(data[3][0:2]),
+                int(data[3][3:5]),
+                int(data[3][6:8])
             ),
             "last_close": float(data[5]),  # "昨收"
             "open": float(data[6]),  # "今开"
@@ -471,30 +359,33 @@ def quotation_to_dict(data):
     return quotation
 
 
-def transaction_to_dict(data):
-    transaction = {
-        "data_type": 'transaction',
-        "symbol": data[1],   # 股票代码
-        "index": data[2],  # 成交序号
-        "time": data[3],   # 时间，字符串格式，不带日期
-        "price":  float(data[4]),  # 成交价格
-        "volume": int(data[5]),  # 成交量
-        "amount": float(data[6]),  # 成交金额
-        "buynum": int(data[7]),  # 买单委托序号
-        "sellnum": int(data[8]),  # 卖单委托序号
-        "iotype": int(data[9]),  # 主动性买卖标识
-        "channel": int(data[10]),  # 成交通道（这是交易所的一个标记，没有作用）
-    }
-    return transaction
-
-
-def symbol_type(symbol):
-    """
-    description: 用于判断股票代码类型：母基金，分级基金，指数，AB股
-    return
-    ------
-    """
-    return symbol_type
+def transaction_to_dict(data, trading_date):
+    if len(data) == 11:
+        transaction = {
+            "data_type": 'transaction',
+            "symbol": data[1],   # 股票代码
+            "index": data[2],  # 成交序号
+            "time": datetime(
+                int(trading_date[0:4]),
+                int(trading_date[5:7]),
+                int(trading_date[8:10]),
+                int(data[3][0:2]),
+                int(data[3][3:5]),
+                int(data[3][6:8]),
+                int(data[3][9:])*1000
+            ),  # 时间 datetime格式
+            # "time": data[3],   # 时间，字符串格式，不带日期
+            "price":  float(data[4]),  # 成交价格
+            "volume": int(data[5]),  # 成交量
+            "amount": float(data[6]),  # 成交金额
+            "buynum": int(data[7]),  # 买单委托序号
+            "sellnum": int(data[8]),  # 卖单委托序号
+            "iotype": int(data[9]),  # 主动性买卖标识
+            "channel": int(data[10]),  # 成交通道（这是交易所的一个标记，没有作用）
+        }
+        return transaction
+    else:
+        return None
 
 
 def read_config(file_path):
@@ -510,11 +401,3 @@ def read_config(file_path):
             .format(file_path)
         )
     return cfg
-
-
-def write_config(cfg, file_path):
-    # 将配置写入
-    print("写入配置：\n{}".format(json.dumps(cfg, indent=2)))
-    f = open(file_path, 'w', encoding='UTF-8')
-    f.write(json.dumps(cfg, indent=2))
-    f.close()
