@@ -93,6 +93,7 @@ class WorkerManager(Vendor):
                             "\tnickname: {}"
                             .format(worker_name, nickname)
                         )
+                        self.redis.hmset("dHydra.Worker."+worker_name+"."+nickname+".Info",worker_info)
                     self.worker_info[worker_name][nickname] = copy.deepcopy(worker_info)
                 if self.auto_remove_terminated > -1 and\
                         difference>timedelta(seconds=self.auto_remove_terminated+1):
