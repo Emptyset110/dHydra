@@ -305,6 +305,9 @@ class RequestInstrument(Request):
         self.__trader__.instruments =\
             DataFrame(result)\
             .drop_duplicates("InstrumentID")
+        self.__trader__.instruments.set_index(
+            "InstrumentID", drop=False, inplace=True
+        )
         print(
             "CtpMiniTrader: 成功获取Instruments:{}个"
             .format(
@@ -388,13 +391,6 @@ class CtpMiniTrader(TraderApi):
         # Get Api Version
         self.api_version = self.GetApiVersion().decode("utf-8")
         self.trading_day = None
-
-        # CtpTraderApi自己维护的几个属性
-        # self.user_login = None  # 用户登录应答的缓存
-        # self.trading_account = None  # 资金账户
-        # self.trading_account_last_updated = None  # 资金账户上次更新时间
-        # position
-        # self.position = None    # DataFrame类型
 
         self.instruments = DataFrame(
             columns=[

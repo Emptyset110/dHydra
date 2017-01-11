@@ -71,11 +71,6 @@ class CtpMd(Worker):
             time.sleep(60)
 
     def on_start(self):
-        self.init_mdapi()
-        self.__redis__.set(
-            "dHydra.Worker.CtpMd.instrument_ids",
-            pickle.dumps(self.instrument_ids)
-        )
         # 初始化instrument_ids
         self.ctp_mini_trader = CtpMiniTrader(account=self.__account__)
         while not self.ctp_mini_trader.is_connected:
@@ -87,6 +82,13 @@ class CtpMd(Worker):
         # update_instruments and re-init
         t = threading.Thread(target=self.check_instruments_update,daemon=True)
         t.start()
+
+        # 初始化mdapi
+        self.init_mdapi()
+        self.__redis__.set(
+            "dHydra.Worker.CtpMd.instrument_ids",
+            pickle.dumps(self.instrument_ids)
+        )
 
     def init_mdapi(self):
         self.mdapi = get_vendor(
