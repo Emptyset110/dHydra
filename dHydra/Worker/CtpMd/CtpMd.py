@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from dHydra.core.Worker import Worker
 import os
-import sys
 import time
 from ctp.futures import ApiStruct, MdApi
+from .CtpMiniTrader import CtpMiniTrader
 import pickle
 import dHydra.core.util as util
 from dHydra.core.Functions import get_vendor
@@ -15,11 +15,7 @@ class CtpMd(Worker):
 
     def __init__(
         self,
-        account="ctp_real.json",
         config="CtpMd.json",
-        instrument_ids=[],  # 如果有传入instrument_ids，以传入的为准
-        simnow=False,       # 如果account配置的是simnow的debug账户，请务必将这个flag设置为True
-                            # 以免扰乱依赖此Worker广播数据的数据处理模块
         **kwargs
     ):
         """
@@ -31,74 +27,72 @@ class CtpMd(Worker):
         :param kwargs:
         """
         super().__init__(**kwargs)  # You are not supposed to change THIS
-        self.simnow = simnow
         self.mdapi = None
-        if instrument_ids == []:
-            cfg = util.read_config(os.path.join("config",config))
-            self.instrument_ids = cfg["instrument_ids"]
-        else:
-            self.instrument_ids = instrument_ids
-        self.__account__ = account
+        self.__config__ = config
+        cfg = util.read_config(os.path.join("config", config))
+        self.__account__ = cfg["account"]
+        self.init_config_instrument_ids()
 
-    def get_all_instruments(self):
-        trader = get_vendor("CtpTraderApi", account=self.__account__)
-        result = list()
-        instruments = list()
-        while instruments == list():
-            time.sleep(3)
+    def init_config_instrument_ids(self):
+        cfg = util.read_config(os.path.join("config", self.__config__))
+        self.instrument_ids = cfg["instrument_ids"]
+
+    def check_instruments_update(self):
+        while 1:
             try:
-                instruments = list(trader.instruments.InstrumentID)
-            except Exception as e:
-                trader.prepare_instruments_info()
-                print("获取instruments失败，1秒后重试")
-        trader.Release()
-        for item in instruments:
-            if ("&" in item) or (" " in item):
-                continue
-            else:
-                result.append(item)
-        # 确保我们配置文件中规定的instruments必须在列表中
-        result = list(set(result) | set(self.instrument_ids))
+                instruments = list(self.ctp_mini_trader.instruments.InstrumentID)
+                new_set = set([])
+                for item in instruments:
+                    if isinstance(item, str):
+                        if "&" in item or " " in item:
+                            continue
+                        else:
+                            new_set.add(item)
+                    else:
+                        print(
+                            "check_instruments_update, warning: item = ",
+                            item, instruments
+                        )
+                update_list = list(new_set - set(self.instrument_ids))
 
-        return result
+                self.instrument_ids.extend(update_list)
+                self.__redis__.set(
+                    "dHydra.Worker.CtpMd.instrument_ids",
+                    pickle.dumps(self.instrument_ids)
+                )
+                if len(update_list) > 0:
+                    for i in range(0, len(update_list)):
+                        update_list[i] = update_list[i].encode()
+                    # print("CtpMd Worker Subscribe", update_list)
+                    self.mdapi.SubscribeMarketData(update_list)
+            except Exception as e:
+                traceback.print_exc()
+                self.logger.warning(e)
+            time.sleep(60)
 
     def on_start(self):
+        self.init_mdapi()
+        self.__redis__.set(
+            "dHydra.Worker.CtpMd.instrument_ids",
+            pickle.dumps(self.instrument_ids)
+        )
+        # 初始化instrument_ids
+        self.ctp_mini_trader = CtpMiniTrader(account=self.__account__)
+        while not self.ctp_mini_trader.is_connected:
+            time.sleep(1)
+        while self.ctp_mini_trader.instruments_last_updated is None:
+            self.ctp_mini_trader.prepare_instruments_info()
+            time.sleep(1)
+
         # update_instruments and re-init
-        t = threading.Thread(target=self.restart_thread,daemon=True)
+        t = threading.Thread(target=self.check_instruments_update,daemon=True)
         t.start()
 
-    def restart_thread(self):
-        from datetime import datetime
-        if self.mdapi is None:
-            self.init_mdapi()
-        else:
-            while True:
-                now = datetime.now()
-                if now.hour == 8 and now.minute == 55:
-                    self.logger.info("重启MdApi")
-                    self.init_mdapi()
-                else:
-                    self.logger.info("{}".format(now))
-                time.sleep(60)
-
-
     def init_mdapi(self):
-        if self.mdapi is not None:
-            try:
-                self.mdapi.Release()
-            except Exception as e:
-                self.logger.error("MdApi Release Failed: {}".format(e))
-
-        instrument_ids = self.get_all_instruments()
-        self.logger.info(
-            "成功获取Instruments: {}".format(
-                len(instrument_ids)
-            )
-        )
         self.mdapi = get_vendor(
             "CtpMdApi",
             account=self.__account__,
-            instrument_ids=instrument_ids
+            instrument_ids=self.instrument_ids
         )
         self.mdapi.OnRtnDepthMarketData = self.OnRtnDepthMarketData
         self.logger.info("开启CtpMd")
@@ -118,9 +112,6 @@ class CtpMd(Worker):
 
 
     def __data_handler__(self, msg):
-        # 以下是测试时的代码
-        # if msg["type"] == 'pmessage' or msg["type"] == "message":
-        #     message = pickle.loads(msg["data"])
         pass
 
     def __before_termination__(self, sig):
@@ -183,8 +174,6 @@ class CtpMd(Worker):
             'ActionDay': pDepthMarketData.ActionDay.decode(),
         }
 
-        if self.simnow==True:
-            data["simnow"] = True
         self.__redis__.publish(
             "dHydra.Worker.CtpMd."+data["InstrumentID"],
             pickle.dumps(data)

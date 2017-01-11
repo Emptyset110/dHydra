@@ -42,7 +42,9 @@ class DB(Vendor):
         try:
             self.logger.info("Trying to connect to redis")
             self.redis = redis.StrictRedis(
-                decode_responses=True, host=host, port=port
+                decode_responses=True,
+                host=host,
+                port=port
             )
             self.redis.client_list()
             return self.redis

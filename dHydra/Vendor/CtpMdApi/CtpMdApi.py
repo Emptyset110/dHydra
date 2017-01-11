@@ -64,7 +64,7 @@ class CtpMdApi(MdApi, Vendor):
         self.Init()
         try:
             while 1:
-                time.sleep(10)
+                time.sleep(600)
         except Exception as e:
             self.logger.warning(e)
 
@@ -174,7 +174,7 @@ class CtpMdApi(MdApi, Vendor):
         bIsLast
     ):
         """订阅行情应答"""
-        print('OnRspSubMarketData:', pRspInfo)
+        print('CtpMdApi: OnRspSubMarketData:', pSpecificInstrument)
 
     def OnRspUnSubMarketData(
         self,
@@ -184,7 +184,7 @@ class CtpMdApi(MdApi, Vendor):
         bIsLast
     ):
         """取消订阅行情应答"""
-        print('OnRspUnSubMarketData:', pRspInfo)
+        print('OnRspUnSubMarketData:', pSpecificInstrument)
 
     def OnRspError(self, pRspInfo, nRequestID, bIsLast):
         """错误应答"""

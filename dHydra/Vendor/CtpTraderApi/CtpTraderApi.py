@@ -704,6 +704,9 @@ class CtpTraderApi(TraderApi):
     # 登录相关
     # ==========================================================
     def connect(self, user_id, password, broker_id, trade_front):
+        import hashlib
+        import tempfile
+        import sys
         """初始化连接"""
         self.user_id = user_id                # 账号
         self.password = password            # 密码
@@ -713,7 +716,12 @@ class CtpTraderApi(TraderApi):
         # 如果尚未建立服务器连接，则进行连接
         if not self.is_connected:
             # 创建C++环境中的API对象，这里传入的参数是需要用来保存.con文件的文件夹路径
-            self.Create(b"ctp_data")
+            dir = b''.join((b'ctp.futures', self.broker_id, self.user_id))
+            dir = hashlib.md5(dir).hexdigest()
+            dir = os.path.join(tempfile.gettempdir(), dir, 'Md') + os.sep
+            if not os.path.isdir(dir):
+                os.makedirs(dir)
+            self.Create(os.fsencode(dir) if sys.version_info[0] >= 3 else dir)
 
             # 注册服务器地址
             self.RegisterFront(self.trade_front)

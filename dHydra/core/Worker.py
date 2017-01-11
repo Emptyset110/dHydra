@@ -253,11 +253,9 @@ class Worker(multiprocessing.Process):
         随着Worker进程的start而启动
         """
         while True:
-            data = self.__listener__.get_message()
+            data = self.__listener__.get_message(timeout=10)
             if data is not None:
                 self.__data_handler__(data)
-            else:
-                time.sleep(0.001)
 
     # 需要在子类中重写的数据处理方法
     def __data_handler__(self, msg):
