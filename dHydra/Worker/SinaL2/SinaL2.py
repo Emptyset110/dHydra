@@ -11,17 +11,17 @@ class SinaL2(Worker):
 
     def __init__(
         self,
-        symbols=["sz000001"],
-        hq='hq_pjb',
-        query=['quotation', 'transaction', "orders"],
-        # ['quotation', 'orders', 'transaction', 'info']
-        # to_mongo=False,
+        config="SinaL2.json",
         **kwargs
     ):
         super().__init__(**kwargs)  # You are not supposed to change THIS
-        self.symbols = symbols
-        self.hq = hq
-        self.query = query
+        if "/" not in config:
+            cfg = util.read_config(os.path.join(os.getcwd(), "config", config))
+        else:
+            cfg = util.read_config(config)
+        self.symbols = cfg["symbols"]
+        self.hq = cfg["hq"]
+        self.query = cfg["query"]
 
         self.count_transaction = 0
         self.count_quotation = 0
