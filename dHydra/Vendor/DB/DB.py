@@ -9,9 +9,6 @@
 import dHydra.core.util as util
 from dHydra.core.Vendor import Vendor
 # --- 导入自定义配置
-from .connection import *
-from .const import *
-from .config import *
 # 以上是自动生成的 #
 
 from pymongo import MongoClient
@@ -23,7 +20,16 @@ class DB(Vendor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def get_mongodb(self, host="localhost", port=27017, timeout=1500):
+    def get_mongodb(self, config="mongodb.json", timeout=1500):
+        import os
+        if "/" in config:
+            cfg = util.read_config(config)
+        else:
+            cfg = util.read_config(
+                os.path.join(os.getcwd(), "config", config)
+            )
+        host = cfg["host"]
+        port = cfg["port"]
         try:
             self.logger.info("尝试连接到Mongodb")
             client = MongoClient(host=host, port=port,
@@ -38,7 +44,17 @@ class DB(Vendor):
                 ">>>>>>>>>>>>>>>>>>连接到mongodb失败<<<<<<<<<<<<<<<<<<<")
             return False
 
-    def get_redis(self, host="127.0.0.1", port=6379):
+    def get_redis(self, config="redis.json"):
+        import os
+        if "/" in config:
+            cfg = util.read_config(config)
+        else:
+            cfg = util.read_config(
+                os.path.join(os.getcwd(), "config", config)
+            )
+        host = cfg["host"]
+        port = cfg["port"]
+
         try:
             self.logger.info("Trying to connect to redis")
             self.redis = redis.StrictRedis(

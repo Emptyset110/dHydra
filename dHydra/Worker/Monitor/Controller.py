@@ -6,7 +6,7 @@ from dHydra.core.Controller import controller
 from dHydra.core.Controller import controller_get
 from dHydra.core.Controller import controller_post
 
-conn = redis.StrictRedis(decode_responses=True, host="127.0.0.1")
+conn = get_vendor("DB").get_redis()
 
 @controller_get
 def get_worker_names(
