@@ -79,16 +79,16 @@ class CtpMd(Worker):
             self.ctp_mini_trader.prepare_instruments_info()
             time.sleep(1)
 
-        # update_instruments and re-init
-        t = threading.Thread(target=self.check_instruments_update,daemon=True)
-        t.start()
-
         # 初始化mdapi
         self.init_mdapi()
         self.__redis__.set(
             "dHydra.Worker.CtpMd.instrument_ids",
             pickle.dumps(self.instrument_ids)
         )
+        time.sleep(1)
+        # update_instruments and re-init
+        t = threading.Thread(target=self.check_instruments_update, daemon=True)
+        t.start()
 
     def init_mdapi(self):
         self.mdapi = get_vendor(
@@ -132,8 +132,8 @@ class CtpMd(Worker):
         data = {
             'TradingDay': pDepthMarketData.TradingDay.decode(),
             'InstrumentID': pDepthMarketData.InstrumentID.decode(),
-            'ExchangeID': pDepthMarketData.ExchangeID.decode(),
-            'ExchangeInstID': pDepthMarketData.ExchangeInstID.decode(),
+            # 'ExchangeID': pDepthMarketData.ExchangeID.decode(),
+            # 'ExchangeInstID': pDepthMarketData.ExchangeInstID.decode(),
             'LastPrice': pDepthMarketData.LastPrice,
             'PreSettlementPrice': pDepthMarketData.PreSettlementPrice,
             'PreClosePrice': pDepthMarketData.PreClosePrice,
@@ -175,7 +175,9 @@ class CtpMd(Worker):
             'AveragePrice': pDepthMarketData.AveragePrice,
             'ActionDay': pDepthMarketData.ActionDay.decode(),
         }
-
+        data["ExchangeID"] = self.ctp_mini_trader.instruments.ix[
+            data["InstrumentID"],"ExchangeID"
+        ]
         self.__redis__.publish(
             "dHydra.Worker.CtpMd."+data["InstrumentID"],
             pickle.dumps(data)
