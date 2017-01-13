@@ -22,6 +22,7 @@ class SinaL2(Worker):
         self.symbols = cfg["symbols"]
         self.hq = cfg["hq"]
         self.query = cfg["query"]
+        self.account= cfg["account"]
 
         self.count_transaction = 0
         self.count_quotation = 0
@@ -34,6 +35,7 @@ class SinaL2(Worker):
             symbols=self.symbols,
             hq=self.hq,
             query=self.query,
+            account=self.account,
             on_recv_data=self.on_recv_data
         )
 

@@ -29,7 +29,7 @@ import os
 
 class Sina(Vendor):
 
-    def __init__(self, account="sina.json", login=False, **kwargs):
+    def __init__(self, account="account/sina.json", login=False, **kwargs):
         super().__init__(**kwargs)
         config = util.read_config(os.path.join(os.getcwd(), account))
 

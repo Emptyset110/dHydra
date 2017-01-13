@@ -28,6 +28,7 @@ class SinaL2:
         query=['quotation', 'transaction', "orders"],
         on_recv_data=None,   # 收到数据以后的回调函数
         use_logger=True,
+        account="account/sina.json",
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -39,7 +40,7 @@ class SinaL2:
         if use_logger:
             self.logger = util.get_logger(self.__class__.__name__)
 
-        self.sina = Sina(login=True)
+        self.sina = Sina(account=account,login=True)
         self.is_login = False
         self.stopped = False
         self.terminated = False

@@ -1,5 +1,5 @@
 {
-  "account": "sina.json",
+  "account": "account/sina.json",
   "hq": "hq_pjb",
   "query": ["quotation","transaction","orders"],
   "symbols": ["sz000001", "sz000002"]
