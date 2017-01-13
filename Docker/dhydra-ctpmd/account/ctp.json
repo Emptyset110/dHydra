@@ -1,0 +1,8 @@
+{
+    "broker_id":   "9999",
+    "investor_id": "068246",
+    "user_id"  :   "068246",
+    "password" :   "",
+    "market_front": "tcp://180.168.146.187:10010",
+    "trade_front": "tcp://180.168.146.187:10000"
+}
