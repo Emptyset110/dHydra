@@ -68,7 +68,7 @@ class Worker(multiprocessing.Process):
 
         self.__token__ = util.generate_token()
         if nickname is None:
-            self.__nickname__ = self.__class__.__name__ + "Default"
+            self.__nickname__ = self.__class__.__name__
         else:
             self.__nickname__ = nickname
         self.nickname = self.__nickname__
@@ -83,8 +83,7 @@ class Worker(multiprocessing.Process):
         self.__stop_info__ = None  #
         self.__stop_time__ = None  #
         self.__status__ = "init"
-        # self.mongo = False
-        # "init", "error_exit", "suspended", "user_stopped", "normal"
+
         self.redis_key = "dHydra.Worker." + \
                          self.__class__.__name__ + "." + self.__nickname__ + "."
         self.channel_pub = self.redis_key + "Pub"
@@ -306,7 +305,7 @@ class Worker(multiprocessing.Process):
             log_path=self.__log_path__,  #
             console_log=self.__console_log__,  # 屏幕打印日志开关，默认True
             console_log_level=self.__console_log_level__,  # 屏幕打印日志的级别，默认为INFO
-            critical_log=self.__critical_log__,  # critica单独l写文件日志，默认关闭
+            critical_log=self.__critical_log__,  # critical写文件日志，默认关闭
             error_log=self.__error_log__,  # error级别单独写文件日志，默认开启
             warning_log=self.__warning_log__,  # warning级别单独写日志，默认关闭
             info_log=self.__info_log__,  # info级别单独写日志，默认开启
@@ -321,6 +320,7 @@ class Worker(multiprocessing.Process):
         初始化Worker
         """
         self.__on_start__()
+        self.logger.info("初始化Worker")
         # 用户自定义的on_start
         self.on_start()
 
@@ -331,7 +331,6 @@ class Worker(multiprocessing.Process):
             self.error_msg = "Duplicated Process"
             self.logger.warning(self.error_msg)
             sys.exit(0)
-            return False
 
         # 开启监听命令线程
         self.__thread_listen_command__ = threading.Thread(

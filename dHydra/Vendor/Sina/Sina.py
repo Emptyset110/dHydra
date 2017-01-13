@@ -389,7 +389,7 @@ class Sina(Vendor):
                     symbolList.append(i["symbol"])
         return symbolList
 
-    def get_quote(self, symbols, dataframe=True):
+    def get_quote(self, symbols, dataframe=True, timeout=0.2):
         if (
                 isinstance(symbols, list) or
                 isinstance(symbols, set) or
@@ -404,11 +404,11 @@ class Sina(Vendor):
         while retry:
             try:
                 quote = self.session.get(
-                    URL_QUOTATION(symbols),    timeout=0.1
+                    URL_QUOTATION(symbols),    timeout=timeout
                 ).text
                 retry = False
-            except:
-                pass
+            except Exception as e:
+                self.logger.info(e)
         quoteList = re.findall(r'\"(.*)\"', quote)
         if dataframe:
             for i in range(0, len(quoteList)):

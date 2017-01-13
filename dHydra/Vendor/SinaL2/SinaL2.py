@@ -155,7 +155,7 @@ class SinaL2:
                     self.on_recv_data(message)
 
             except Exception as e:
-                traceback.print_exc()
+                # traceback.print_exc()
                 self.logger.error(
                     "{},{}"
                     .format(

@@ -328,8 +328,10 @@ def upper(data_list):
 
 def get_trading_date():
     from dHydra.core.Functions import get_vendor
+    print("实例化Sina")
     sina = get_vendor("Sina")
-    sh000300 = sina.get_quote(symbols=["sh000300"])
+    print("尝试获取交易日")
+    sh000300 = sina.get_quote(symbols=["sh000300"],timeout=5)
     sh000300_date = sh000300.iloc[0].date
 
     return sh000300_date

@@ -11,18 +11,11 @@ RUN git clone https://github.com/Emptyset110/dHydra --depth=1 && \
     cd dHydra && \
     pip3 install --editable .
 
-# 从github下载编译pyctp
-RUN git clone https://github.com/Emptyset110/pyctp.git && \
-    cd pyctp && \
-    python setup.py install && \
-    cd .. && \
-    rm -rf pyctp
+# 复制启动脚本
+COPY StartSinaL2.py /dHydra/StartSinaL2.py
 
 # 设置启动路径
 WORKDIR /dHydra
 
-# 复制启动脚本
-COPY StartCtpMdToMongo.py /dHydra/StartCtpMdToMongo.py
-
 # 设置启动脚本
-ENTRYPOINT ["python","StartCtpMdToMongo.py"]
+ENTRYPOINT ["python","StartSinaL2.py"]

@@ -122,11 +122,12 @@ def get_client_ip():
             ip = re.findall(r'\"(.*)\"', response)
             break
         except Exception as e:
+            print("get_client_ip: {}".format(e))
             try:
                 ip = _get_public_ip()
                 return ip
-            except:
-                pass
+            except Exception as e:
+                print("_get_client_ip: {}".format(e))
     return ip[0]
 
 def slice_list(step=None, num=None, data_list=None):
