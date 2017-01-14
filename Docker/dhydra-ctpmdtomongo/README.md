@@ -54,5 +54,5 @@ docker build -f ./Dockerfile . -t emptyset110/dhydra:ctpmdtomongo-0.1.0
 
 # 启动docker，将config和account目录映射过去
 ```shell
-docker run -it --rm -v <config文件夹绝对路径>/config:/dHydra/config -v <account文件夹绝对路径>:/dHydra/account emptyset110/dhydra:ctpmd-0.1.0
+docker run -it --rm -v <config文件夹绝对路径>/config:/dHydra/config -v <account文件夹绝对路径>/account:/dHydra/account emptyset110/dhydra:ctpmd-0.1.0
 ```
