@@ -40,6 +40,7 @@ docker build -f ./Dockerfile . -t emptyset110/dhydra:ctpmdtomongo-0.1.0
 > `account`则是ctp帐号的路径
 
 ### account/ctp.json
+这是SimNow的一个模拟帐号，请自行更改自己的帐号
 ```
 {
     "broker_id":   "9999",
